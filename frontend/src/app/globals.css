@@ -106,10 +106,10 @@
       --surface-elevated: 30 41 59;
       --surface-overlay: 51 65 85;
 
-      --text-primary: 248 250 252;
+      /* --text-primary: 248 250 252;
       --text-secondary: 226 232 240;
       --text-muted: 148 163 184;
-      --text-inverse: 15 23 42;
+      --text-inverse: 15 23 42; */
 
       --border-light: 51 65 85;
       --border-medium: 71 85 105;
@@ -638,6 +638,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
   }
 }
 
