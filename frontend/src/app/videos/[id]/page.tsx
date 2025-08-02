@@ -1,47 +1,35 @@
-
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import VideoPlayer from '@/components/video/VideoPlayer';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface Video {
-  title: string;
-  description: string;
-  filePath: string;
-}
-
-import PageLayout from '@/components/layout/PageLayout';
-
-export default function VideoPage() {
-  const [video, setVideo] = useState<Video | null>(null);
+export default function VideoPage({ params }: { params: { id: string } }) {
+  const [video, setVideo] = useState<any>(null);
   const [error, setError] = useState('');
-  const params = useParams();
-  const { id } = params;
+  const { token } = useAuth();
 
   useEffect(() => {
-    if (!id) return;
-
     const fetchVideo = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/videos/${id}` , {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        const res = await fetch(`http://localhost:5000/api/videos/${params.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-
         if (res.ok) {
           const data = await res.json();
           setVideo(data);
         } else {
           const data = await res.json();
-          setError(data.message);
+          setError(data.message || 'Failed to fetch video');
         }
       } catch (error) {
-        setError('Something went wrong');
+        setError('Something went wrong. Please try again.');
       }
     };
 
-    fetchVideo();
-  }, [id]);
+    if (token) {
+      fetchVideo();
+    }
+  }, [token, params.id]);
 
   if (error) {
     return <div className="p-8 text-red-500">{error}</div>;
@@ -52,12 +40,12 @@ export default function VideoPage() {
   }
 
   return (
-    <PageLayout>
-      <div className="p-8">
-        <h1 className="mb-4 text-3xl font-bold">{video.title}</h1>
-        <p className="mb-4">{video.description}</p>
-        <VideoPlayer src={`http://localhost:5000/${video.filePath}`} />
+    <div className="p-8">
+      <h1 className="text-3xl font-bold mb-4">{video.title}</h1>
+      <div className="aspect-w-16 aspect-h-9">
+        <video src={`http://localhost:5000/${video.filePath}`} controls className="w-full h-full object-cover" />
       </div>
-    </PageLayout>
+      <p className="mt-4 text-gray-600">{video.description}</p>
+    </div>
   );
 }
