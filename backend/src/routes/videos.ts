@@ -1,6 +1,6 @@
 
 import express from 'express';
-import { uploadVideo, getVideos, getVideo, getVideoCount, deleteVideo } from '../controllers/videos';
+import { uploadVideo, getVideos, getVideo, getVideoCount, deleteVideo, streamVideo } from '../controllers/videos';
 import { auth, teacherAuth } from '../middleware/auth';
 import upload from '../config/multer';
 
@@ -11,5 +11,6 @@ router.get('/', auth, getVideos);
 router.get('/:id', auth, getVideo);
 router.get('/count', teacherAuth, getVideoCount);
 router.delete('/:id', teacherAuth, deleteVideo);
+router.get('/stream/:filename', streamVideo);
 
 export default router;

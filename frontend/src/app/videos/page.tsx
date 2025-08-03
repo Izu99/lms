@@ -100,7 +100,7 @@ export default function VideoManagement() {
           <Button
             size="lg"
             className="bg-blue-600 hover:bg-blue-700 text-white backdrop-blur-sm border border-blue-500"
-            onClick={() => window.location.href = `/videos/${video.id}`}
+            onClick={() => window.location.href = `/videos/${video._id}`}
           >
             <Play className="w-6 h-6 mr-2" />
             Watch Now

@@ -142,7 +142,7 @@ export default function VideoPage() {
               <div className="relative bg-black rounded-lg overflow-hidden shadow-lg aspect-video border border-gray-200">
                 <video
                   id="main-video"
-                  src={`http://localhost:5000/${video.filePath}`}
+                  src={`http://localhost:5000/api/videos/stream/${video.filePath.split(/[\\/]/).pop()}`}
                   className="w-full h-full object-contain"
                   controls
                   onPlay={() => setIsPlaying(true)}

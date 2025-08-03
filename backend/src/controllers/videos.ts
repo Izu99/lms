@@ -76,3 +76,40 @@ export const deleteVideo = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Something went wrong' });
     }
 };
+
+import path from 'path';
+
+export const streamVideo = async (req: Request, res: Response) => {
+  const { filename } = req.params;
+  const videoPath = path.join(__dirname, '..', '..', 'uploads', filename);
+
+  try {
+    const stat = fs.statSync(videoPath);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+
+    if (!range) {
+      return res.status(400).send("Requires Range header");
+    }
+
+    const [startStr, endStr] = range.replace(/bytes=/, "").split("-");
+    const start = parseInt(startStr, 10);
+    const end = endStr ? parseInt(endStr, 10) : fileSize - 1;
+
+    const chunkSize = end - start + 1;
+    const file = fs.createReadStream(videoPath, { start, end });
+
+    res.writeHead(206, {
+      "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+      "Accept-Ranges": "bytes",
+      "Content-Length": chunkSize,
+      "Content-Type": "video/mp4",
+    });
+
+    file.pipe(res);
+  } catch (err) {
+    console.error("Stream error:", err);
+    res.status(500).json({ message: "Cannot stream video" });
+  }
+};
+
