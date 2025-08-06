@@ -3,10 +3,7 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-<<<<<<< HEAD
 uploads/
-=======
->>>>>>> b2aa89a77a71b6588e69ce228e7d44ffc6b05d89
 
 # Next.js build output
 .next/
