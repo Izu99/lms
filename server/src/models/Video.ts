@@ -3,7 +3,7 @@ import mongoose, { Document, Types } from 'mongoose';
 export interface IVideo extends Document {
   title: string;
   description: string;
-  videoUrl: string;
+  videoUrl: string; 
   uploadedBy: Types.ObjectId;
 }
 
