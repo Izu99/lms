@@ -11,6 +11,8 @@ import {
   Search,
   User,
   Calendar,
+  School,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +28,16 @@ interface VideoData {
     _id: string;
     username: string;
     role: string;
+  };
+  class?: {
+    _id: string;
+    name: string;
+    location: string;
+  };
+  year?: {
+    _id: string;
+    year: number;
+    name: string;
   };
   createdAt: string;
   updatedAt: string;
@@ -73,7 +85,6 @@ export default function VideoManagementPage() {
     }
   }, [user, userLoading]);
 
-  // ADD THIS MISSING FUNCTION
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
     return token ? { Authorization: `Bearer ${token}` } : {};
@@ -205,40 +216,148 @@ export default function VideoManagementPage() {
     return null;
   }
 
+  // Check if user is student - different view
+  const isStudent = user.role === "student";
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar user={user} onLogout={handleLogout} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Video Management
-            </h1>
-            <p className="text-gray-600">
-              Upload and manage your course videos
-            </p>
+        {/* Header - Different for Students vs Teachers */}
+        {/* Header with Statistics */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Video className="text-blue-600" size={28} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {isStudent
+                    ? "Video Learning Hub"
+                    : "Video Content Management"}
+                </h1>
+                <p className="text-gray-600">
+                  {isStudent
+                    ? "Access your ICT A-Level course videos and track progress"
+                    : "Upload, organize and manage your course video content"}
+                </p>
+              </div>
+            </div>
+            {/* Only show upload button for teachers/admin */}
+            {!isStudent && (
+              <Button onClick={openAddForm} className="flex items-center gap-2">
+                <Plus size={20} />
+                Upload New Video
+              </Button>
+            )}
           </div>
-          <Button onClick={openAddForm} className="flex items-center gap-2">
-            <Plus size={20} />
-            Upload New Video
-          </Button>
-        </div>
 
-        {/* Search */}
-        <div className="bg-white rounded-lg border p-6 mb-8">
-          <div className="relative max-w-md">
-            <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            />
-            <Input
-              placeholder="Search videos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          {/* Search Bar */}
+          <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+            <div className="relative max-w-md">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={20}
+              />
+              <Input
+                placeholder="Search videos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          {/* Statistics Cards - Role Based */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            {/* Total Videos */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Video className="text-blue-600" size={24} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">
+                    {isStudent ? "Available Videos" : "Total Videos"}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {videos.length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Classes/Subjects */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <School className="text-green-600" size={24} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">
+                    {isStudent ? "My Classes" : "Active Classes"}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {
+                      [
+                        ...new Set(
+                          videos.filter((v) => v.class).map((v) => v.class!._id)
+                        ),
+                      ].length
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Years/Progress */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <GraduationCap className="text-purple-600" size={24} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">
+                    {isStudent ? "Learning Progress" : "Academic Years"}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {isStudent
+                      ? "65%" // You can calculate actual progress here
+                      : [
+                          ...new Set(
+                            videos.filter((v) => v.year).map((v) => v.year!._id)
+                          ),
+                        ].length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Role-specific 4th card */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  {isStudent ? (
+                    <Calendar className="text-orange-600" size={24} />
+                  ) : (
+                    <User className="text-orange-600" size={24} />
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">
+                    {isStudent ? "Hours Watched" : "Content Creators"}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {isStudent
+                      ? "24.5hrs" // You can calculate actual watch time
+                      : [...new Set(videos.map((v) => v.uploadedBy._id))]
+                          .length}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -252,12 +371,10 @@ export default function VideoManagementPage() {
             {filteredVideos.map((video) => (
               <div
                 key={video._id}
-                className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
-              
+                className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow"
+              >
                 <div className="relative aspect-video bg-gray-900 flex items-center justify-center">
-                  <video
-                    className="w-full h-full object-cover"
-                  >
+                  <video className="w-full h-full object-cover">
                     <source
                       src={`http://localhost:5000/${video.videoUrl}`}
                       type="video/mp4"
@@ -283,6 +400,28 @@ export default function VideoManagementPage() {
                     {video.description || "No description available"}
                   </p>
 
+                  {/* Class and Year Info - Show for both students and teachers */}
+                  {(video.class || video.year) && (
+                    <div className="flex items-center gap-2 mb-3">
+                      {video.class && (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 rounded-full">
+                          <School size={12} className="text-blue-600" />
+                          <span className="text-xs font-medium text-blue-700">
+                            {video.class.name} - {video.class.location}
+                          </span>
+                        </div>
+                      )}
+                      {video.year && (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded-full">
+                          <GraduationCap size={12} className="text-green-600" />
+                          <span className="text-xs font-medium text-green-700">
+                            {video.year.name}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                     <User size={14} />
                     <span>{video.uploadedBy?.username || "Unknown"}</span>
@@ -291,29 +430,35 @@ export default function VideoManagementPage() {
                     <span>{formatDate(video.createdAt)}</span>
                   </div>
 
-                  {/* Action Buttons */}
+                  {/* Action Buttons - Different for Students vs Teachers */}
                   <div className="flex gap-2">
                     <Link href={`/videos/${video._id}`} className="flex-1">
                       <Button variant="outline" size="sm" className="w-full">
                         <Play size={16} className="mr-1" />
-                        View
+                        {isStudent ? "Watch Lesson" : "View"}
                       </Button>
                     </Link>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditForm(video)}
-                    >
-                      <Edit size={16} />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteVideo(video._id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
+
+                    {/* Only show edit/delete for teachers/admin */}
+                    {!isStudent && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditForm(video)}
+                        >
+                          <Edit size={16} />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteVideo(video._id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -328,18 +473,22 @@ export default function VideoManagementPage() {
               No videos found
             </h3>
             <p className="text-gray-600 mb-6">
-              Upload your first video to get started
+              {isStudent
+                ? "No video lessons available yet"
+                : "Upload your first video to get started"}
             </p>
-            <Button onClick={openAddForm}>
-              <Plus size={20} className="mr-2" />
-              Upload New Video
-            </Button>
+            {!isStudent && (
+              <Button onClick={openAddForm}>
+                <Plus size={20} className="mr-2" />
+                Upload New Video
+              </Button>
+            )}
           </div>
         )}
       </main>
 
-      {/* Video Form Modal */}
-      {isFormOpen && (
+      {/* Video Form Modal - Only for teachers/admin */}
+      {!isStudent && isFormOpen && (
         <VideoForm
           video={editingVideo}
           onSave={

@@ -48,7 +48,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
       return [
         { href: "/", label: "Dashboard", icon: BarChart3 },
         { href: "/videos", label: "Video Management", icon: Video },
-        { href: "/settings", label: "Class & Year Setup", icon: School },
+        { href: "/class-year", label: "Class & Year Setup", icon: School },
         { href: "/students", label: "Students", icon: Users },
         { href: "/assignments", label: "Assignments", icon: FileText },
         // { href: "/grades", label: "Gradebook", icon: BarChart3 }
@@ -126,7 +126,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 </div>
                 <div className="hidden md:block text-left">
                   <p className="text-sm font-medium">{user.username}</p>
-                  <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                  <p className="text-xs text-blue-600  rounded-full capitalize">{user.role}</p>
                 </div>
               </Button>
 

@@ -211,7 +211,7 @@ export default function SettingsPage() {
               <Settings className="text-blue-600" size={28} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Settings & Management</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Location & Management</h1>
               <p className="text-gray-600">Manage classes, years, and academic settings for your ICT program</p>
             </div>
           </div>
