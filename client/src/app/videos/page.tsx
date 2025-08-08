@@ -13,6 +13,7 @@ import {
   Calendar,
   School,
   GraduationCap,
+  Eye, // Added missing Eye import
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ interface VideoData {
     year: number;
     name: string;
   };
+  views: number; // Added missing views field
   createdAt: string;
   updatedAt: string;
 }
@@ -224,7 +226,6 @@ export default function VideoManagementPage() {
       <Navbar user={user} onLogout={handleLogout} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header - Different for Students vs Teachers */}
         {/* Header with Statistics */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -400,27 +401,34 @@ export default function VideoManagementPage() {
                     {video.description || "No description available"}
                   </p>
 
-                  {/* Class and Year Info - Show for both students and teachers */}
-                  {(video.class || video.year) && (
-                    <div className="flex items-center gap-2 mb-3">
-                      {video.class && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 rounded-full">
-                          <School size={12} className="text-blue-600" />
-                          <span className="text-xs font-medium text-blue-700">
-                            {video.class.name} - {video.class.location}
-                          </span>
-                        </div>
-                      )}
-                      {video.year && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded-full">
-                          <GraduationCap size={12} className="text-green-600" />
-                          <span className="text-xs font-medium text-green-700">
-                            {video.year.name}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {/* Class, Year Info and View Count */}
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    {video.class && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 rounded-full">
+                        <School size={12} className="text-blue-600" />
+                        <span className="text-xs font-medium text-blue-700">
+                          {video.class.name} - {video.class.location}
+                        </span>
+                      </div>
+                    )}
+                    {video.year && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-green-100 rounded-full">
+                        <GraduationCap size={12} className="text-green-600" />
+                        <span className="text-xs font-medium text-green-700">
+                          {video.year.name}
+                        </span>
+                      </div>
+                    )}
+                    {/* View Count Badge - Only show to teachers */}
+                    {/* {user.role === "teacher" && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 rounded-full">
+                        <Eye size={12} className="text-orange-600" />
+                        <span className="text-xs font-medium text-orange-700">
+                          {video.views || 0} views
+                        </span>
+                      </div>
+                    )} */}
+                  </div>
 
                   <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
                     <User size={14} />
@@ -428,6 +436,15 @@ export default function VideoManagementPage() {
                     <span>•</span>
                     <Calendar size={14} />
                     <span>{formatDate(video.createdAt)}</span>
+                    {/* View Count Badge - Only show to teachers */}
+                    {user.role === "teacher" && (
+                      <div className="flex items-center gap-1 px-2 py-1 rounded-full">
+                        <Eye size={12} className="" />
+                        <span className="text-xs font-medium ">
+                          {video.views || 0} views
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Action Buttons - Different for Students vs Teachers */}
@@ -466,6 +483,7 @@ export default function VideoManagementPage() {
           </div>
         )}
 
+        {/* Empty State */}
         {filteredVideos.length === 0 && !loading && (
           <div className="text-center py-12">
             <Video className="mx-auto text-gray-400 mb-4" size={64} />

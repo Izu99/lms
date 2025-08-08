@@ -49,6 +49,7 @@ interface VideoData {
     year: number;
     name: string;
   };
+  views: number; // ADD THIS LINE - Missing views field
   createdAt: string;
   updatedAt: string;
 }
@@ -70,8 +71,9 @@ export default function VideoViewPage() {
   const [allVideos, setAllVideos] = useState<VideoData[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showDescription, setShowDescription] = useState(true);
+  const [hasViewCounted, setHasViewCounted] = useState(false); // NEW: Track if view was counted
 
-  // Get user data from localStorage - SAME AS BEFORE
+  // Get user data from localStorage
   useEffect(() => {
     const token = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
@@ -133,7 +135,7 @@ export default function VideoViewPage() {
       });
       const allVideos = response.data.videos || response.data;
       setAllVideos(allVideos);
-      
+
       const related = allVideos
         .filter((v: VideoData) => v._id !== videoId)
         .slice(0, 5);
@@ -141,6 +143,32 @@ export default function VideoViewPage() {
     } catch (error) {
       console.error("Error fetching related videos:", error);
     }
+  };
+
+  // NEW: Function to increment view count
+  const incrementViewCount = async () => {
+    if (hasViewCounted || !video) return; // Don't count multiple times
+
+    try {
+      await axios.post(
+        `http://localhost:5000/api/videos/${videoId}/view`,
+        {},
+        { headers: getAuthHeaders() }
+      );
+
+      setHasViewCounted(true);
+
+      // Update local video state with incremented view
+      setVideo((prev) => (prev ? { ...prev, views: prev.views + 1 } : null));
+    } catch (error) {
+      console.error("Error incrementing view count:", error);
+    }
+  };
+
+  // NEW: Handle video play event
+  const handleVideoPlay = () => {
+    setIsPlaying(true);
+    incrementViewCount(); // Count view when video starts playing
   };
 
   const handleDeleteVideo = async () => {
@@ -177,28 +205,29 @@ export default function VideoViewPage() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  // Calculate progress - SIMPLE VERSION
+  // Calculate progress
   const calculateProgress = () => {
     if (!video || !allVideos.length) {
       return { current: 1, total: allVideos.length || 1, percentage: 0 };
     }
 
-    // If video has class and year, filter by them
     let relevantVideos = allVideos;
     if (video.class && video.year) {
-      relevantVideos = allVideos.filter(v => 
-        v.class && v.year && 
-        v.class._id === video.class!._id && 
-        v.year._id === video.year!._id
+      relevantVideos = allVideos.filter(
+        (v) =>
+          v.class &&
+          v.year &&
+          v.class._id === video.class!._id &&
+          v.year._id === video.year!._id
       );
     }
-    
-    // Sort by creation date
-    const sortedVideos = relevantVideos.sort((a, b) => 
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+
+    const sortedVideos = relevantVideos.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
-    
-    const currentIndex = sortedVideos.findIndex(v => v._id === video._id);
+
+    const currentIndex = sortedVideos.findIndex((v) => v._id === video._id);
     const total = sortedVideos.length;
     const current = currentIndex >= 0 ? currentIndex + 1 : 1;
     const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
@@ -219,9 +248,8 @@ export default function VideoViewPage() {
     );
   }
 
-  // Don't render navbar until user is loaded
   if (!user) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
   if (loading) {
@@ -263,8 +291,18 @@ export default function VideoViewPage() {
               <video
                 className="w-full h-full object-contain"
                 controls
-                onPlay={() => setIsPlaying(true)}
+                controlsList={
+                  user.role === "student"
+                    ? "nodownload noremoteplayback"
+                    : "noremoteplayback"
+                }
+                onPlay={handleVideoPlay}
                 onPause={() => setIsPlaying(false)}
+                onContextMenu={
+                  user.role === "student"
+                    ? (e) => e.preventDefault()
+                    : undefined
+                }
               >
                 <source
                   src={`http://localhost:5000/${video.videoUrl}`}
@@ -281,8 +319,8 @@ export default function VideoViewPage() {
                   <h1 className="text-2xl font-bold text-gray-900 mb-2">
                     {video.title}
                   </h1>
-                  
-                  {/* Class and Year Info - SIMPLE AND SAFE */}
+
+                  {/* Class and Year Info */}
                   {(video.class || video.year) && (
                     <div className="flex items-center gap-4 mb-3">
                       {video.class && (
@@ -305,10 +343,13 @@ export default function VideoViewPage() {
                   )}
 
                   <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                    <div className="flex items-center gap-1">
-                      <Eye size={16} />
-                      <span>45 views</span>
-                    </div>
+                    {/* NEW: Show view count only to teachers */}
+                    {user.role === "teacher" && (
+                      <div className="flex items-center gap-1">
+                        <Eye size={16} />
+                        <span>{video.views} views</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-1">
                       <Calendar size={16} />
                       <span>{formatDate(video.createdAt)}</span>
@@ -316,7 +357,7 @@ export default function VideoViewPage() {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
+                {/* Action Buttons - NO DOWNLOAD BUTTON */}
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -438,10 +479,13 @@ export default function VideoViewPage() {
                 </Link>
               </div>
               <h2 className="font-semibold text-gray-900">
-                {video.class ? `${video.class.name} - ${video.class.location}` : "ICT A-Level Lessons"}
+                {video.class
+                  ? `${video.class.name} - ${video.class.location}`
+                  : "ICT A-Level Lessons"}
               </h2>
               <p className="text-sm text-gray-600">
-                AL ICT / Prabath Wickramasinghe {video.year ? `${video.year.name} ` : ""}
+                AL ICT / EduForm Platform{" "}
+                {video.year ? `${video.year.name} ` : ""}
               </p>
             </div>
 
@@ -473,9 +517,11 @@ export default function VideoViewPage() {
                       <div className="relative">
                         <video
                           className="w-20 h-14 bg-gray-200 rounded object-cover"
-                          preload="auto"
+                          preload=""
                         >
-                          <source src={`http://localhost:5000/${relatedVideo.videoUrl}`} />
+                          <source
+                            src={`http://localhost:5000/${relatedVideo.videoUrl}`}
+                          />
                         </video>
                         <div className="absolute top-1 left-1 bg-gray-900 text-white text-xs px-1 rounded">
                           {index + 2}
@@ -497,7 +543,7 @@ export default function VideoViewPage() {
                 ))}
               </div>
 
-              {/* Course Progress (for students) - WORKS NOW */}
+              {/* Course Progress (for students) */}
               {user.role === "student" && (
                 <div className="mt-6 p-4 bg-green-50 rounded-lg">
                   <h4 className="font-medium text-green-900 mb-2">
@@ -510,7 +556,9 @@ export default function VideoViewPage() {
                         style={{ width: `${progress.percentage}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm text-green-700">{progress.percentage}%</span>
+                    <span className="text-sm text-green-700">
+                      {progress.percentage}%
+                    </span>
                   </div>
                   <p className="text-sm text-green-600">
                     {progress.current} of {progress.total} lessons completed
@@ -518,7 +566,7 @@ export default function VideoViewPage() {
                 </div>
               )}
 
-              {/* Teacher Stats - WORKS NOW */}
+              {/* Teacher Stats - NOW SHOWS ACTUAL VIEWS */}
               {user.role === "teacher" && (
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                   <h4 className="font-medium text-blue-900 mb-3">
@@ -526,16 +574,16 @@ export default function VideoViewPage() {
                   </h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
+                      <span className="text-blue-600">Student Views:</span>
+                      <span className="font-medium">{video.views}</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="text-blue-600">Total Videos:</span>
                       <span className="font-medium">{progress.total}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-blue-600">Current Position:</span>
                       <span className="font-medium">{progress.current}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-600">Completion Rate:</span>
-                      <span className="font-medium">{progress.percentage}%</span>
                     </div>
                   </div>
                 </div>

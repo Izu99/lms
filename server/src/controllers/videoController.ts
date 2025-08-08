@@ -31,7 +31,6 @@ export const uploadVideo = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Title, class, and year are required' });
     }
 
-    // Use req.user._id instead of (req as any).userId
     const userId = (req as any).user._id;
     if (!userId) {
       return res.status(401).json({ message: 'Authentication failed - no user ID' });
@@ -41,9 +40,10 @@ export const uploadVideo = async (req: Request, res: Response) => {
       title,
       description,
       videoUrl: videoFile.path,
-      uploadedBy: userId,  // This will now work
+      uploadedBy: userId,
       class: classId,
       year: yearId,
+      views: 0,  // NEW: Initialize with 0 views
     });
 
     await newVideo.save();
@@ -58,6 +58,27 @@ export const uploadVideo = async (req: Request, res: Response) => {
   }
 };
 
+// NEW: Increment view count endpoint
+export const incrementViewCount = async (req: Request, res: Response) => {
+  try {
+    const videoId = req.params.id;
+    
+    const video = await Video.findByIdAndUpdate(
+      videoId,
+      { $inc: { views: 1 } },  // Increment views by 1
+      { new: true }
+    );
+    
+    if (!video) {
+      return res.status(404).json({ message: 'Video not found' });
+    }
+    
+    res.json({ message: 'View count updated', views: video.views });
+  } catch (error) {
+    console.error("Increment view error:", error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
 // Update video
 export const updateVideo = async (req: Request, res: Response) => {
