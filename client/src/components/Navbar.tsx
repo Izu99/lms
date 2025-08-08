@@ -4,7 +4,6 @@ import {
   GraduationCap, 
   User, 
   Bell, 
-  Search, 
   Menu, 
   X,
   LogOut,
@@ -15,10 +14,10 @@ import {
   BarChart3,
   Video,
   Calendar,
-  Upload
+  Upload,
+  School
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Link from "next/link";
 
 interface NavbarProps {
@@ -38,30 +37,31 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
     if (user.role === "student") {
       return [
         { href: "/", label: "Dashboard", icon: BarChart3 },
-        // { href: "/courses", label: "My Courses", icon: BookOpen },
-        { href: "/assignments", label: "Assignments", icon: FileText },
         { href: "/videos", label: "Video Lessons", icon: Video },
+        { href: "/assignments", label: "Assignments", icon: FileText },
         { href: "/grades", label: "My Grades", icon: BarChart3 },
-        { href: "/schedule", label: "Class Schedule", icon: Calendar }
+        { href: "/schedule", label: "Schedule", icon: Calendar }
       ];
     }
 
     if (user.role === "teacher") {
       return [
         { href: "/", label: "Dashboard", icon: BarChart3 },
-        // { href: "/courses", label: "Manage Courses", icon: BookOpen },
+        { href: "/videos", label: "Video Management", icon: Video },
+        { href: "/settings", label: "Class & Year Setup", icon: School },
         { href: "/students", label: "Students", icon: Users },
         { href: "/assignments", label: "Assignments", icon: FileText },
-        { href: "/videos", label: "Upload Videos", icon: Upload },
-        { href: "/grades", label: "Grade Book", icon: BarChart3 }
+        // { href: "/grades", label: "Gradebook", icon: BarChart3 }
       ];
     }
 
-    // Default for admin or other roles
+    // Admin role
     return [
       { href: "/", label: "Dashboard", icon: BarChart3 },
-      { href: "/users", label: "Manage Users", icon: Users },
-      { href: "/courses", label: "All Courses", icon: BookOpen }
+      { href: "/videos", label: "All Videos", icon: Video },
+      { href: "/settings", label: "System Settings", icon: Settings },
+      { href: "/users", label: "Users", icon: Users },
+      { href: "/reports", label: "Reports", icon: BarChart3 }
     ];
   };
 
@@ -72,6 +72,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
       onLogout();
     } else {
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       window.location.href = "/auth/login";
     }
   };
@@ -84,8 +85,10 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
           <Link href="/" className="flex items-center gap-3">
             <GraduationCap size={32} className="text-blue-600" />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">ICT Hub</h1>
-              <p className="text-xs text-gray-500">A-Level Learning Portal</p>
+              <h1 className="text-2xl font-black text-gray-900 tracking-wide" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                EduForm
+              </h1>
+              <p className="text-xs text-gray-500 font-medium">A-Level Learning Portal</p>
             </div>
           </Link>
 
@@ -95,7 +98,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
               >
                 <tab.icon size={16} />
                 {tab.label}
@@ -105,17 +108,6 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-4">
-            {/* Search */}
-            <div className="hidden lg:block">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <Input 
-                  placeholder="Search..."
-                  className="pl-9 w-64 bg-gray-50 border-gray-200"
-                />
-              </div>
-            </div>
-
             {/* Notifications */}
             <Button variant="ghost" size="icon" className="relative">
               <Bell size={20} />
@@ -184,24 +176,13 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t bg-white py-4">
-            {/* Mobile Search */}
-            <div className="px-4 mb-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <Input 
-                  placeholder="Search..."
-                  className="pl-9 bg-gray-50 border-gray-200"
-                />
-              </div>
-            </div>
-
             {/* Mobile Navigation Tabs */}
             <nav className="space-y-1 px-4">
               {navTabs.map((tab) => (
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className="flex items-center gap-3 px-3 py-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="flex items-center gap-3 px-3 py-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <tab.icon size={20} />

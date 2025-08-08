@@ -5,6 +5,8 @@ export interface IVideo extends Document {
   description: string;
   videoUrl: string; 
   uploadedBy: Types.ObjectId;
+  class: Types.ObjectId;  // Reference to Class
+  year: Types.ObjectId;   // Reference to Year
 }
 
 const videoSchema = new mongoose.Schema<IVideo>({
@@ -12,6 +14,8 @@ const videoSchema = new mongoose.Schema<IVideo>({
   description: String,
   videoUrl: { type: String, required: true },
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  class: { type: mongoose.Schema.Types.ObjectId, ref: 'Class', required: true },
+  year: { type: mongoose.Schema.Types.ObjectId, ref: 'Year', required: true },
 }, { timestamps: true });
 
 export const Video = mongoose.model<IVideo>('Video', videoSchema);

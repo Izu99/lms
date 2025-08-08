@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Upload, Video, File } from "lucide-react";
+import { X, Upload, Video, File, School, Calendar } from "lucide-react";
+import axios from "axios";
 
 interface VideoData {
   _id: string;
@@ -14,8 +15,32 @@ interface VideoData {
     username: string;
     role: string;
   };
+  class: {
+    _id: string;
+    name: string;
+    location: string;
+  };
+  year: {
+    _id: string;
+    year: number;
+    name: string;
+  };
   createdAt: string;
   updatedAt: string;
+}
+
+interface ClassData {
+  _id: string;
+  name: string;
+  location: string;
+  isActive: boolean;
+}
+
+interface YearData {
+  _id: string;
+  year: number;
+  name: string;
+  isActive: boolean;
 }
 
 interface VideoFormProps {
@@ -27,42 +52,97 @@ interface VideoFormProps {
 export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
   const [formData, setFormData] = useState({
     title: "",
-    description: ""
+    description: "",
+    classId: "",
+    yearId: ""
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [years, setYears] = useState<YearData[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
+    fetchClassesAndYears();
+    
     if (video) {
       setFormData({
         title: video.title,
-        description: video.description || ""
+        description: video.description || "",
+        classId: video.class._id,
+        yearId: video.year._id
       });
     }
   }, [video]);
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+  };
+
+  const fetchClassesAndYears = async () => {
+    try {
+      setDataLoading(true);
+      const [classRes, yearRes] = await Promise.all([
+        axios.get("http://localhost:5000/api/classes", { headers: getAuthHeaders() }),
+        axios.get("http://localhost:5000/api/years", { headers: getAuthHeaders() })
+      ]);
+      
+      setClasses(classRes.data.classes || []);
+      setYears(yearRes.data.years || []);
+    } catch (error) {
+      console.error("Error fetching classes and years:", error);
+      alert("Error loading classes and years. Please try again.");
+    } finally {
+      setDataLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const submitData = new FormData();
-      submitData.append('title', formData.title);
-      submitData.append('description', formData.description);
-      
-      // Only append video file if one is selected (required for new videos)
-      if (videoFile) {
-        submitData.append('video', videoFile);
-      } else if (!video) {
-        // If creating new video and no file selected, show error
+      // Validation
+      if (!formData.title.trim()) {
+        alert("Please enter a video title");
+        setLoading(false);
+        return;
+      }
+
+      if (!formData.classId) {
+        alert("Please select a class");
+        setLoading(false);
+        return;
+      }
+
+      if (!formData.yearId) {
+        alert("Please select a year");
+        setLoading(false);
+        return;
+      }
+
+      if (!video && !videoFile) {
         alert("Please select a video file");
         setLoading(false);
         return;
       }
 
+      const submitData = new FormData();
+      submitData.append('title', formData.title);
+      submitData.append('description', formData.description);
+      submitData.append('class', formData.classId);
+      submitData.append('year', formData.yearId);
+      
+      // Only append video file if one is selected
+      if (videoFile) {
+        submitData.append('video', videoFile);
+      }
+
       await onSave(submitData);
     } catch (error) {
       console.error("Error saving video:", error);
+      alert("Error saving video. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -71,30 +151,42 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Check file type
+      // Only check file type - NO SIZE LIMIT
       if (!file.type.startsWith('video/')) {
         alert('Please select a video file');
         return;
       }
       
-      // Check file size (limit to 100MB)
-      if (file.size > 100 * 1024 * 1024) {
-        alert('Video file size should be less than 100MB');
-        return;
-      }
-      
+      // Size limit removed - accept any video size
       setVideoFile(file);
     }
   };
+
+  // Helper function to format file size for display
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const selectedClass = classes.find(c => c._id === formData.classId);
+  const selectedYear = years.find(y => y._id === formData.yearId);
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {video ? "Edit Video" : "Upload New Video"}
-          </h2>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <Video className="text-blue-600" size={20} />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {video ? "Edit Video" : "Upload New Video"}
+            </h2>
+          </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X size={20} />
           </Button>
@@ -115,6 +207,90 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
             />
           </div>
 
+          {/* Class and Year Selection */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Class Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Class *
+              </label>
+              <div className="relative">
+                <School className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <select
+                  value={formData.classId}
+                  onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+                  required
+                  disabled={dataLoading}
+                >
+                  <option value="">
+                    {dataLoading ? "Loading classes..." : "Select a class"}
+                  </option>
+                  {classes.map(classItem => (
+                    <option key={classItem._id} value={classItem._id}>
+                      {classItem.name} - {classItem.location}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {classes.length === 0 && !dataLoading && (
+                <p className="text-xs text-amber-600 mt-1">
+                  No classes available. Please create a class first.
+                </p>
+              )}
+            </div>
+
+            {/* Year Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Academic Year *
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <select
+                  value={formData.yearId}
+                  onChange={(e) => setFormData({ ...formData, yearId: e.target.value })}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+                  required
+                  disabled={dataLoading}
+                >
+                  <option value="">
+                    {dataLoading ? "Loading years..." : "Select a year"}
+                  </option>
+                  {years.map(yearItem => (
+                    <option key={yearItem._id} value={yearItem._id}>
+                      {yearItem.name} (A-Level Year {yearItem.year})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {years.length === 0 && !dataLoading && (
+                <p className="text-xs text-amber-600 mt-1">
+                  No years available. Please create a year first.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Actions for missing data */}
+          {((classes.length === 0 || years.length === 0) && !dataLoading) && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-amber-800 mb-2">Setup Required</h4>
+              <p className="text-sm text-amber-700 mb-3">
+                You need to create classes and years before uploading videos.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => window.open('/settings', '_blank')}
+                className="text-amber-700 border-amber-300 hover:bg-amber-50"
+              >
+                Open Settings Page
+              </Button>
+            </div>
+          )}
+
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -123,7 +299,7 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Enter video description"
+              placeholder="Enter video description (optional)"
               rows={4}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
@@ -134,7 +310,7 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Video File {!video && "*"}
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-blue-300 transition-colors">
               <input
                 type="file"
                 accept="video/*"
@@ -149,7 +325,12 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
                 {videoFile ? (
                   <div className="flex items-center gap-2 text-green-600">
                     <File size={24} />
-                    <span className="font-medium">{videoFile.name}</span>
+                    <div className="text-center">
+                      <span className="font-medium block">{videoFile.name}</span>
+                      <span className="text-sm text-gray-500">
+                        {formatFileSize(videoFile.size)}
+                      </span>
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center">
@@ -158,7 +339,7 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
                       {video ? "Upload new video file (optional)" : "Click to upload video file"}
                     </p>
                     <p className="text-sm text-gray-500 mt-1">
-                      MP4, WebM, or other video formats (max 100MB)
+                      MP4, WebM, or other video formats (no size limit)
                     </p>
                   </div>
                 )}
@@ -172,21 +353,38 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
           </div>
 
           {/* Preview */}
-          {formData.title && (
+          {formData.title && formData.classId && formData.yearId && (
             <div className="border-t pt-6">
               <h3 className="text-sm font-medium text-gray-700 mb-3">Preview</h3>
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-gray-50 rounded-lg p-4 border">
                 <div className="flex items-start gap-4">
-                  <div className="w-32 h-18 bg-gray-200 rounded flex items-center justify-center">
-                    <Video className="text-gray-400" size={24} />
+                  <div className="w-20 h-14 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                    <Video className="text-gray-400" size={20} />
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{formData.title}</h4>
-                    <p className="text-sm text-gray-600 mt-1">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 mb-1">{formData.title}</h4>
+                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
                       {formData.description || "No description"}
                     </p>
-                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                      {videoFile && <span>File: {videoFile.name}</span>}
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                      {selectedClass && (
+                        <div className="flex items-center gap-1">
+                          <School size={12} />
+                          <span>{selectedClass.name} - {selectedClass.location}</span>
+                        </div>
+                      )}
+                      {selectedYear && (
+                        <div className="flex items-center gap-1">
+                          <Calendar size={12} />
+                          <span>{selectedYear.name}</span>
+                        </div>
+                      )}
+                      {videoFile && (
+                        <div className="flex items-center gap-1">
+                          <File size={12} />
+                          <span>{videoFile.name} ({formatFileSize(videoFile.size)})</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -199,7 +397,11 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading} className="flex-1">
+            <Button 
+              type="submit" 
+              disabled={loading || dataLoading || classes.length === 0 || years.length === 0} 
+              className="flex-1"
+            >
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

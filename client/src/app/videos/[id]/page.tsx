@@ -11,7 +11,6 @@ import {
   ThumbsUp,
   ThumbsDown,
   Share,
-  Download,
   Clock,
   Eye,
   User,
@@ -21,6 +20,9 @@ import {
   Trash2,
   ChevronLeft,
   Star,
+  School,
+  MapPin,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
@@ -36,6 +38,16 @@ interface VideoData {
     _id: string;
     username: string;
     role: string;
+  };
+  class?: {
+    _id: string;
+    name: string;
+    location: string;
+  };
+  year?: {
+    _id: string;
+    year: number;
+    name: string;
   };
   createdAt: string;
   updatedAt: string;
@@ -55,10 +67,11 @@ export default function VideoViewPage() {
   const [loading, setLoading] = useState(true);
   const [userLoading, setUserLoading] = useState(true);
   const [relatedVideos, setRelatedVideos] = useState<VideoData[]>([]);
+  const [allVideos, setAllVideos] = useState<VideoData[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showDescription, setShowDescription] = useState(true);
 
-  // Get user data from localStorage - SAME AS DASHBOARD
+  // Get user data from localStorage - SAME AS BEFORE
   useEffect(() => {
     const token = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
@@ -119,6 +132,8 @@ export default function VideoViewPage() {
         headers: getAuthHeaders(),
       });
       const allVideos = response.data.videos || response.data;
+      setAllVideos(allVideos);
+      
       const related = allVideos
         .filter((v: VideoData) => v._id !== videoId)
         .slice(0, 5);
@@ -161,6 +176,37 @@ export default function VideoViewPage() {
   const formatDateShort = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
+
+  // Calculate progress - SIMPLE VERSION
+  const calculateProgress = () => {
+    if (!video || !allVideos.length) {
+      return { current: 1, total: allVideos.length || 1, percentage: 0 };
+    }
+
+    // If video has class and year, filter by them
+    let relevantVideos = allVideos;
+    if (video.class && video.year) {
+      relevantVideos = allVideos.filter(v => 
+        v.class && v.year && 
+        v.class._id === video.class!._id && 
+        v.year._id === video.year!._id
+      );
+    }
+    
+    // Sort by creation date
+    const sortedVideos = relevantVideos.sort((a, b) => 
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    
+    const currentIndex = sortedVideos.findIndex(v => v._id === video._id);
+    const total = sortedVideos.length;
+    const current = currentIndex >= 0 ? currentIndex + 1 : 1;
+    const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+
+    return { current, total, percentage };
+  };
+
+  const progress = calculateProgress();
 
   // Show loading while checking authentication
   if (userLoading) {
@@ -217,7 +263,6 @@ export default function VideoViewPage() {
               <video
                 className="w-full h-full object-contain"
                 controls
-                poster={video.thumbnail}
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
               >
@@ -236,6 +281,29 @@ export default function VideoViewPage() {
                   <h1 className="text-2xl font-bold text-gray-900 mb-2">
                     {video.title}
                   </h1>
+                  
+                  {/* Class and Year Info - SIMPLE AND SAFE */}
+                  {(video.class || video.year) && (
+                    <div className="flex items-center gap-4 mb-3">
+                      {video.class && (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 rounded-full">
+                          <School size={14} className="text-blue-600" />
+                          <span className="text-sm font-medium text-blue-700">
+                            {video.class.name} - {video.class.location}
+                          </span>
+                        </div>
+                      )}
+                      {video.year && (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-green-100 rounded-full">
+                          <GraduationCap size={14} className="text-green-600" />
+                          <span className="text-sm font-medium text-green-700">
+                            {video.year.name}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
                     <div className="flex items-center gap-1">
                       <Eye size={16} />
@@ -265,14 +333,6 @@ export default function VideoViewPage() {
                   >
                     <Share size={16} />
                     Share
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <Download size={16} />
-                    Download
                   </Button>
 
                   {/* Teacher-only actions */}
@@ -318,14 +378,17 @@ export default function VideoViewPage() {
                   </div>
                 </div>
 
-                {user.role === "student" && (
-                  <Button
-                    size="sm"
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    Subscribe
-                  </Button>
-                )}
+                {/* Progress Info */}
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-700">
+                    Video {progress.current} of {progress.total}
+                  </p>
+                  {video.class && video.year && (
+                    <p className="text-xs text-gray-500">
+                      {video.class.name} - {video.year.name}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Description Section */}
@@ -375,10 +438,10 @@ export default function VideoViewPage() {
                 </Link>
               </div>
               <h2 className="font-semibold text-gray-900">
-                ICT A-Level Lessons
+                {video.class ? `${video.class.name} - ${video.class.location}` : "ICT A-Level Lessons"}
               </h2>
               <p className="text-sm text-gray-600">
-                Programming • Database • Web Development
+                AL ICT / Prabath Wickramasinghe {video.year ? `${video.year.name} ` : ""}
               </p>
             </div>
 
@@ -409,15 +472,10 @@ export default function VideoViewPage() {
                     <div className="flex gap-3">
                       <div className="relative">
                         <video
-                          className="w-20 h-14 bg-gray-200 rounded object-cover cursor-pointer"
-                          src={`http://localhost:5000/${relatedVideo.videoUrl}`}
-                          preload=""
-                          onClick={(event) => {
-                            event.preventDefault();
-                            // Your play logic here
-                          }}
+                          className="w-20 h-14 bg-gray-200 rounded object-cover"
+                          preload="auto"
                         >
-                          Your browser does not support the video tag.
+                          <source src={`http://localhost:5000/${relatedVideo.videoUrl}`} />
                         </video>
                         <div className="absolute top-1 left-1 bg-gray-900 text-white text-xs px-1 rounded">
                           {index + 2}
@@ -439,7 +497,7 @@ export default function VideoViewPage() {
                 ))}
               </div>
 
-              {/* Course Progress (for students) */}
+              {/* Course Progress (for students) - WORKS NOW */}
               {user.role === "student" && (
                 <div className="mt-6 p-4 bg-green-50 rounded-lg">
                   <h4 className="font-medium text-green-900 mb-2">
@@ -448,19 +506,19 @@ export default function VideoViewPage() {
                   <div className="flex items-center gap-2 mb-2">
                     <div className="flex-1 bg-green-200 rounded-full h-2">
                       <div
-                        className="bg-green-600 h-2 rounded-full"
-                        style={{ width: "35%" }}
+                        className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${progress.percentage}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm text-green-700">35%</span>
+                    <span className="text-sm text-green-700">{progress.percentage}%</span>
                   </div>
                   <p className="text-sm text-green-600">
-                    3 of 8 lessons completed
+                    {progress.current} of {progress.total} lessons completed
                   </p>
                 </div>
               )}
 
-              {/* Teacher Stats */}
+              {/* Teacher Stats - WORKS NOW */}
               {user.role === "teacher" && (
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                   <h4 className="font-medium text-blue-900 mb-3">
@@ -468,16 +526,16 @@ export default function VideoViewPage() {
                   </h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-blue-600">Total Views:</span>
-                      <span className="font-medium">45</span>
+                      <span className="text-blue-600">Total Videos:</span>
+                      <span className="font-medium">{progress.total}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-blue-600">Students Watched:</span>
-                      <span className="font-medium">12</span>
+                      <span className="text-blue-600">Current Position:</span>
+                      <span className="font-medium">{progress.current}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-blue-600">Completion Rate:</span>
-                      <span className="font-medium">78%</span>
+                      <span className="font-medium">{progress.percentage}%</span>
                     </div>
                   </div>
                 </div>
