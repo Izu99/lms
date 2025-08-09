@@ -8,8 +8,9 @@ import cors from 'cors';
 
 import authRoutes from './routes/authRoutes';
 import videoRoutes from './routes/videoRoutes';
-import classRoutes from './routes/classRoutes';  // Add this
-import yearRoutes from './routes/yearRoutes';    // Add this
+import classRoutes from './routes/classRoutes';
+import yearRoutes from './routes/yearRoutes';
+import paperRoutes from './routes/paperRoutes'; // ✅ ADD THIS LINE
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
 const MONGO_URI = process.env.MONGO_URI as string;
@@ -29,16 +30,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Routes
-// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/years', yearRoutes);
+app.use('/api/papers', paperRoutes); // ✅ ADD THIS LINE
 
 app.get('/', (_req: express.Request, res: express.Response) =>
   res.json({ message: 'ICT LMS Server is running!' })
 );
 
+// Error handling middleware should come AFTER routes
 app.use(
   (err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error(err.stack);
@@ -46,6 +48,7 @@ app.use(
   }
 );
 
+// 404 handler should be LAST
 app.use(/.*/, (_req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });

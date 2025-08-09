@@ -38,7 +38,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
       return [
         { href: "/", label: "Dashboard", icon: BarChart3 },
         { href: "/videos", label: "Video Lessons", icon: Video },
-        { href: "/assignments", label: "Assignments", icon: FileText },
+        { href: "/papers", label: "Assignments", icon: FileText },
         { href: "/grades", label: "My Grades", icon: BarChart3 },
         { href: "/schedule", label: "Schedule", icon: Calendar }
       ];
@@ -50,7 +50,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
         { href: "/videos", label: "Video Management", icon: Video },
         { href: "/class-year", label: "Class & Year Setup", icon: School },
         { href: "/students", label: "Students", icon: Users },
-        { href: "/assignments", label: "Assignments", icon: FileText },
+        { href: "/papers", label: "Assignments", icon: FileText },
         // { href: "/grades", label: "Gradebook", icon: BarChart3 }
       ];
     }
