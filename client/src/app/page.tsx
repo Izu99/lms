@@ -1,45 +1,78 @@
-"use client";
+"use client"; 
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
-import { 
-  BookOpen, 
-  Clock, 
-  Trophy, 
-  Calendar,
-  FileText,
+import {
   Video,
-  CheckCircle,
-  AlertCircle,
-  Bell,
-  Download,
-  User,
+  Plus,
   Play,
-  ChevronRight,
+  Search,
+  User,
+  Calendar,
+  School,
+  GraduationCap,
   Eye,
-  Upload
+  BookOpen,
+  TrendingUp,
+  Clock,
+  Award,
+  Users,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import axios from "axios";
 import Link from "next/link";
 
-interface UserData {
-  username: string;
-  role: "student" | "teacher" | "admin";
+interface VideoData {
+  _id: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  uploadedBy: {
+    _id: string;
+    username: string;
+    role: string;
+  };
+  class?: {
+    _id: string;
+    name: string;
+    location: string;
+  };
+  year?: {
+    _id: string;
+    year: number;
+    name: string;
+  };
+  views: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export default function Dashboard() {
-  const [user, setUser] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
+interface UserData {
+  _id: string;
+  username: string;
+  role: "student" | "teacher" | "admin";
+  firstName?: string;
+  lastName?: string;
+}
 
+export default function DashboardPage() {
+  const [user, setUser] = useState<UserData | null>(null);
+  const [videos, setVideos] = useState<VideoData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userLoading, setUserLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Get user data from localStorage
   useEffect(() => {
-    // Get user data from localStorage
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    
+    const token = localStorage.getItem("token");
+    const savedUser = localStorage.getItem("user");
+
     if (!token || !savedUser) {
       window.location.href = "/auth/login";
       return;
     }
-    
+
     try {
       const userData = JSON.parse(savedUser);
       setUser(userData);
@@ -47,256 +80,423 @@ export default function Dashboard() {
       console.error("Error parsing user data:", error);
       window.location.href = "/auth/login";
     } finally {
-      setLoading(false);
+      setUserLoading(false);
     }
   }, []);
 
+  // Fetch videos after user is loaded
+  useEffect(() => {
+    if (user && !userLoading) {
+      fetchVideos();
+    }
+  }, [user, userLoading]);
+
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
+  const fetchVideos = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get("http://localhost:5000/api/videos", {
+        headers: getAuthHeaders(),
+      });
+      setVideos(response.data.videos || response.data);
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/auth/login";
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     window.location.href = "/auth/login";
   };
 
-  if (loading) {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const getDisplayName = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    return user?.username || "User";
+  };
+
+  // Show loading while checking authentication
+  if (userLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="flex justify-center items-center h-64">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
       </div>
     );
   }
 
   if (!user) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
-  // Different content based on user role
-  const getDashboardContent = () => {
-    if (user.role === "student") {
-      return {
-        welcomeMessage: "Welcome back to your learning journey!",
-        stats: [
-          { label: "Enrolled Courses", value: "3", icon: BookOpen, color: "blue" },
-          { label: "Completed Tasks", value: "12", icon: CheckCircle, color: "green" },
-          { label: "Total Points", value: "245", icon: Trophy, color: "purple" },
-          { label: "Next Deadline", value: "2 days", icon: Clock, color: "red" }
-        ],
-        quickActions: [
-          { label: "Watch Videos", href: "/videos", icon: Video },
-          { label: "View Assignments", href: "/assignments", icon: FileText },
-          { label: "Check Grades", href: "/grades", icon: Trophy },
-          { label: "Class Schedule", href: "/schedule", icon: Calendar }
-        ],
-        recentActivities: [
-          { text: "Completed Python Variables lesson", time: "2 hours ago", icon: CheckCircle },
-          { text: "Submitted Database assignment", time: "1 day ago", icon: FileText },
-          { text: "Watched HTML/CSS tutorial", time: "2 days ago", icon: Video }
-        ]
-      };
-    }
+  const isStudent = user.role === "student";
+  const isTeacher = user.role === "teacher";
 
-    if (user.role === "teacher") {
-      return {
-        welcomeMessage: "Welcome to your teaching dashboard!",
-        stats: [
-          { label: "Total Students", value: "28", icon: User, color: "blue" },
-          { label: "Active Courses", value: "3", icon: BookOpen, color: "green" },
-          { label: "Videos Uploaded", value: "15", icon: Video, color: "purple" },
-          { label: "Pending Reviews", value: "7", icon: Clock, color: "orange" }
-        ],
-        quickActions: [
-          { label: "Upload Video", href: "/videos", icon: Upload },
-          { label: "Create Assignment", href: "/assignments", icon: FileText },
-          { label: "Grade Students", href: "/grades", icon: Trophy },
-          { label: "View Students", href: "/students", icon: User }
-        ],
-        recentActivities: [
-          { text: "Uploaded new Python tutorial", time: "3 hours ago", icon: Upload },
-          { text: "Graded 5 assignments", time: "1 day ago", icon: Trophy },
-          { text: "Added new course material", time: "2 days ago", icon: BookOpen }
-        ]
-      };
-    }
+  // Filter videos for students vs teachers
+  const filteredVideos = videos.filter((video) => {
+  const matchesSearch =
+    video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (video.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
 
-    // Default/admin content
-    return {
-      welcomeMessage: "Welcome to the admin dashboard!",
-      stats: [
-        { label: "Total Users", value: "156", icon: User, color: "blue" },
-        { label: "Active Courses", value: "8", icon: BookOpen, color: "green" },
-        { label: "System Status", value: "Good", icon: CheckCircle, color: "green" },
-        { label: "Storage Used", value: "67%", icon: Clock, color: "orange" }
-      ],
-      quickActions: [
-        { label: "Manage Users", href: "/users", icon: User },
-        { label: "System Settings", href: "/settings", icon: Trophy },
-        { label: "View Reports", href: "/reports", icon: FileText },
-        { label: "Backup Data", href: "/backup", icon: Download }
-      ],
-      recentActivities: [
-        { text: "New user registration", time: "1 hour ago", icon: User },
-        { text: "System backup completed", time: "6 hours ago", icon: CheckCircle },
-        { text: "Course updated", time: "1 day ago", icon: BookOpen }
-      ]
-    };
-  };
+  // No filtering by uploader - everyone sees all matching videos
+  return matchesSearch;
+});
 
-  const content = getDashboardContent();
+// Show only latest 5 videos sorted by createdAt descending
+const latestVideos = [...filteredVideos]
+  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  .slice(0, 5);
+
+  const recentVideos = filteredVideos.slice(0, 6);
+
+  // Calculate statistics
+  const totalViews = isTeacher 
+    ? filteredVideos.reduce((sum, video) => sum + (video.views || 0), 0)
+    : 0;
+
+  const uniqueClasses = [...new Set(videos.filter((v) => v.class).map((v) => v.class!._id))].length;
+  const uniqueYears = [...new Set(videos.filter((v) => v.year).map((v) => v.year!._id))].length;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar user={user} onLogout={handleLogout} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
+        {/* Welcome Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {user.username}!
-          </h1>
-          <p className="text-gray-600">{content.welcomeMessage}</p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {content.stats.map((stat, index) => (
-            <div key={index} className="bg-white rounded-lg p-6 shadow-sm border">
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 bg-${stat.color}-100 rounded-lg flex items-center justify-center`}>
-                  <stat.icon className={`text-${stat.color}-600`} size={24} />
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xl font-bold">
+                    {getDisplayName().charAt(0).toUpperCase()}
+                  </span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Welcome back, {getDisplayName()}! 👋
+                  </h1>
+                  <p className="text-gray-600">
+                    {isStudent 
+                      ? "Ready to continue your ICT A-Level journey?"
+                      : "Manage your video content and track student engagement"
+                    }
+                  </p>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Quick Actions */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border mb-6">
-              <div className="p-6 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
-              </div>
-              <div className="p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {content.quickActions.map((action, index) => (
-                    <Link
-                      key={index}
-                      href={action.href}
-                      className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                    >
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <action.icon className="text-blue-600" size={20} />
-                      </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{action.label}</p>
-                        <p className="text-sm text-gray-500">Quick access</p>
-                      </div>
-                      <ChevronRight className="text-gray-400 ml-auto" size={16} />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="p-6 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  {content.recentActivities.map((activity, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
-                        <activity.icon className="text-gray-500" size={16} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-900">{activity.text}</p>
-                        <p className="text-xs text-gray-500">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
+              <div className="text-right">
+                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                  isTeacher ? "bg-blue-100 text-blue-800" : "bg-green-100 text-green-800"
+                }`}>
+                  {isTeacher ? <GraduationCap size={16} /> : <School size={16} />}
+                  {user.role.toUpperCase()}
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Right Column - Notifications & Info */}
-          <div className="space-y-6">
-            {/* Announcements */}
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="p-6 border-b">
-                <h3 className="text-lg font-semibold text-gray-900">Announcements</h3>
+        {/* Statistics Cards - Role Based */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {isStudent ? (
+            // Student Statistics
+            <>
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Video className="text-blue-600" size={24} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Available Videos</p>
+                    <p className="text-2xl font-bold text-gray-900">{videos.length}</p>
+                  </div>
+                </div>
               </div>
-              <div className="p-6 space-y-4">
-                <div className="flex items-start gap-3">
-                  <Bell className="text-blue-500 mt-1" size={16} />
+
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <BookOpen className="text-green-600" size={24} />
+                  </div>
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900">
-                      New Programming Resources
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Check out the new Python tutorials
-                    </p>
-                    <p className="text-xs text-gray-400">2 hours ago</p>
+                    <p className="text-sm text-gray-500">Subjects</p>
+                    <p className="text-2xl font-bold text-gray-900">{uniqueClasses}</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="text-orange-500 mt-1" size={16} />
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Clock className="text-purple-600" size={24} />
+                  </div>
                   <div>
-                    <h4 className="text-sm font-medium text-gray-900">
-                      Assignment Deadline
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Database project due in 2 days
-                    </p>
-                    <p className="text-xs text-gray-400">1 day ago</p>
+                    <p className="text-sm text-gray-500">Hours Watched</p>
+                    <p className="text-2xl font-bold text-gray-900">24.5hrs</p>
                   </div>
                 </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <Award className="text-orange-600" size={24} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Progress</p>
+                    <p className="text-2xl font-bold text-gray-900">85%</p>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            // Teacher Statistics
+            <>
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Video className="text-blue-600" size={24} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">My Videos</p>
+                    <p className="text-2xl font-bold text-gray-900">{filteredVideos.length}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Eye className="text-green-600" size={24} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Total Views</p>
+                    <p className="text-2xl font-bold text-gray-900">{totalViews}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Users className="text-purple-600" size={24} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Students Reached</p>
+                    <p className="text-2xl font-bold text-gray-900">127</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="text-orange-600" size={24} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Avg. Engagement</p>
+                    <p className="text-2xl font-bold text-gray-900">92%</p>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          {/* Search Section */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {isStudent ? "Continue Learning" : "Content Overview"}
+                </h2>
+                {isTeacher && (
+                  <Link href="/videos">
+                    <Button size="sm" className="flex items-center gap-2">
+                      <Plus size={16} />
+                      Upload Video
+                    </Button>
+                  </Link>
+                )}
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative mb-6">
+                <Search
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
+                <Input
+                  placeholder={isStudent ? "Search lessons..." : "Search your videos..."}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              {/* Recent Videos */}
+              {loading ? (
+                <div className="flex justify-center items-center h-32">
+                  <div className="w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentVideos.slice(0, 4).map((video) => (
+                    <div
+                      key={video._id}
+                      className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="w-16 h-12 bg-gray-900 rounded flex items-center justify-center">
+                        <Play size={16} className="text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 truncate">
+                          {video.title}
+                        </h3>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          {video.class && (
+                            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+                              {video.class.name}
+                            </span>
+                          )}
+                          {isTeacher && (
+                            <span className="flex items-center gap-1">
+                              <Eye size={12} />
+                              {video.views || 0} views
+                            </span>
+                          )}
+                          <span>{formatDate(video.createdAt)}</span>
+                        </div>
+                      </div>
+                      <Link href={`/videos/${video._id}`}>
+                        <Button size="sm" variant="outline">
+                          {isStudent ? "Watch" : "View"}
+                        </Button>
+                      </Link>
+                    </div>
+                  ))}
+
+                  {recentVideos.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <Video size={48} className="mx-auto mb-4 text-gray-300" />
+                      <p>
+                        {isStudent 
+                          ? "No videos available yet" 
+                          : "Upload your first video to get started"
+                        }
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {recentVideos.length > 4 && (
+                <div className="mt-4 text-center">
+                  <Link href="/videos">
+                    <Button variant="outline" size="sm">
+                      View All Videos
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Links Sidebar */}
+          <div className="space-y-6">
+            {/* Quick Navigation */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Quick Access</h3>
+              <div className="space-y-3">
+                <Link href="/videos" className="block">
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <Video size={20} className="text-blue-600" />
+                    <span className="font-medium">
+                      {isStudent ? "All Videos" : "Manage Videos"}
+                    </span>
+                  </div>
+                </Link>
+
+                <Link href="/profile" className="block">
+                  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <User size={20} className="text-green-600" />
+                    <span className="font-medium">My Profile</span>
+                  </div>
+                </Link>
+
+                {isTeacher && (
+                  <Link href="/analytics" className="block">
+                    <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                      <BarChart3 size={20} className="text-purple-600" />
+                      <span className="font-medium">Analytics</span>
+                    </div>
+                  </Link>
+                )}
+
+                {isStudent && (
+                  <Link href="/progress" className="block">
+                    <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                      <TrendingUp size={20} className="text-orange-600" />
+                      <span className="font-medium">My Progress</span>
+                    </div>
+                  </Link>
+                )}
               </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="bg-white rounded-lg shadow-sm border">
-              <div className="p-6 border-b">
-                <h3 className="text-lg font-semibold text-gray-900">This Week</h3>
-              </div>
-              <div className="p-6 space-y-3">
-                {user.role === "student" ? (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Videos Watched</span>
-                      <span className="font-medium">5</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Assignments Done</span>
-                      <span className="font-medium">3</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Study Hours</span>
-                      <span className="font-medium">12h</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Videos Uploaded</span>
-                      <span className="font-medium">2</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Assignments Graded</span>
-                      <span className="font-medium">15</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Student Messages</span>
-                      <span className="font-medium">8</span>
-                    </div>
-                  </>
-                )}
+            {/* Recent Activity */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">
+                {isStudent ? "Learning Activity" : "Recent Activity"}
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-gray-600">
+                    {isStudent 
+                      ? "Completed Database Fundamentals"
+                      : "Video uploaded: React Basics"
+                    }
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-gray-600">
+                    {isStudent 
+                      ? "Started Python Programming"
+                      : "Student watched your video"
+                    }
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <span className="text-gray-600">
+                    {isStudent 
+                      ? "Assignment submitted"
+                      : "New comment on video"
+                    }
+                  </span>
+                </div>
               </div>
             </div>
           </div>

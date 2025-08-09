@@ -379,7 +379,7 @@ export default function VideoViewPage() {
                   {/* Teacher-only actions */}
                   {user.role === "teacher" && (
                     <>
-                      <Link href={`/videos/edit/${video._id}`}>
+                      {/* <Link href={`/videos/edit/${video._id}`}>
                         <Button
                           variant="outline"
                           size="sm"
@@ -388,7 +388,7 @@ export default function VideoViewPage() {
                           <Edit size={16} />
                           Edit
                         </Button>
-                      </Link>
+                      </Link> */}
                       <Button
                         variant="outline"
                         size="sm"
