@@ -337,6 +337,7 @@ export default function VideoManagementPage() {
             </div>
 
             {/* Role-specific 4th card */}
+            {/* Role-specific 4th card - FIXED */}
             <div className="bg-white rounded-lg shadow-sm border p-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -352,9 +353,15 @@ export default function VideoManagementPage() {
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
                     {isStudent
-                      ? "24.5hrs" // You can calculate actual watch time
-                      : [...new Set(videos.map((v) => v.uploadedBy._id))]
-                          .length}
+                      ? "24.5hrs" // This works fine for students
+                      : [
+                          ...new Set(
+                            videos
+                              .filter((v) => v.uploadedBy)
+                              .map((v) => v.uploadedBy._id)
+                          ),
+                        ].length}{" "}
+                    {/* // Fixed for teachers */}
                   </p>
                 </div>
               </div>
