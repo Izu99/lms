@@ -78,8 +78,8 @@ export const getAllPapers = async (req: Request, res: Response) => {
     let papers;
 
     if (requestingUser.role === 'teacher' || requestingUser.role === 'admin') {
-      // Teachers see all their papers
-      papers = await Paper.find({ teacherId: requestingUser._id })
+      // Teachers and Admins see all papers
+      papers = await Paper.find()
         .select('-questions.options.isCorrect') // Hide correct answers
         .sort({ createdAt: -1 });
     } else {
@@ -149,6 +149,7 @@ export const getPaperById = async (req: Request, res: Response) => {
           _id: q._id,
           questionText: q.questionText,
           order: q.order,
+          imageUrl: q.imageUrl, // Add this line
           options: q.options.map(opt => ({
             _id: opt._id,
             optionText: opt.optionText

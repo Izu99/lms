@@ -80,7 +80,7 @@ export default function ProfilePage() {
     console.log("Redirecting to login:", reason);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "/auth/login";
+    window.location.href = "/login";
   };
 
   // Enhanced localStorage validation
@@ -369,7 +369,7 @@ export default function ProfilePage() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "/auth/login";
+    window.location.href = "/login";
   };
 
   const formatDate = (dateString: string) => {

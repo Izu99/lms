@@ -8,20 +8,20 @@ import {
   getAllStudents,
   updateStudentStatus
 } from '../controllers/authController';
-import { authMiddleware } from '../middleware/auth';
+import { protect } from '../middleware/auth';
 
 const router = express.Router();
 
 router.post('/register', register);
 router.post('/login', login);
-router.get('/me', authMiddleware, getCurrentUser);
+router.get('/me', protect, getCurrentUser);
 
 // Profile endpoints
-router.get('/users/:id', authMiddleware, getUserProfile);
-router.put('/users/:id', authMiddleware, updateUserProfile);
+router.get('/users/:id', protect, getUserProfile);
+router.put('/users/:id', protect, updateUserProfile);
 
 // Student management endpoints (Teachers only)
-router.get('/students', authMiddleware, getAllStudents);
-router.put('/students/:studentId/status', authMiddleware, updateStudentStatus);
+router.get('/students', protect, getAllStudents);
+router.put('/students/:studentId/status', protect, updateStudentStatus);
 
 export default router;

@@ -21,7 +21,8 @@ import {
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Student {
   _id: string;
@@ -61,50 +62,37 @@ interface ResultsData {
   };
 }
 
-interface UserData {
-  _id: string;
-  username: string;
-  role: "student" | "teacher" | "admin";
-}
 
-export default function PaperResultsPage({ params }: { params: { id: string } }) {
+
+export default function PaperResultsPage() {
   const router = useRouter();
+  const { id: paperId } = useParams();
   const [resultsData, setResultsData] = useState<ResultsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<UserData | null>(null);
+  const { user, loading: authLoading } = useAuth();
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { 
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    } : {};
+    return { 'Content-Type': 'application/json' }; // No Authorization header needed for cookie-based auth
   };
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const user = JSON.parse(userData);
-      setUser(user);
-      
+    if (!authLoading && user) {
       if (user.role !== 'teacher' && user.role !== 'admin') {
         router.push('/papers');
         return;
       }
-    } else {
-      router.push('/auth/login');
-      return;
+      fetchResults();
+    } else if (!authLoading && !user) {
+      router.push('/login');
     }
-    
-    fetchResults();
-  }, [router]);
+  }, [authLoading, user, router]);
 
   const fetchResults = async () => {
     try {
       setLoading(true);
       const headers = getAuthHeaders();
-      const response = await axios.get(`http://localhost:5000/api/papers/${params.id}/results`, { headers });
+      const response = await axios.get(`http://localhost:5000/api/papers/${paperId}/results`, { headers });
       setResultsData(response.data);
     } catch (error) {
       console.error("Error fetching results:", error);
@@ -158,7 +146,7 @@ export default function PaperResultsPage({ params }: { params: { id: string } })
     return <XCircle className="text-red-500" size={16} />;
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="flex justify-center items-center h-screen">
@@ -188,11 +176,7 @@ export default function PaperResultsPage({ params }: { params: { id: string } })
   if (error || !resultsData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <Navbar user={user} onLogout={() => {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          window.location.href = "/auth/login";
-        }} />
+        <Navbar user={user} />
         
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
@@ -210,11 +194,7 @@ export default function PaperResultsPage({ params }: { params: { id: string } })
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navbar user={user} onLogout={() => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/auth/login";
-      }} />
+      <Navbar user={user} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
@@ -349,8 +329,7 @@ export default function PaperResultsPage({ params }: { params: { id: string } })
             <div className="text-center py-12">
               <Users className="mx-auto text-gray-400 mb-4" size={48} />
               <h4 className="text-lg font-semibold text-gray-900 mb-2">No Submissions Yet</h4>
-              <p className="text-gray-600">Students haven't submitted this paper yet</p>
-            </div>
+                                <p className="text-gray-600">Students haven&apos;t submitted this paper yet</p>            </div>
           ) : (
             <div className="space-y-4">
               {resultsData.results.map((result, index) => (

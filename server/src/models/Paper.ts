@@ -9,6 +9,7 @@ export interface IQuestion {
     isCorrect: boolean;
   }[];
   order: number;
+  imageUrl?: string;
 }
 
 export interface IPaper extends Document {
@@ -26,9 +27,11 @@ export interface IPaper extends Document {
 
 const questionSchema = new mongoose.Schema({
   questionText: { type: String, required: true },
+  imageUrl: { type: String },
   options: [{
     optionText: { type: String, required: true },
-    isCorrect: { type: Boolean, required: true, default: false }
+    isCorrect: { type: Boolean, required: true, default: false },
+    imageUrl: { type: String } // Added imageUrl field
   }],
   order: { type: Number, required: true }
 });

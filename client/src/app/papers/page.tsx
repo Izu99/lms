@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
+import { useAuth } from "@/hooks/useAuth";
 import {
   FileText,
   Clock,
@@ -33,45 +34,46 @@ interface Paper {
   createdAt: string;
 }
 
-interface UserData {
-  _id: string;
-  username: string;
-  role: "student" | "teacher" | "admin";
-}
+
 
 export default function PapersPage() {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<UserData | null>(null);
+  const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [deleting, setDeleting] = useState<string>("");
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { 
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    } : {};
+    const token = localStorage.getItem('token');
+    return { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }; 
   };
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      setUser(JSON.parse(userData));
+    if (!authLoading && user) {
+      fetchPapers();
     }
-    fetchPapers();
-  }, []);
+  }, [authLoading, user]);
 
   const fetchPapers = async () => {
     try {
       setLoading(true);
-      const headers = getAuthHeaders();
-      const response = await axios.get("http://localhost:5000/api/papers", { headers });
+      const token = localStorage.getItem('token');
+      const response = await axios.get("http://localhost:5000/api/papers", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setPapers(response.data.papers || []);
     } catch (error) {
       console.error("Error fetching papers:", error);
-      setError("Failed to load papers");
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        // If 401, it means the cookie is invalid or missing, redirect to login
+        window.location.href = "/login";
+      } else {
+        setError("Failed to load papers");
+      }
     } finally {
       setLoading(false);
     }
@@ -86,8 +88,10 @@ export default function PapersPage() {
 
     try {
       setDeleting(paperId);
-      const headers = getAuthHeaders();
-      await axios.delete(`http://localhost:5000/api/papers/${paperId}`, { headers });
+      const token = localStorage.getItem('token');
+      await axios.delete(`http://localhost:5000/api/papers/${paperId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
       setPapers(prev => prev.filter(paper => paper._id !== paperId));
       alert("Paper deleted successfully!");
@@ -139,7 +143,7 @@ export default function PapersPage() {
   // Check if user is student for different UI
   const isStudent = user?.role === "student";
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="flex justify-center items-center h-screen">
@@ -154,11 +158,7 @@ export default function PapersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navbar user={user} onLogout={() => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/auth/login";
-      }} />
+      <Navbar user={user} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

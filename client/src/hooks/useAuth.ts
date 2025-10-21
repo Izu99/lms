@@ -40,7 +40,7 @@ export const useAuth = () => {
       } else {
         // If no saved user, redirect to login
         localStorage.removeItem('token');
-        window.location.href = '/auth/login';
+        window.location.href = '/login';
       }
     } finally {
       setLoading(false);
@@ -51,7 +51,7 @@ export const useAuth = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-    window.location.href = '/auth/login';
+    window.location.href = '/login';
   };
 
   return { user, loading, logout, checkAuth };

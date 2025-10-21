@@ -89,7 +89,7 @@ export default function RegisterPage() {
 
     try {
       await axios.post("http://localhost:5000/api/auth/register", data);
-      window.location.href = "/auth/login";
+      window.location.href = "/login";
     } catch (e: unknown) {
       if (axios.isAxiosError(e)) {
         setError(e.response?.data?.error || "Something went wrong");

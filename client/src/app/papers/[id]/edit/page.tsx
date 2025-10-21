@@ -7,565 +7,468 @@ import {
   Plus,
   Trash2,
   Save,
-  ArrowLeft,
-  Clock,
-  Calendar,
   AlertCircle,
-  CheckCircle,
-  X,
-  Edit
+  ArrowLeft,
+  Calendar,
+  Clock,
+  ListOrdered,
+  Check,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
+import { useRouter, useParams } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
+interface Option {
+  _id?: string;
+  optionText: string;
+  isCorrect: boolean;
+}
 
 interface Question {
   _id?: string;
   questionText: string;
-  options: {
-    _id?: string;
-    optionText: string;
-    isCorrect: boolean;
-  }[];
+  options: Option[];
+  open: boolean; // For UI accordion
+  imageUrl?: string;
 }
 
-interface Paper {
-  _id: string;
-  title: string;
-  description?: string;
-  deadline: string;
-  timeLimit: number;
-  questions: Question[];
-}
 
-interface UserData {
-  _id: string;
-  username: string;
-  role: "student" | "teacher" | "admin";
-}
 
-export default function EditPaperPage({ params }: { params: { id: string } }) {
+export default function EditPaperPage() {
   const router = useRouter();
-  const [user, setUser] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [paper, setPaper] = useState<Paper | null>(null);
+  const params = useParams();
+  const { id: paperId } = params;
 
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    deadline: "",
-    timeLimit: 30,
-    questions: [] as Question[]
-  });
+  const { user, loading: authLoading } = useAuth();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [timeLimit, setTimeLimit] = useState(60);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      if (user.role !== 'teacher' && user.role !== 'admin') {
+        router.push('/papers');
+      }
+    } else if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [authLoading, user, router]);
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { 
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    } : {};
+    const token = localStorage.getItem('token');
+    return { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }; 
   };
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const user = JSON.parse(userData);
-      setUser(user);
-      
-      if (user.role !== 'teacher' && user.role !== 'admin') {
-        router.push('/papers');
-        return;
-      }
-    } else {
-      router.push('/auth/login');
-      return;
-    }
-    
-    fetchPaper();
-  }, [router]);
+    if (!paperId || !user) return;
 
-  const fetchPaper = async () => {
-    try {
-      setLoading(true);
-      const headers = getAuthHeaders();
-      const response = await axios.get(`http://localhost:5000/api/papers/${params.id}`, { headers });
-      const paperData = response.data.paper;
-      
-      setPaper(paperData);
-      
-      // Populate form with existing data
-      setFormData({
-        title: paperData.title,
-        description: paperData.description || "",
-        deadline: new Date(paperData.deadline).toISOString().slice(0, 16),
-        timeLimit: paperData.timeLimit,
-        questions: paperData.questions.map((q: any) => ({
-          _id: q._id,
-          questionText: q.questionText,
-          options: q.options.map((opt: any) => ({
-            _id: opt._id,
-            optionText: opt.optionText,
-            isCorrect: opt.isCorrect
-          }))
-        }))
-      });
-      
-    } catch (error) {
-      console.error("Error fetching paper:", error);
-      if (axios.isAxiosError(error)) {
-        setError(error.response?.data?.message || "Failed to load paper for editing");
-      } else {
-        setError("Failed to load paper for editing");
+    const fetchPaper = async () => {
+      try {
+        setLoading(true);
+        const headers = getAuthHeaders();
+        const response = await axios.get(`http://localhost:5000/api/papers/${paperId}`, { headers });
+        const paper = response.data.paper;
+
+        setTitle(paper.title);
+        setDescription(paper.description || "");
+        setDeadline(new Date(paper.deadline).toISOString().slice(0, 16));
+        setTimeLimit(paper.timeLimit);
+        setQuestions(paper.questions.map((q: Question) => ({ ...q, open: false })));
+
+      } catch (error) {
+        console.error("Error fetching paper:", error);
+        setError("Failed to load paper for editing.");
+      } finally {
+        setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    fetchPaper();
+  }, [paperId, user]);
 
   const addQuestion = () => {
-    setFormData(prev => ({
-      ...prev,
-      questions: [...prev.questions, {
+    setQuestions([
+      ...questions,
+      {
         questionText: "",
         options: [
+          { optionText: "", isCorrect: true },
           { optionText: "", isCorrect: false },
           { optionText: "", isCorrect: false },
           { optionText: "", isCorrect: false },
-          { optionText: "", isCorrect: false }
-        ]
-      }]
-    }));
+          { optionText: "", isCorrect: false },
+        ],
+        open: true,
+        imageUrl: "",
+      },
+    ]);
   };
 
-  const removeQuestion = (questionIndex: number) => {
-    setFormData(prev => ({
-      ...prev,
-      questions: prev.questions.filter((_, index) => index !== questionIndex)
-    }));
+  const handleImageUpload = async (qIndex: number, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { 
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}`
+      };
+      const response = await axios.post("http://localhost:5000/api/images/upload/paper-options", formData, { headers });
+      const newQuestions = [...questions];
+      newQuestions[qIndex].imageUrl = response.data.imageUrl;
+      setQuestions(newQuestions);
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      setError("Failed to upload image");
+    }
   };
 
-  const updateQuestion = (questionIndex: number, questionText: string) => {
-    setFormData(prev => ({
-      ...prev,
-      questions: prev.questions.map((q, index) => 
-        index === questionIndex ? { ...q, questionText } : q
-      )
-    }));
+  const removeQuestion = (index: number) => {
+    setQuestions(questions.filter((_, i) => i !== index));
   };
 
-  const updateOption = (questionIndex: number, optionIndex: number, optionText: string) => {
-    setFormData(prev => ({
-      ...prev,
-      questions: prev.questions.map((q, qIndex) => 
-        qIndex === questionIndex ? {
-          ...q,
-          options: q.options.map((opt, oIndex) => 
-            oIndex === optionIndex ? { ...opt, optionText } : opt
-          )
-        } : q
-      )
-    }));
+  const handleQuestionChange = (index: number, value: string) => {
+    const newQuestions = [...questions];
+    newQuestions[index].questionText = value;
+    setQuestions(newQuestions);
   };
 
-  const setCorrectAnswer = (questionIndex: number, optionIndex: number) => {
-    setFormData(prev => ({
-      ...prev,
-      questions: prev.questions.map((q, qIndex) => 
-        qIndex === questionIndex ? {
-          ...q,
-          options: q.options.map((opt, oIndex) => ({
-            ...opt,
-            isCorrect: oIndex === optionIndex
-          }))
-        } : q
-      )
-    }));
+  const addOption = (qIndex: number) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].options.push({ optionText: "", isCorrect: false });
+    setQuestions(newQuestions);
+  };
+
+  const removeOption = (qIndex: number, oIndex: number) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].options = newQuestions[qIndex].options.filter(
+      (_, i) => i !== oIndex
+    );
+    setQuestions(newQuestions);
+  };
+
+  const handleOptionChange = (qIndex: number, oIndex: number, value: string) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].options[oIndex].optionText = value;
+    setQuestions(newQuestions);
+  };
+
+  const setCorrectOption = (qIndex: number, oIndex: number) => {
+    const newQuestions = [...questions];
+    newQuestions[qIndex].options.forEach((opt, i) => {
+      opt.isCorrect = i === oIndex;
+    });
+    setQuestions(newQuestions);
+  };
+
+  const toggleQuestion = (index: number) => {
+    const newQuestions = [...questions];
+    newQuestions[index].open = !newQuestions[index].open;
+    setQuestions(newQuestions);
   };
 
   const validateForm = () => {
-    if (!formData.title.trim()) {
-      setError("Title is required");
-      return false;
-    }
+    if (!title.trim()) return "Paper title is required.";
+    if (!deadline) return "Deadline is required.";
+    if (timeLimit <= 0) return "Time limit must be greater than 0.";
+    if (questions.length === 0) return "At least one question is required.";
 
-    if (!formData.deadline) {
-      setError("Deadline is required");
-      return false;
-    }
-
-    if (formData.questions.length === 0) {
-      setError("At least one question is required");
-      return false;
-    }
-
-    for (let i = 0; i < formData.questions.length; i++) {
-      const question = formData.questions[i];
-      
-      if (!question.questionText.trim()) {
-        setError(`Question ${i + 1} text is required`);
-        return false;
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      if (!q.questionText.trim()) return `Question ${i + 1} text is required.`;
+      if (q.options.length < 2) return `Question ${i + 1} must have at least two options.`;
+      if (q.options.some(opt => !opt.optionText.trim())) {
+        return `All options for Question ${i + 1} must have text.`;
       }
-
-      const filledOptions = question.options.filter(opt => opt.optionText.trim());
-      if (filledOptions.length < 2) {
-        setError(`Question ${i + 1} must have at least 2 options`);
-        return false;
-      }
-
-      const correctAnswers = question.options.filter(opt => opt.isCorrect && opt.optionText.trim());
-      if (correctAnswers.length !== 1) {
-        setError(`Question ${i + 1} must have exactly one correct answer`);
-        return false;
+      if (!q.options.some(opt => opt.isCorrect)) {
+        return `A correct answer must be selected for Question ${i + 1}.`;
       }
     }
-
-    return true;
+    return "";
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
+  const handleSubmit = async () => {
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setError("");
 
     try {
-      setSaving(true);
-      setError("");
-      
+      setSubmitting(true);
       const headers = getAuthHeaders();
-      const payload = {
-        ...formData,
-        questions: formData.questions.map(q => ({
-          ...q,
-          options: q.options.filter(opt => opt.optionText.trim())
-        }))
+      const paperData = {
+        title,
+        description,
+        deadline,
+        timeLimit,
+        questions: questions.map(({ questionText, options, imageUrl }) => ({
+          questionText,
+          options: options.map(opt => ({ optionText: opt.optionText, isCorrect: opt.isCorrect })),
+          imageUrl,
+        })),
       };
 
-      await axios.put(`http://localhost:5000/api/papers/${params.id}`, payload, { headers });
+      await axios.put(`http://localhost:5000/api/papers/${paperId}`, paperData, { headers });
       
-      setSuccess("Paper updated successfully!");
-      setTimeout(() => {
-        router.push('/papers');
-      }, 2000);
-      
+      alert("Paper updated successfully!");
+      router.push("/papers");
+
     } catch (error) {
       console.error("Error updating paper:", error);
       if (axios.isAxiosError(error)) {
         setError(error.response?.data?.message || "Failed to update paper");
       } else {
-        setError("Failed to update paper");
+        setError("An unexpected error occurred");
       }
     } finally {
-      setSaving(false);
+      setSubmitting(false);
     }
   };
 
-  if (loading) {
+  if (authLoading || loading || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex justify-center items-center h-screen">
-          <div className="text-center">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading paper...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user || user.role === 'student') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex justify-center items-center h-screen">
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600">Only teachers can edit papers</p>
-          </div>
-        </div>
+      <div className="flex justify-center items-center h-screen">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="ml-4 text-gray-600">Loading Paper Editor...</p>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navbar user={user} onLogout={() => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/auth/login";
-      }} />
+      <Navbar user={user} />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
         >
-          <div className="flex items-center gap-4 mb-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <FileText className="text-blue-600" size={28} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Edit Paper</h1>
+                <p className="text-gray-600 truncate max-w-md">{title}</p>
+              </div>
+            </div>
             <Link href="/papers">
-              <Button variant="outline" size="sm">
+              <Button variant="outline">
                 <ArrowLeft size={16} className="mr-2" />
                 Back to Papers
               </Button>
             </Link>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-              <Edit className="text-orange-600" size={28} />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Edit Paper</h1>
-              <p className="text-gray-600">Modify your examination paper</p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Notifications */}
-        {error && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4"
-          >
-            <div className="flex items-center gap-2">
-              <AlertCircle className="text-red-500" size={20} />
-              <p className="text-red-700">{error}</p>
-              <button onClick={() => setError("")} className="ml-auto text-red-500">
-                <X size={16} />
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {success && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mb-6 bg-green-50 border-2 border-green-200 rounded-xl p-4"
-          >
-            <div className="flex items-center gap-2">
-              <CheckCircle className="text-green-500" size={20} />
-              <p className="text-green-700">{success}</p>
-            </div>
-          </motion.div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Information */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6"
-          >
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Paper Information</h2>
-            
-            <div className="space-y-4">
+          {/* Paper Details Form */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-8 mb-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-6">Paper Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Title */}
+              <div className="md:col-span-2">
+                <label className="font-semibold text-gray-700 mb-2 block">Title</label>
+                <Input
+                  placeholder="e.g., Mid-Term ICT Examination"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="h-12"
+                />
+              </div>
+              {/* Description */}
+              <div className="md:col-span-2">
+                <label className="font-semibold text-gray-700 mb-2 block">Description (Optional)</label>
+                <Textarea
+                  placeholder="A brief summary of the paper's content"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+              </div>
+              {/* Deadline */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Paper Title *
+                <label className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  <Calendar size={16} /> Deadline
                 </label>
                 <Input
-                  value={formData.title}
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Enter paper title"
-                  className="h-12 border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 rounded-xl"
-                  required
+                  type="datetime-local"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                  className="h-12"
                 />
               </div>
-
+              {/* Time Limit */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Description (Optional)
+                <label className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                  <Clock size={16} /> Time Limit (minutes)
                 </label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Enter paper description"
-                  className="border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 rounded-xl"
-                  rows={3}
+                <Input
+                  type="number"
+                  value={timeLimit}
+                  onChange={(e) => setTimeLimit(Number(e.target.value))}
+                  className="h-12"
                 />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <Calendar size={16} className="text-blue-500" />
-                    Deadline *
-                  </label>
-                  <Input
-                    type="datetime-local"
-                    value={formData.deadline}
-                    onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
-                    className="h-12 border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 rounded-xl"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <Clock size={16} className="text-emerald-500" />
-                    Time Limit (minutes) *
-                  </label>
-                  <Input
-                    type="number"
-                    min="5"
-                    max="300"
-                    value={formData.timeLimit}
-                    onChange={(e) => setFormData(prev => ({ ...prev, timeLimit: parseInt(e.target.value) || 30 }))}
-                    className="h-12 border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 rounded-xl"
-                    required
-                  />
-                </div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Questions Section - Similar to create page */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6"
-          >
+          {/* Questions Builder */}
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Questions ({formData.questions.length})</h2>
-              <Button 
-                type="button"
-                onClick={addQuestion}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg"
-              >
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <ListOrdered /> Questions Builder
+              </h2>
+              <Button onClick={addQuestion}>
                 <Plus size={16} className="mr-2" />
                 Add Question
               </Button>
             </div>
 
-            {formData.questions.length === 0 ? (
-              <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl">
-                <FileText className="mx-auto text-gray-400 mb-4" size={48} />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Questions Added</h3>
-                <p className="text-gray-600 mb-4">Add questions to your paper</p>
-                <Button type="button" onClick={addQuestion} className="bg-emerald-600 hover:bg-emerald-700">
-                  <Plus size={16} className="mr-2" />
-                  Add First Question
-                </Button>
+            {questions.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed rounded-xl">
+                <p className="text-gray-500">No questions added yet.</p>
               </div>
             ) : (
-              <div className="space-y-6">
-                {formData.questions.map((question, questionIndex) => (
-                  <motion.div
-                    key={questionIndex}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: questionIndex * 0.1 }}
-                    className="border-2 border-gray-200 rounded-xl p-6 bg-gray-50/50"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Question {questionIndex + 1}
+              <div className="space-y-4">
+                {questions.map((q, qIndex) => (
+                  <div key={qIndex} className="border rounded-xl overflow-hidden">
+                    <div 
+                      className="bg-gray-50 p-4 flex items-center justify-between cursor-pointer"
+                      onClick={() => toggleQuestion(qIndex)}
+                    >
+                      <h3 className="font-semibold text-gray-800">
+                        Question {qIndex + 1}
                       </h3>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeQuestion(questionIndex)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
+                      <div className="flex items-center gap-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeQuestion(qIndex);
+                          }}
+                          className="text-red-500 hover:bg-red-100"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                        {q.open ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Question Text *
-                        </label>
+                    {q.open && (
+                      <div className="p-6 space-y-6">
+                        {/* Question Text */}
                         <Textarea
-                          value={question.questionText}
-                          onChange={(e) => updateQuestion(questionIndex, e.target.value)}
-                          placeholder="Enter your question in Sinhala or English"
-                          className="border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                          rows={3}
+                          placeholder={`Enter text for question ${qIndex + 1}`}
+                          value={q.questionText}
+                          onChange={(e) => handleQuestionChange(qIndex, e.target.value)}
+                          className="text-lg"
                         />
-                      </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                          Answer Options * (Select one correct answer)
-                        </label>
+                        {/* Image Upload */}
+                        <div className="space-y-2">
+                          <label className="font-semibold text-gray-700">Optional Image</label>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload(qIndex, e.target.files)}
+                          />
+                          {q.imageUrl && (
+                            <div className="mt-2">
+                              <img src={`http://localhost:5000${q.imageUrl}`} alt="Question preview" className="rounded-md max-h-24" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Options */}
                         <div className="space-y-3">
-                          {question.options.map((option, optionIndex) => (
-                            <div key={optionIndex} className="flex items-center gap-3">
-                              <button
-                                type="button"
-                                onClick={() => setCorrectAnswer(questionIndex, optionIndex)}
-                                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                                  option.isCorrect 
-                                    ? 'bg-green-500 border-green-500 text-white' 
-                                    : 'border-gray-300 hover:border-green-400'
+                          {q.options.map((opt, oIndex) => (
+                            <div key={oIndex} className="flex items-center gap-3">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setCorrectOption(qIndex, oIndex)}
+                                className={`rounded-full w-10 h-10 flex-shrink-0 ${
+                                  opt.isCorrect
+                                    ? "bg-green-500 text-white"
+                                    : "bg-gray-200 text-gray-600"
                                 }`}
                               >
-                                {option.isCorrect && <CheckCircle size={16} />}
-                              </button>
-                              <div className="flex-1">
-                                <Input
-                                  value={option.optionText}
-                                  onChange={(e) => updateOption(questionIndex, optionIndex, e.target.value)}
-                                  placeholder={`Option ${String.fromCharCode(65 + optionIndex)}`}
-                                  className="border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                                />
-                              </div>
+                                <Check size={20} />
+                              </Button>
+                              <Input
+                                placeholder={`Option ${oIndex + 1}`}
+                                value={opt.optionText}
+                                onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                              />
+
                             </div>
                           ))}
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">
-                          Click the circle to mark the correct answer
-                        </p>
+                        
+
                       </div>
-                    </div>
-                  </motion.div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
-          </motion.div>
+          </div>
+
+          {/* Error Display */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6 bg-red-50 border-l-4 border-red-500 p-4"
+            >
+              <div className="flex items-center gap-3">
+                <AlertCircle className="text-red-600" />
+                <p className="text-red-700 font-medium">{error}</p>
+              </div>
+            </motion.div>
+          )}
 
           {/* Submit Button */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="flex gap-4"
-          >
-            <Link href="/papers" className="flex-1">
-              <Button type="button" variant="outline" className="w-full h-12" disabled={saving}>
-                Cancel
-              </Button>
-            </Link>
-            <Button 
-              type="submit" 
-              disabled={saving || formData.questions.length === 0}
-              className="flex-1 h-12 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white"
+          <div className="mt-8 flex justify-end">
+            <Button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-3 rounded-xl font-semibold text-lg"
             >
-              {saving ? (
+              {submitting ? (
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Saving Changes...
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Updating Paper...
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Save size={16} />
+                  <Save size={20} />
                   Save Changes
                 </div>
               )}
             </Button>
-          </motion.div>
-        </form>
+          </div>
+        </motion.div>
       </main>
     </div>
   );

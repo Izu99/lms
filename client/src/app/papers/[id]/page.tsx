@@ -20,7 +20,8 @@ import {
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Option {
   _id: string;
@@ -32,6 +33,7 @@ interface Question {
   questionText: string;
   options: Option[];
   order: number;
+  imageUrl?: string;
 }
 
 interface Paper {
@@ -44,16 +46,13 @@ interface Paper {
   questions: Question[];
 }
 
-interface UserData {
-  _id: string;
-  username: string;
-  role: "student" | "teacher" | "admin";
-}
 
-export default function PaperAttemptPage({ params }: { params: { id: string } }) {
+
+export default function PaperAttemptPage() {
   const router = useRouter();
+  const { id: paperId } = useParams();
   const [paper, setPaper] = useState<Paper | null>(null);
-  const [user, setUser] = useState<UserData | null>(null);
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -65,20 +64,18 @@ export default function PaperAttemptPage({ params }: { params: { id: string } })
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { 
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    } : {};
+    const token = localStorage.getItem('token');
+    return { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }; 
   };
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      setUser(JSON.parse(userData));
+    if (!authLoading && user && paperId) {
+      fetchPaper();
     }
-    fetchPaper();
-  }, []);
+  }, [authLoading, user, paperId]);
 
   // Timer effect with auto-save and warnings
   useEffect(() => {
@@ -115,18 +112,40 @@ export default function PaperAttemptPage({ params }: { params: { id: string } })
   }, [answers]);
 
   const fetchPaper = async () => {
+    if (!paperId) {
+      setError("Paper ID is missing.");
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
+      console.log("Fetching paper with ID:", paperId, "for user role:", user?.role); // Added log
       const headers = getAuthHeaders();
-      const response = await axios.get(`http://localhost:5000/api/papers/${params.id}`, { headers });
+      const response = await axios.get(`http://localhost:5000/api/papers/${paperId}`, { headers });
       setPaper(response.data.paper);
       setTimeLeft(response.data.paper.timeLimit * 60); // Convert to seconds
     } catch (error) {
       console.error("Error fetching paper:", error);
       if (axios.isAxiosError(error)) {
-        setError(error.response?.data?.message || "Failed to load paper");
+        const errorMessage = error.response?.data?.message;
+        if (error.response?.status === 400) {
+          if (errorMessage === 'Invalid paper ID') {
+            setError('Invalid paper ID. Please check the URL.');
+          } else if (errorMessage === 'You have already attempted this paper') {
+            setError('You have already attempted this paper. Please check your results.');
+            router.push('/papers/results/my-results'); // Redirect to results page
+          } else if (errorMessage === 'This paper is no longer available') {
+            setError('This paper is no longer available. The deadline has passed.');
+          } else {
+            setError(errorMessage || "Failed to load paper due to a bad request.");
+          }
+        } else if (error.response?.status === 404) {
+          setError('Paper not found.');
+        } else {
+          setError(errorMessage || "Failed to load paper.");
+        }
       } else {
-        setError("Failed to load paper");
+        setError("Failed to load paper due to a network error.");
       }
     } finally {
       setLoading(false);
@@ -210,7 +229,7 @@ export default function PaperAttemptPage({ params }: { params: { id: string } })
       };
 
       const response = await axios.post(
-        `http://localhost:5000/api/papers/${params.id}/submit`,
+        `http://localhost:5000/api/papers/${paperId}/submit`,
         submissionData,
         { headers }
       );
@@ -262,7 +281,7 @@ export default function PaperAttemptPage({ params }: { params: { id: string } })
     return null;
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="flex justify-center items-center h-screen">
@@ -295,11 +314,7 @@ export default function PaperAttemptPage({ params }: { params: { id: string } })
   if (user?.role === 'teacher') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <Navbar user={user} onLogout={() => {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          window.location.href = "/auth/login";
-        }} />
+        <Navbar user={user} />
 
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
@@ -322,11 +337,7 @@ export default function PaperAttemptPage({ params }: { params: { id: string } })
   if (isExpired()) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <Navbar user={user} onLogout={() => {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          window.location.href = "/auth/login";
-        }} />
+        <Navbar user={user} />
 
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
@@ -344,11 +355,7 @@ export default function PaperAttemptPage({ params }: { params: { id: string } })
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navbar user={user} onLogout={() => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/auth/login";
-      }} />
+      <Navbar user={user} />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!started ? (
@@ -400,7 +407,7 @@ export default function PaperAttemptPage({ params }: { params: { id: string } })
                 <li>• Your answers are automatically saved every few seconds</li>
                 <li>• You can only submit this paper once</li>
                 <li>• The paper will auto-submit when time runs out</li>
-                <li>• You'll get warnings when time is running low</li>
+                <li>• You&apos;ll get warnings when time is running low</li>
               </ul>
             </div>
 
@@ -539,6 +546,11 @@ export default function PaperAttemptPage({ params }: { params: { id: string } })
                           <h2 className="text-xl font-semibold text-gray-900 leading-relaxed mb-4">
                             {currentQuestionData.questionText}
                           </h2>
+                          {currentQuestionData.imageUrl && (
+                            <div className="mb-4">
+                              <img src={`http://localhost:5000${currentQuestionData.imageUrl}`} alt="Question image" className="rounded-lg max-w-full h-auto max-h-96" />
+                            </div>
+                          )}
                           
                           <div className="space-y-3">
                             {currentQuestionData.options.map((option, optionIndex) => (
@@ -620,7 +632,7 @@ export default function PaperAttemptPage({ params }: { params: { id: string } })
                   {answeredCount < totalQuestions && (
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3">
                       <p className="text-yellow-700 text-sm">
-                        ⚠️ You haven't answered all questions. Unanswered questions will be marked as incorrect.
+                        ⚠️ You haven&apos;t answered all questions. Unanswered questions will be marked as incorrect.
                       </p>
                     </div>
                   )}

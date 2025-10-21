@@ -31,7 +31,7 @@ export default function AuthForm({ type }: AuthProps) {
     try {
       const url =
         type === "login"
-          ? "http://localhost:5000/api/auth/login"
+          ? "http://localhost:5000/api/login"
           : "http://localhost:5000/api/auth/register";
       const reqData = { username: data.username, password: data.password };
       await axios.post(url, reqData);

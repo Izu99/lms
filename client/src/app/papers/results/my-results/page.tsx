@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Trophy,
   Clock,
@@ -34,43 +35,41 @@ interface Result {
   submittedAt: string;
 }
 
-interface UserData {
-  _id: string;
-  username: string;
-  role: "student" | "teacher" | "admin";
-}
+
 
 export default function MyResultsPage() {
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<UserData | null>(null);
+  const { user, loading: authLoading } = useAuth();
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return token ? { 
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    } : {};
+    return { 'Content-Type': 'application/json' }; // No Authorization header needed for cookie-based auth
   };
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      setUser(JSON.parse(userData));
+    if (!authLoading && user) {
+      fetchResults();
+    } else if (!authLoading && !user) {
+      // Redirect to login if not authenticated
+      window.location.href = "/login";
     }
-    fetchResults();
-  }, []);
+  }, [authLoading, user]);
 
   const fetchResults = async () => {
     try {
       setLoading(true);
-      const headers = getAuthHeaders();
-      const response = await axios.get("http://localhost:5000/api/papers/results/my-results", { headers });
+      // No need for explicit headers, axios.defaults.withCredentials = true handles cookies
+      const response = await axios.get("http://localhost:5000/api/papers/results/my-results");
       setResults(response.data.results || []);
     } catch (error) {
       console.error("Error fetching results:", error);
-      setError("Failed to load results");
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        // If 401, it means the cookie is invalid or missing, redirect to login
+        window.location.href = "/login";
+      } else {
+        setError("Failed to load results");
+      }
     } finally {
       setLoading(false);
     }
@@ -115,7 +114,7 @@ export default function MyResultsPage() {
   const bestScore = results.length > 0 ? Math.max(...results.map(r => r.percentage)) : 0;
   const totalPapers = results.length;
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="flex justify-center items-center h-screen">
@@ -130,11 +129,7 @@ export default function MyResultsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navbar user={user} onLogout={() => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/auth/login";
-      }} />
+      <Navbar user={user} />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}

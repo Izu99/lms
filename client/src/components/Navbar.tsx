@@ -73,7 +73,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
     } else {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = "/auth/login";
+      window.location.href = "/login";
     }
   };
 

@@ -69,7 +69,7 @@ export default function DashboardPage() {
     const savedUser = localStorage.getItem("user");
 
     if (!token || !savedUser) {
-      window.location.href = "/auth/login";
+      window.location.href = "/login";
       return;
     }
 
@@ -78,7 +78,7 @@ export default function DashboardPage() {
       setUser(userData);
     } catch (error) {
       console.error("Error parsing user data:", error);
-      window.location.href = "/auth/login";
+      window.location.href = "/login";
     } finally {
       setUserLoading(false);
     }
@@ -108,7 +108,7 @@ export default function DashboardPage() {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.location.href = "/auth/login";
+        window.location.href = "/login";
       }
     } finally {
       setLoading(false);
@@ -118,7 +118,7 @@ export default function DashboardPage() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "/auth/login";
+    window.location.href = "/login";
   };
 
   const formatDate = (dateString: string) => {

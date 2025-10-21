@@ -59,7 +59,7 @@ export default function SettingsPage() {
     const savedUser = localStorage.getItem('user');
     
     if (!token || !savedUser) {
-      window.location.href = "/auth/login";
+      window.location.href = "/login";
       return;
     }
     
@@ -68,7 +68,7 @@ export default function SettingsPage() {
       setUser(userData);
       fetchData();
     } catch (error) {
-      window.location.href = "/auth/login";
+      window.location.href = "/login";
     }
   }, []);
 
@@ -92,7 +92,7 @@ export default function SettingsPage() {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = "/auth/login";
+        window.location.href = "/login";
       }
     } finally {
       setLoading(false);
@@ -178,7 +178,7 @@ export default function SettingsPage() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    window.location.href = "/auth/login";
+    window.location.href = "/login";
   };
 
   const filteredClasses = classes.filter(classItem => 

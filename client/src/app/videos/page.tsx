@@ -65,7 +65,7 @@ export default function VideoManagementPage() {
     const savedUser = localStorage.getItem("user");
 
     if (!token || !savedUser) {
-      window.location.href = "/auth/login";
+      window.location.href = "/login";
       return;
     }
 
@@ -74,7 +74,7 @@ export default function VideoManagementPage() {
       setUser(userData);
     } catch (error) {
       console.error("Error parsing user data:", error);
-      window.location.href = "/auth/login";
+      window.location.href = "/login";
     } finally {
       setUserLoading(false);
     }
@@ -106,7 +106,7 @@ export default function VideoManagementPage() {
         alert("Please login to access videos");
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.location.href = "/auth/login";
+        window.location.href = "/login";
       }
     } finally {
       setLoading(false);
@@ -134,7 +134,7 @@ export default function VideoManagementPage() {
         alert("Please login to upload videos");
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.location.href = "/auth/login";
+        window.location.href = "/login";
       } else {
         alert("Error uploading video. Please try again.");
       }
@@ -181,7 +181,7 @@ export default function VideoManagementPage() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "/auth/login";
+    window.location.href = "/login";
   };
 
   const openEditForm = (video: VideoData) => {
