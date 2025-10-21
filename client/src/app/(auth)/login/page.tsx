@@ -36,6 +36,8 @@ const Link = ({ href, children, className, ...props }) => (
   </a>
 );
 
+import { API_BASE_URL, API_URL } from "@/lib/constants";
+
 export default function LoginPage() {
   const [data, setData] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
@@ -84,7 +86,7 @@ export default function LoginPage() {
 
     try {
       // Using fetch (you can replace with axios if preferred)
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

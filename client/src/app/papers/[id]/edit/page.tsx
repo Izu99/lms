@@ -23,6 +23,7 @@ import axios from "axios";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
+import { API_BASE_URL, API_URL } from "@/lib/constants";
 
 interface Option {
   _id?: string;
@@ -80,7 +81,7 @@ export default function EditPaperPage() {
       try {
         setLoading(true);
         const headers = getAuthHeaders();
-        const response = await axios.get(`http://localhost:5000/api/papers/${paperId}`, { headers });
+        const response = await axios.get(`${API_URL}/papers/${paperId}`, { headers });
         const paper = response.data.paper;
 
         setTitle(paper.title);
@@ -130,7 +131,7 @@ export default function EditPaperPage() {
         "Content-Type": "multipart/form-data",
         "Authorization": `Bearer ${token}`
       };
-      const response = await axios.post("http://localhost:5000/api/images/upload/paper-options", formData, { headers });
+      const response = await axios.post(`${API_URL}/images/upload/paper-options`, formData, { headers });
       const newQuestions = [...questions];
       newQuestions[qIndex].imageUrl = response.data.imageUrl;
       setQuestions(newQuestions);
@@ -227,7 +228,7 @@ export default function EditPaperPage() {
         })),
       };
 
-      await axios.put(`http://localhost:5000/api/papers/${paperId}`, paperData, { headers });
+      await axios.put(`${API_URL}/papers/${paperId}`, paperData, { headers });
       
       alert("Paper updated successfully!");
       router.push("/papers");
@@ -394,7 +395,7 @@ export default function EditPaperPage() {
                           />
                           {q.imageUrl && (
                             <div className="mt-2">
-                              <img src={`http://localhost:5000${q.imageUrl}`} alt="Question preview" className="rounded-md max-h-24" />
+                              <img src={`${API_BASE_URL}${q.imageUrl}`} alt="Question preview" className="rounded-md max-h-24" />
                             </div>
                           )}
                         </div>

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL, API_URL } from "@/lib/constants";
 
 interface User {
   username: string;
@@ -24,7 +25,7 @@ export const useAuth = () => {
       }
 
       // Try to get fresh user data from backend
-      const response = await axios.get('http://localhost:5000/api/auth/me', {
+      const response = await axios.get(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

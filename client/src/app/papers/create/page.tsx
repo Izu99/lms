@@ -23,6 +23,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
+import { API_BASE_URL, API_URL } from "@/lib/constants";
 
 interface Option {
   optionText: string;
@@ -97,7 +98,7 @@ export default function CreatePaperPage() {
         "Content-Type": "multipart/form-data",
         "Authorization": `Bearer ${token}`
       };
-      const response = await axios.post("http://localhost:5000/api/images/upload/paper-options", formData, { headers });
+      const response = await axios.post(`${API_URL}/images/upload/paper-options`, formData, { headers });
       const newQuestions = [...questions];
       newQuestions[qIndex].imageUrl = response.data.imageUrl;
       setQuestions(newQuestions);
@@ -194,7 +195,7 @@ export default function CreatePaperPage() {
         })),
       };
 
-      await axios.post("http://localhost:5000/api/papers", paperData, { headers });
+      await axios.post(`${API_URL}/papers`, paperData, { headers });
       
       alert("Paper created successfully!");
       router.push("/papers");
@@ -361,7 +362,7 @@ export default function CreatePaperPage() {
                           />
                           {q.imageUrl && (
                             <div className="mt-2">
-                              <img src={`http://localhost:5000${q.imageUrl}`} alt="Question preview" className="rounded-md max-h-24" />
+                              <img src={`${API_BASE_URL}${q.imageUrl}`} alt="Question preview" className="rounded-md max-h-24" />
                             </div>
                           )}
                         </div>

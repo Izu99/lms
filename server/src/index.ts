@@ -31,9 +31,12 @@ app.use((req, res, next) => {
   next();
 });
 
+const allowedOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
+console.log('Allowed origin:', allowedOrigin);
+
 app.use(
   cors({
-    origin: 'http://localhost:3000',
+    origin: allowedOrigin,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     optionsSuccessStatus: 204,

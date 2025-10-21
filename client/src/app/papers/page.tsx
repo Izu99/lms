@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import Link from "next/link";
+import { API_BASE_URL, API_URL } from "@/lib/constants";
 
 interface Paper {
   _id: string;
@@ -62,7 +63,7 @@ export default function PapersPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get("http://localhost:5000/api/papers", {
+      const response = await axios.get(`${API_URL}/papers`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPapers(response.data.papers || []);
@@ -89,7 +90,7 @@ export default function PapersPage() {
     try {
       setDeleting(paperId);
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/papers/${paperId}`, {
+      await axios.delete(`${API_URL}/papers/${paperId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

@@ -22,6 +22,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { API_BASE_URL, API_URL } from "@/lib/constants";
 
 interface Option {
   _id: string;
@@ -121,7 +122,7 @@ export default function PaperAttemptPage() {
       setLoading(true);
       console.log("Fetching paper with ID:", paperId, "for user role:", user?.role); // Added log
       const headers = getAuthHeaders();
-      const response = await axios.get(`http://localhost:5000/api/papers/${paperId}`, { headers });
+      const response = await axios.get(`${API_URL}/papers/${paperId}`, { headers });
       setPaper(response.data.paper);
       setTimeLeft(response.data.paper.timeLimit * 60); // Convert to seconds
     } catch (error) {
@@ -229,7 +230,7 @@ export default function PaperAttemptPage() {
       };
 
       const response = await axios.post(
-        `http://localhost:5000/api/papers/${paperId}/submit`,
+        `${API_URL}/papers/${paperId}/submit`,
         submissionData,
         { headers }
       );
@@ -548,7 +549,7 @@ export default function PaperAttemptPage() {
                           </h2>
                           {currentQuestionData.imageUrl && (
                             <div className="mb-4">
-                              <img src={`http://localhost:5000${currentQuestionData.imageUrl}`} alt="Question image" className="rounded-lg max-w-full h-auto max-h-96" />
+                              <img src={`${API_BASE_URL}${currentQuestionData.imageUrl}`} alt="Question image" className="rounded-lg max-w-full h-auto max-h-96" />
                             </div>
                           )}
                           
