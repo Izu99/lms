@@ -37,15 +37,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const multer_1 = require("../config/multer");
 const auth_1 = require("../middleware/auth");
-const videoController = __importStar(require("../controllers/videoController"));
+const youtubeController = __importStar(require("../controllers/youtubeController"));
 const router = express_1.default.Router();
-router.post('/', auth_1.protect, multer_1.upload.single('video'), videoController.uploadVideo);
-router.get('/', auth_1.protect, videoController.getAllVideos);
-router.get('/:id', auth_1.protect, videoController.getVideoById);
-router.put('/:id', auth_1.protect, multer_1.upload.single('video'), videoController.updateVideo);
-router.delete('/:id', auth_1.protect, videoController.deleteVideo);
-// NEW: Route to increment view count
-router.post('/:id/view', auth_1.protect, videoController.incrementViewCount);
+router.post('/', auth_1.protect, youtubeController.createYoutubeLink);
+router.get('/', auth_1.protect, youtubeController.getAllYoutubeLinks);
+router.get('/:id', auth_1.protect, youtubeController.getYoutubeLinkById);
+router.put('/:id', auth_1.protect, youtubeController.updateYoutubeLink);
+router.delete('/:id', auth_1.protect, youtubeController.deleteYoutubeLink);
 exports.default = router;

@@ -219,9 +219,7 @@ export default function ProfilePage() {
         if (error.response?.status === 401) {
           redirectToLogin("Session expired");
           return;
-        } else if (error.response?.status === 404) {
-          setError("User not found");
-        } else if (error.response?.status >= 500) {
+        } else if (error.response && error.response.status >= 500) {
           setError("Server error. Please try again later.");
         } else {
           setError(`Failed to load profile: ${error.response?.statusText || error.message}`);
@@ -325,7 +323,7 @@ export default function ProfilePage() {
           setError(`Update failed: ${error.response.data?.message || "Invalid data"}`);
         } else if (error.response?.status === 409) {
           setError("Username already exists");
-        } else if (error.response?.status >= 500) {
+        } else if (error.response && error.response.status >= 500) {
           setError("Server error. Please try again later.");
         } else {
           setError(`Update failed: ${error.response?.statusText || error.message}`);
@@ -656,7 +654,7 @@ export default function ProfilePage() {
                   </div>
 
                   <p className="text-sm text-gray-500 mt-2">
-                    Leave password fields empty if you don't want to change your password.
+                    Leave password fields empty if you do not want to change your password.
                   </p>
                 </div>
 

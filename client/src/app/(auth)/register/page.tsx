@@ -219,7 +219,7 @@ export default function RegisterPage() {
                   className="text-lg font-medium text-white leading-relaxed mb-4 transition-all duration-500"
                   key={currentQuote}
                 >
-                  "{quote.text}"
+                  `{quote.text}`
                 </blockquote>
                 <cite className="text-emerald-200 text-sm font-semibold">
                   — {quote.author}

@@ -13,14 +13,14 @@ import {
 } from "lucide-react";
 
 // Simulating your components since we can't import them
-const Input = ({ className, ...props }) => (
+const Input = ({ className, ...props }: { className?: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
   <input
     className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${className}`}
     {...props}
   />
 );
 
-const Button = ({ className, children, ...props }) => (
+const Button = ({ className, children, ...props }: { className?: string; children: React.ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
   <button
     className={`px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${className}`}
     {...props}
@@ -30,7 +30,7 @@ const Button = ({ className, children, ...props }) => (
 );
 
 // Mock Link component
-const Link = ({ href, children, className, ...props }) => (
+const Link = ({ href, children, className, ...props }: { href: string; children: React.ReactNode; className?: string } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
   <a href={href} className={className} {...props}>
     {children}
   </a>
@@ -41,10 +41,11 @@ import { API_BASE_URL, API_URL } from "@/lib/constants";
 export default function LoginPage() {
   const [data, setData] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [currentQuote, setCurrentQuote] = useState(0);
+  const [floatingElementStyles, setFloatingElementStyles] = useState<React.CSSProperties[]>([]);
 
   const motivationalQuotes = [
     {
@@ -71,6 +72,15 @@ export default function LoginPage() {
 
   useEffect(() => {
     setMounted(true);
+
+    const generatedStyles = Array.from({ length: 15 }).map(() => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      animation: `float ${4 + Math.random() * 4}s ease-in-out infinite`,
+      animationDelay: `${Math.random() * 4}s`,
+    }));
+    setFloatingElementStyles(generatedStyles);
+
     // Change quote every 4 seconds
     const interval = setInterval(() => {
       setCurrentQuote((prev) => (prev + 1) % motivationalQuotes.length);
@@ -79,7 +89,7 @@ export default function LoginPage() {
   }, []);
 
   // Fixed login function with proper form handling
-  async function handleLogin(e) {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -113,7 +123,7 @@ export default function LoginPage() {
 
       window.location.href = "/";
     } catch (e) {
-      setError(e.message || "Something went wrong");
+      setError((e instanceof Error) ? e.message : "Something went wrong");
     }
     setLoading(false);
   }
@@ -130,18 +140,11 @@ export default function LoginPage() {
           <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
           <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl"></div>
           {/* Floating Elements */}
-          {[...Array(15)].map((_, i) => (
+          {floatingElementStyles.map((style, i) => (
             <div
               key={i}
               className="absolute w-2 h-2 bg-white/20 rounded-full"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animation: `float ${
-                  4 + Math.random() * 4
-                }s ease-in-out infinite`,
-                animationDelay: `${Math.random() * 4}s`,
-              }}
+              style={style}
             />
           ))}
         </div>
@@ -208,7 +211,7 @@ export default function LoginPage() {
                   className="text-lg font-medium text-white leading-relaxed mb-4 transition-all duration-500"
                   key={currentQuote}
                 >
-                  "{quote.text}"
+                  `{quote.text}`
                 </blockquote>
                 <cite className="text-blue-200 text-sm font-semibold">
                   — {quote.author}

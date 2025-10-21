@@ -3,25 +3,72 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authMiddleware = void 0;
+exports.protect = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = require("../models/User");
-const authMiddleware = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
-    const token = authHeader.split(' ')[1];
+const protect = async (req, res, next) => {
     try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({
+                message: 'Unauthorized',
+                error: 'Missing or invalid authorization header'
+            });
+        }
+        const token = authHeader.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({
+                message: 'Unauthorized',
+                error: 'No token provided'
+            });
+        }
+        // Verify JWT token
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+        // Find user in database
         const user = await User_1.User.findById(decoded.id);
-        if (!user)
-            return res.status(401).json({ message: 'User not found' });
+        if (!user) {
+            return res.status(401).json({
+                message: 'User not found',
+                error: 'Token is valid but user no longer exists'
+            });
+        }
+        // Attach user to request object
         req.user = user;
         next();
     }
     catch (err) {
-        return res.status(401).json({ message: 'Unauthorized (Invalid Token)' });
+        console.error('❌ Auth Middleware Error:', err.message);
+        // Handle specific JWT errors
+        if (err.name === 'TokenExpiredError') {
+            return res.status(401).json({
+                message: 'Token expired',
+                error: 'Please login again'
+            });
+        }
+        if (err.name === 'JsonWebTokenError') {
+            return res.status(401).json({
+                message: 'Invalid token',
+                error: 'Token is malformed or invalid'
+            });
+        }
+        if (err.name === 'NotBeforeError') {
+            return res.status(401).json({
+                message: 'Token not active',
+                error: 'Token is not active yet'
+            });
+        }
+        // Database or other errors
+        if (err.name === 'CastError') {
+            return res.status(401).json({
+                message: 'Invalid user ID',
+                error: 'Token contains invalid user reference'
+            });
+        }
+        // Generic error fallback
+        return res.status(500).json({
+            message: 'Internal server error',
+            error: 'Authentication service temporarily unavailable'
+        });
     }
 };
-exports.authMiddleware = authMiddleware;
+exports.protect = protect;

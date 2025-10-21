@@ -50,7 +50,7 @@ export default function StudentManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [editingStudent, setEditingStudent] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ status: '', notes: '' });
+  const [editForm, setEditForm] = useState<{ status: StudentData['status'] | ''; notes: string }>({ status: '', notes: '' });
   const [updating, setUpdating] = useState(false);
 
   // Get user data from localStorage
@@ -141,7 +141,7 @@ export default function StudentManagementPage() {
       setStudents(prevStudents => 
         prevStudents.map(student => 
           student._id === studentId 
-            ? { ...student, status: editForm.status as any, notes: editForm.notes }
+            ? { ...student, status: editForm.status as StudentData['status'], notes: editForm.notes }
             : student
         )
       );
@@ -443,7 +443,7 @@ export default function StudentManagementPage() {
                           {editingStudent === student._id ? (
                             <select
                               value={editForm.status}
-                              onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                              onChange={(e) => setEditForm({ ...editForm, status: e.target.value as StudentData['status'] })}
                               className="border border-gray-300 rounded px-2 py-1 text-sm"
                             >
                               <option value="pending">Pending</option>

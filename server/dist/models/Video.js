@@ -10,5 +10,8 @@ const videoSchema = new mongoose_1.default.Schema({
     description: String,
     videoUrl: { type: String, required: true },
     uploadedBy: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User', required: true },
+    class: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Class', required: true },
+    year: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Year', required: true },
+    views: { type: Number, default: 0 }, // NEW: Default to 0 views
 }, { timestamps: true });
 exports.Video = mongoose_1.default.model('Video', videoSchema);

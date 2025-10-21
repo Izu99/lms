@@ -15,12 +15,12 @@ interface VideoData {
     username: string;
     role: string;
   };
-  class: {
+  class?: {
     _id: string;
     name: string;
     location: string;
   };
-  year: {
+  year?: {
     _id: string;
     year: number;
     name: string;
@@ -69,8 +69,8 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
       setFormData({
         title: video.title,
         description: video.description || "",
-        classId: video.class._id,
-        yearId: video.year._id
+        classId: video.class ? video.class._id : "",
+        yearId: video.year ? video.year._id : ""
       });
     }
   }, [video]);

@@ -36,8 +36,8 @@ export default function AuthForm({ type }: AuthProps) {
       const reqData = { username: data.username, password: data.password };
       await axios.post(url, reqData);
       window.location.href = "/";
-    } catch (e: any) {
-      setError(e.response?.data?.error || "Something went wrong");
+    } catch (e: unknown) {
+      setError(axios.isAxiosError(e) && e.response?.data?.error ? e.response.data.error : "Something went wrong");
     }
     setLoading(false);
   }

@@ -9,7 +9,16 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const userSchema = new mongoose_1.default.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['student', 'teacher', 'admin'], default: 'student' }
+    email: { type: String, unique: true, sparse: true },
+    firstName: { type: String },
+    lastName: { type: String },
+    role: { type: String, enum: ['student', 'teacher', 'admin'], default: 'student' },
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'pending', 'paid', 'unpaid'],
+        default: 'pending'
+    },
+    notes: { type: String }
 }, { timestamps: true });
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password'))

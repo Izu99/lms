@@ -24,7 +24,7 @@ interface NavbarProps {
   user: {
     username: string;
     role: "student" | "teacher" | "admin";
-  };
+  } | null;
   onLogout?: () => void;
 }
 
@@ -34,6 +34,10 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
 
   // Different navigation tabs based on user role
   const getNavTabs = () => {
+    if (!user) {
+      return [];
+    }
+
     if (user.role === "student") {
       return [
         { href: "/", label: "Dashboard", icon: BarChart3 },
@@ -125,8 +129,12 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   <User size={16} className="text-white" />
                 </div>
                 <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium">{user.username}</p>
-                  <p className="text-xs text-blue-600  rounded-full capitalize">{user.role}</p>
+                  {user && (
+                    <>
+                      <p className="text-sm font-medium">{user.username}</p>
+                      <p className="text-xs text-blue-600  rounded-full capitalize">{user.role}</p>
+                    </>
+                  )}
                 </div>
               </Button>
 
