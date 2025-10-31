@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
+import { API_URL } from "@/lib/constants";
 
 interface UserData {
   _id?: string;
@@ -164,7 +165,7 @@ export default function ProfilePage() {
       if (Object.keys(headers).length === 0) return;
 
       const response = await axios.get(
-        `http://localhost:5000/api/auth/me`,
+        `${API_URL}/auth/me`,
         { headers }
       );
       
@@ -196,7 +197,7 @@ export default function ProfilePage() {
       if (Object.keys(headers).length === 0) return;
 
       const response = await axios.get(
-        `http://localhost:5000/api/auth/users/${userId}`,
+        `${API_URL}/auth/users/${userId}`,
         { headers }
       );
       
@@ -289,7 +290,7 @@ export default function ProfilePage() {
       }
 
       const response = await axios.put(
-        `http://localhost:5000/api/auth/users/${userId}`,
+        `${API_URL}/auth/users/${userId}`,
         updateData,
         { headers }
       );

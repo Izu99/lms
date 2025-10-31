@@ -23,6 +23,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { API_URL } from "@/lib/constants";
 
 interface Student {
   _id: string;
@@ -92,7 +93,7 @@ export default function PaperResultsPage() {
     try {
       setLoading(true);
       const headers = getAuthHeaders();
-      const response = await axios.get(`http://localhost:5000/api/papers/${paperId}/results`, { headers });
+      const response = await axios.get(`${API_URL}/papers/${paperId}/results`, { headers });
       setResultsData(response.data);
     } catch (error) {
       console.error("Error fetching results:", error);

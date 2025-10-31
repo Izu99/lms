@@ -1,15 +1,14 @@
-
 import dotenv from 'dotenv';
 dotenv.config();
-
-const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
-const MONGO_URI = process.env.MONGO_URI as string;
 
 import express from 'express';
 import mongoose from 'mongoose';
 import path from 'path';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+
+const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
+const MONGO_URI = process.env.MONGO_URI as string;
 
 // Import routes
 import authRoutes from './routes/authRoutes';
@@ -31,17 +30,19 @@ app.use((req, res, next) => {
   next();
 });
 
-const allowedOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
-console.log('Allowed origin:', allowedOrigin);
+// ✅ CORS setup for both local and Azure frontend
+const allowedOrigins = [
+  process.env.CLIENT_ORIGIN,
+  'http://localhost:3000',
+  'https://lms-frontend-app.azurewebsites.net'
+].filter(Boolean);
 
-app.use(
-  cors({
-    origin: allowedOrigin,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-    optionsSuccessStatus: 204,
-  })
-);
+app.use(cors({
+  origin: allowedOrigins as string[],
+  credentials: true,
+}));
+
+console.log('Allowed origins:', allowedOrigins);
 
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
@@ -53,6 +54,10 @@ app.use('/api/papers', paperRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/years', yearRoutes);
 app.use('/api/youtube', youtubeRoutes);
+
+app.get('/', (req, res) => {
+  res.send('✅ Backend is running on Azure');
+});
 
 // Global error handler
 app.use((err: any, req: any, res: any, next: any) => {

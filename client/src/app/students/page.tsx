@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
+import { API_URL } from "@/lib/constants";
 
 interface StudentData {
   _id: string;
@@ -96,7 +97,7 @@ export default function StudentManagementPage() {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/api/auth/students", {
+      const response = await axios.get(`${API_URL}/auth/students`, {
         headers: getAuthHeaders(),
       });
       
@@ -127,7 +128,7 @@ export default function StudentManagementPage() {
       setUpdating(true);
       
       const response = await axios.put(
-        `http://localhost:5000/api/auth/students/${studentId}/status`,
+        `${API_URL}/auth/students/${studentId}/status`,
         {
           status: editForm.status,
           notes: editForm.notes

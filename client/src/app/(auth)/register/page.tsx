@@ -17,6 +17,7 @@ import {
   Target,
   UserPlus,
 } from "lucide-react";
+import { API_URL } from "@/lib/constants";
 
 export default function RegisterPage() {
   const [data, setData] = useState({ username: "", password: "" });
@@ -88,7 +89,7 @@ export default function RegisterPage() {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/auth/register", data);
+      await axios.post(`${API_URL}/auth/register`, data);
       window.location.href = "/login";
     } catch (e: unknown) {
       if (axios.isAxiosError(e)) {

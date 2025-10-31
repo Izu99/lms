@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
+import { API_URL, API_BASE_URL } from "@/lib/constants";
 
 interface VideoData {
   _id: string;
@@ -110,7 +111,7 @@ export default function VideoViewPage() {
   const fetchVideo = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:5000/api/videos/${videoId}`,
+        `${API_URL}/videos/${videoId}`,
         {
           headers: getAuthHeaders(),
         }
@@ -130,7 +131,7 @@ export default function VideoViewPage() {
 
   const fetchRelatedVideos = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/videos", {
+      const response = await axios.get(`${API_URL}/videos`, {
         headers: getAuthHeaders(),
       });
       const allVideos = response.data.videos || response.data;
@@ -151,7 +152,7 @@ export default function VideoViewPage() {
 
     try {
       await axios.post(
-        `http://localhost:5000/api/videos/${videoId}/view`,
+        `${API_URL}/videos/${videoId}/view`,
         {},
         { headers: getAuthHeaders() }
       );
@@ -175,7 +176,7 @@ export default function VideoViewPage() {
     if (!confirm("Are you sure you want to delete this video?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/videos/${videoId}`, {
+      await axios.delete(`${API_URL}/videos/${videoId}`, {
         headers: getAuthHeaders(),
       });
 
@@ -305,7 +306,7 @@ export default function VideoViewPage() {
                 }
               >
                 <source
-                  src={`http://localhost:5000/${video.videoUrl}`}
+                  src={`${API_BASE_URL}/${video.videoUrl}`}
                   type="video/mp4"
                 />
                 Your browser does not support the video tag.
@@ -520,7 +521,7 @@ export default function VideoViewPage() {
                           preload=""
                         >
                           <source
-                            src={`http://localhost:5000/${relatedVideo.videoUrl}`}
+                            src={`${API_BASE_URL}/${relatedVideo.videoUrl}`}
                           />
                         </video>
                         <div className="absolute top-1 left-1 bg-gray-900 text-white text-xs px-1 rounded">

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import Link from "next/link";
+import { API_URL, API_BASE_URL } from "@/lib/constants";
 
 interface VideoData {
   _id: string;
@@ -95,7 +96,7 @@ export default function VideoManagementPage() {
   const fetchVideos = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/api/videos", {
+      const response = await axios.get(`${API_URL}/videos`, {
         headers: getAuthHeaders(),
       });
       console.log("Videos fetched:", response.data);
@@ -116,7 +117,7 @@ export default function VideoManagementPage() {
   const handleAddVideo = async (formData: FormData) => {
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/videos",
+        `${API_URL}/videos`,
         formData,
         {
           headers: {
@@ -144,7 +145,7 @@ export default function VideoManagementPage() {
   const handleUpdateVideo = async (videoId: string, formData: FormData) => {
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/videos/${videoId}`,
+        `${API_URL}/videos/${videoId}`,
         formData,
         {
           headers: {
@@ -167,7 +168,7 @@ export default function VideoManagementPage() {
     if (!confirm("Are you sure you want to delete this video?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/videos/${videoId}`, {
+      await axios.delete(`${API_URL}/videos/${videoId}`, {
         headers: getAuthHeaders(),
       });
 
@@ -384,7 +385,7 @@ export default function VideoManagementPage() {
                 <div className="relative aspect-video bg-gray-900 flex items-center justify-center">
                   <video className="w-full h-full object-cover">
                     <source
-                      src={`http://localhost:5000/${video.videoUrl}`}
+                      src={`${API_BASE_URL}/${video.videoUrl}`}
                       type="video/mp4"
                     />
                   </video>

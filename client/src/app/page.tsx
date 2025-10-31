@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import Link from "next/link";
+import { API_URL } from "@/lib/constants";
 
 interface VideoData {
   _id: string;
@@ -99,7 +100,7 @@ export default function DashboardPage() {
   const fetchVideos = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://localhost:5000/api/videos", {
+      const response = await axios.get(`${API_URL}/videos`, {
         headers: getAuthHeaders(),
       });
       setVideos(response.data.videos || response.data);

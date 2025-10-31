@@ -3,6 +3,7 @@ import { useState } from "react";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { API_URL } from "@/lib/constants";
 
 type AuthProps = {
   type: "login" | "register";
@@ -31,8 +32,8 @@ export default function AuthForm({ type }: AuthProps) {
     try {
       const url =
         type === "login"
-          ? "http://localhost:5000/api/login"
-          : "http://localhost:5000/api/auth/register";
+          ? `${API_URL}/login`
+          : `${API_URL}/auth/register`;
       const reqData = { username: data.username, password: data.password };
       await axios.post(url, reqData);
       window.location.href = "/";

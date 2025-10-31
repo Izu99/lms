@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
+import { API_URL } from "@/lib/constants";
 
 interface ClassData {
   _id: string;
@@ -81,8 +82,8 @@ export default function SettingsPage() {
     try {
       setLoading(true);
       const [classRes, yearRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/classes", { headers: getAuthHeaders() }),
-        axios.get("http://localhost:5000/api/years", { headers: getAuthHeaders() })
+        axios.get(`${API_URL}/classes`, { headers: getAuthHeaders() }),
+        axios.get(`${API_URL}/years`, { headers: getAuthHeaders() })
       ]);
       
       setClasses(classRes.data.classes || []);
@@ -103,10 +104,10 @@ export default function SettingsPage() {
   const handleSaveClass = async (classData: { name: string; location: string }) => {
     try {
       if (editingClass) {
-        await axios.put(`http://localhost:5000/api/classes/${editingClass._id}`, 
+        await axios.put(`${API_URL}/classes/${editingClass._id}`, 
           classData, { headers: getAuthHeaders() });
       } else {
-        await axios.post("http://localhost:5000/api/classes", 
+        await axios.post(`${API_URL}/classes`, 
           classData, { headers: getAuthHeaders() });
       }
       
@@ -123,7 +124,7 @@ export default function SettingsPage() {
     if (!confirm("Are you sure you want to delete this class?")) return;
     
     try {
-      await axios.delete(`http://localhost:5000/api/classes/${id}`, 
+      await axios.delete(`${API_URL}/classes/${id}`, 
         { headers: getAuthHeaders() });
       await fetchData();
     } catch (error) {
@@ -136,10 +137,10 @@ export default function SettingsPage() {
   const handleSaveYear = async (yearData: { year: number; name: string }) => {
     try {
       if (editingYear) {
-        await axios.put(`http://localhost:5000/api/years/${editingYear._id}`, 
+        await axios.put(`${API_URL}/years/${editingYear._id}`, 
           yearData, { headers: getAuthHeaders() });
       } else {
-        await axios.post("http://localhost:5000/api/years", 
+        await axios.post(`${API_URL}/years`, 
           yearData, { headers: getAuthHeaders() });
       }
       
@@ -156,7 +157,7 @@ export default function SettingsPage() {
     if (!confirm("Are you sure you want to delete this year?")) return;
     
     try {
-      await axios.delete(`http://localhost:5000/api/years/${id}`, 
+      await axios.delete(`${API_URL}/years/${id}`, 
         { headers: getAuthHeaders() });
       await fetchData();
     } catch (error) {

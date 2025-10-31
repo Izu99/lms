@@ -5,13 +5,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
-const MONGO_URI = process.env.MONGO_URI;
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const path_1 = __importDefault(require("path"));
 const cors_1 = __importDefault(require("cors"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const PORT = process.env.PORT ? Number(process.env.PORT) : 5000;
+const MONGO_URI = process.env.MONGO_URI;
 // Import routes
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
 const classRoutes_1 = __importDefault(require("./routes/classRoutes"));
@@ -28,14 +28,17 @@ app.use((req, res, next) => {
     console.log('Request received:', req.method, req.url);
     next();
 });
-const allowedOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
-console.log('Allowed origin:', allowedOrigin);
+// ✅ CORS setup for both local and Azure frontend
+const allowedOrigins = [
+    process.env.CLIENT_ORIGIN,
+    'http://localhost:3000',
+    'https://lms-frontend-app.azurewebsites.net'
+].filter(Boolean);
 app.use((0, cors_1.default)({
-    origin: allowedOrigin,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: allowedOrigins,
     credentials: true,
-    optionsSuccessStatus: 204,
 }));
+console.log('Allowed origins:', allowedOrigins);
 app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '..', 'uploads')));
 // Use routes
 app.use('/api/auth', authRoutes_1.default);
@@ -45,6 +48,9 @@ app.use('/api/papers', paperRoutes_1.default);
 app.use('/api/videos', videoRoutes_1.default);
 app.use('/api/years', yearRoutes_1.default);
 app.use('/api/youtube', youtubeRoutes_1.default);
+app.get('/', (req, res) => {
+    res.send('✅ Backend is running on Azure');
+});
 // Global error handler
 app.use((err, req, res, next) => {
     console.error('Global error handler:', err);

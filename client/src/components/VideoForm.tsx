@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Upload, Video, File, School, Calendar } from "lucide-react";
 import axios from "axios";
+import { API_URL } from "@/lib/constants";
 
 interface VideoData {
   _id: string;
@@ -84,8 +85,8 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
     try {
       setDataLoading(true);
       const [classRes, yearRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/classes", { headers: getAuthHeaders() }),
-        axios.get("http://localhost:5000/api/years", { headers: getAuthHeaders() })
+        axios.get(`${API_URL}/classes`, { headers: getAuthHeaders() }),
+        axios.get(`${API_URL}/years`, { headers: getAuthHeaders() })
       ]);
       
       setClasses(classRes.data.classes || []);

@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import Link from "next/link";
+import { API_URL } from "@/lib/constants";
 
 interface Result {
   _id: string;
@@ -60,7 +61,7 @@ export default function MyResultsPage() {
     try {
       setLoading(true);
       // No need for explicit headers, axios.defaults.withCredentials = true handles cookies
-      const response = await axios.get("http://localhost:5000/api/papers/results/my-results");
+      const response = await axios.get(`${API_URL}/papers/results/my-results`);
       setResults(response.data.results || []);
     } catch (error) {
       console.error("Error fetching results:", error);
