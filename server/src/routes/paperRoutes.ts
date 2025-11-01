@@ -24,5 +24,6 @@ router.delete('/:id', protect, deletePaper);
 router.post('/:id/submit', protect, submitPaper);
 router.get('/results/my-results', protect, getStudentResults);
 router.get('/:id/results', protect, getPaperResults);
+router.get('/student/all', protect, getAllPapersForStudent);
 
 export default router;

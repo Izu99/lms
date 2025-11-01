@@ -44,6 +44,8 @@ export default function PapersPage() {
   const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [deleting, setDeleting] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<'available' | 'expired' | 'not-answered' | 'answered'>('available');
+  const [answeredPapers, setAnsweredPapers] = useState<string[]>([]);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -63,14 +65,18 @@ export default function PapersPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/papers`, {
+      const url = user?.role === 'student' ? `${API_URL}/papers/student/all` : `${API_URL}/papers`;
+      const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPapers(response.data.papers || []);
+      if (user?.role === 'student') {
+        setAnsweredPapers(response.data.answeredPapers || []);
+        setActiveTab('not-answered');
+      }
     } catch (error) {
       console.error("Error fetching papers:", error);
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        // If 401, it means the cookie is invalid or missing, redirect to login
         window.location.href = "/login";
       } else {
         setError("Failed to load papers");
@@ -136,13 +142,36 @@ export default function PapersPage() {
     return `${hours}h left`;
   };
 
-  const filteredPapers = papers.filter(paper =>
-    paper.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    paper.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const isStudent = user?.role === "student";
+
+  const filteredPapers = papers.filter(paper => {
+    const matchesSearch = paper.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          paper.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (isStudent) {
+      const isAnswered = answeredPapers.includes(paper._id);
+      const expired = isExpired(paper.deadline);
+
+      if (activeTab === 'not-answered') {
+        return matchesSearch && !isAnswered && !expired;
+      }
+      if (activeTab === 'answered') {
+        return matchesSearch && isAnswered;
+      }
+      if (activeTab === 'expired') {
+        return matchesSearch && expired;
+      }
+      return false;
+    } else { // Teacher/Admin view
+      if (activeTab === 'available') {
+        return matchesSearch && !isExpired(paper.deadline);
+      } else {
+        return matchesSearch && isExpired(paper.deadline);
+      }
+    }
+  });
 
   // Check if user is student for different UI
-  const isStudent = user?.role === "student";
 
   if (authLoading || loading) {
     return (
@@ -227,6 +256,63 @@ export default function PapersPage() {
             </div>
           </div>
         </motion.div>
+
+        {/* Tabs for Students */}
+        {isStudent && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mb-8 flex space-x-4"
+          >
+            <Button 
+              variant={activeTab === 'not-answered' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('not-answered')}
+              className={activeTab === 'not-answered' ? "bg-blue-600 hover:bg-blue-700 text-white" : "text-gray-700 hover:bg-gray-100"}
+            >
+              Not Answered
+            </Button>
+            <Button 
+              variant={activeTab === 'answered' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('answered')}
+              className={activeTab === 'answered' ? "bg-blue-600 hover:bg-blue-700 text-white" : "text-gray-700 hover:bg-gray-100"}
+            >
+              Answered
+            </Button>
+            <Button 
+              variant={activeTab === 'expired' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('expired')}
+              className={activeTab === 'expired' ? "bg-blue-600 hover:bg-blue-700 text-white" : "text-gray-700 hover:bg-gray-100"}
+            >
+              Expired
+            </Button>
+          </motion.div>
+        )}
+
+        {/* Tabs for Teachers */}
+        {!isStudent && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mb-8 flex space-x-4"
+          >
+            <Button 
+              variant={activeTab === 'available' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('available')}
+              className={activeTab === 'available' ? "bg-blue-600 hover:bg-blue-700 text-white" : "text-gray-700 hover:bg-gray-100"}
+            >
+              Available Papers
+            </Button>
+            <Button 
+              variant={activeTab === 'expired' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('expired')}
+              className={activeTab === 'expired' ? "bg-blue-600 hover:bg-blue-700 text-white" : "text-gray-700 hover:bg-gray-100"}
+            >
+              Expired Papers
+            </Button>
+          </motion.div>
+        )}
 
         {/* Statistics Cards - Role Based */}
         <motion.div 

@@ -462,7 +462,33 @@ export const deletePaper = async (req: Request, res: Response) => {
     });
 
   } catch (error) {
+
     console.error('Delete paper error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get all papers for a student
+export const getAllPapersForStudent = async (req: Request, res: Response) => {
+  try {
+    const requestingUser = (req as any).user;
+
+    if (requestingUser.role !== 'student') {
+      return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const papers = await Paper.find()
+      .select('-questions.options.isCorrect -teacherId')
+      .sort({ deadline: 1 });
+
+    const attemptedPapers = await StudentAttempt.find({
+      studentId: requestingUser._id
+    }).distinct('paperId');
+
+    res.json({ papers, attemptedPapers, total: papers.length });
+
+  } catch (error) {
+    console.error('Get all papers for student error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
