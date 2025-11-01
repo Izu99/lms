@@ -11,32 +11,10 @@ import {
   BookOpen,
   Target,
 } from "lucide-react";
-
-// Simulating your components since we can't import them
-const Input = ({ className, ...props }: { className?: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
-  <input
-    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${className}`}
-    {...props}
-  />
-);
-
-const Button = ({ className, children, ...props }: { className?: string; children: React.ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
-  <button
-    className={`px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${className}`}
-    {...props}
-  >
-    {children}
-  </button>
-);
-
-// Mock Link component
-const Link = ({ href, children, className, ...props }: { href: string; children: React.ReactNode; className?: string } & React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-  <a href={href} className={className} {...props}>
-    {children}
-  </a>
-);
-
-import { API_BASE_URL, API_URL } from "@/lib/constants";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { API_URL } from "@/lib/constants";
 
 export default function LoginPage() {
   const [data, setData] = useState({ username: "", password: "" });

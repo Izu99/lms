@@ -7,15 +7,14 @@ if (!JWT_SECRET) throw new Error('JWT_SECRET is not set!');
 
 // Registration controller
 export const register = async (req: Request, res: Response) => {
-  const { username, password } = req.body;
+  const { username, password, firstName, lastName, address, institute, district, phoneNumber, whatsappNumber, telegramNumber } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ message: 'Username and password are required' });
   }
 
   try {
-    // Check if username already exists
-    const existingUser = await User.findOne({ username });
+    const existingUser = await User.findOne({ username: { $regex: new RegExp("^" + username + "$", "i") } });
     if (existingUser) {
       return res.status(400).json({ message: 'Username already taken' });
     }
@@ -24,6 +23,14 @@ export const register = async (req: Request, res: Response) => {
     const user = new User({
       username,
       password,
+      firstName,
+      lastName,
+      address,
+      institute,
+      district,
+      phoneNumber,
+      whatsappNumber,
+      telegramNumber,
       role: 'student',
     });
 

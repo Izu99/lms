@@ -11,6 +11,12 @@ export interface IUser extends Document {
   email?: string;
   firstName?: string;
   lastName?: string;
+  address?: string;
+  institute?: string;
+  district?: string;
+  phoneNumber?: string;
+  whatsappNumber?: string;
+  telegramNumber?: string;
   role: Role;
   status?: StudentStatus; // Added status field
   notes?: string; // Added notes for teachers to add comments
@@ -20,9 +26,15 @@ export interface IUser extends Document {
 const userSchema = new mongoose.Schema<IUser>({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  email: { type: String, unique: true, sparse: true },
+  email: { type: String },
   firstName: { type: String },
   lastName: { type: String },
+  address: { type: String },
+  institute: { type: String },
+  district: { type: String },
+  phoneNumber: { type: String },
+  whatsappNumber: { type: String },
+  telegramNumber: { type: String },
   role: { type: String, enum: ['student', 'teacher', 'admin'], default: 'student' },
   status: { 
     type: String, 
