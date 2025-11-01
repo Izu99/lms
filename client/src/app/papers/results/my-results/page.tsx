@@ -45,7 +45,11 @@ export default function MyResultsPage() {
   const { user, loading: authLoading } = useAuth();
 
   const getAuthHeaders = () => {
-    return { 'Content-Type': 'application/json' }; // No Authorization header needed for cookie-based auth
+    const token = localStorage.getItem('token');
+    return { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }; 
   };
 
   useEffect(() => {
@@ -60,8 +64,8 @@ export default function MyResultsPage() {
   const fetchResults = async () => {
     try {
       setLoading(true);
-      // No need for explicit headers, axios.defaults.withCredentials = true handles cookies
-      const response = await axios.get(`${API_URL}/papers/results/my-results`);
+      const headers = getAuthHeaders();
+      const response = await axios.get(`${API_URL}/papers/results/my-results`, { headers });
       setResults(response.data.results || []);
     } catch (error) {
       console.error("Error fetching results:", error);
