@@ -28,11 +28,28 @@ interface NavbarProps {
   onLogout?: () => void;
 }
 
+import { useRouter } from "next/navigation";
+
+
+
+// ...
+
+
+
 export default function Navbar({ user, onLogout }: NavbarProps) {
+
+  const router = useRouter();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
-  // Different navigation tabs based on user role
+
+
+  // ...
+
+
+
   const getNavTabs = () => {
     if (!user) {
       return [];
@@ -72,14 +89,26 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
   const navTabs = getNavTabs();
 
   const handleLogout = () => {
+
     if (onLogout) {
+
       onLogout();
-    } else {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = "/login";
+
     }
+
+    else {
+
+      localStorage.removeItem('token');
+
+      localStorage.removeItem('user');
+
+      router.push("/login");
+
+    }
+
   };
+
+
 
   return (
     <header className="bg-white shadow-sm border-b sticky top-0 z-50">

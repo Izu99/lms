@@ -87,17 +87,17 @@ export const getAllPapers = async (req: Request, res: Response) => {
       const currentDate = new Date();
       
       // Get paper IDs that student has already attempted
-      const attemptedPapers = await StudentAttempt.find({ 
-        studentId: requestingUser._id 
+      const attemptedPapers = await StudentAttempt.find({
+        studentId: requestingUser._id
       }).distinct('paperId');
-
+      
       papers = await Paper.find({
         deadline: { $gte: currentDate },
         _id: { $nin: attemptedPapers }
       }).select('-questions.options.isCorrect -teacherId')
         .sort({ deadline: 1 });
     }
-
+    
     res.json({ papers, total: papers.length });
 
   } catch (error) {
@@ -121,23 +121,10 @@ export const getPaperById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Paper not found' });
     }
 
-    // Check if student has already attempted
     if (requestingUser.role === 'student') {
-      const existingAttempt = await StudentAttempt.findOne({
-        paperId: id,
-        studentId: requestingUser._id
-      });
+      const isPaperExpired = new Date() > paper.deadline;
 
-      if (existingAttempt) {
-        return res.status(400).json({ message: 'You have already attempted this paper' });
-      }
-
-      // Check if paper is still available
-      if (new Date() > paper.deadline) {
-        return res.status(400).json({ message: 'This paper is no longer available' });
-      }
-
-      // Return paper without correct answers for students
+      // Construct studentPaper
       const studentPaper = {
         _id: paper._id,
         title: paper.title,
@@ -149,14 +136,17 @@ export const getPaperById = async (req: Request, res: Response) => {
           _id: q._id,
           questionText: q.questionText,
           order: q.order,
-          imageUrl: q.imageUrl, // Add this line
+          imageUrl: q.imageUrl,
           options: q.options.map(opt => ({
             _id: opt._id,
-            optionText: opt.optionText
+            optionText: opt.optionText,
+            // Include isCorrect if paper is expired
+            ...(isPaperExpired && { isCorrect: opt.isCorrect })
           }))
         }))
       };
 
+      // Always return the paper, client will handle if it's attempted or expired
       return res.json({ paper: studentPaper });
     }
 
@@ -280,6 +270,7 @@ export const getStudentResults = async (req: Request, res: Response) => {
     .populate('paperId', 'title description deadline')
     .sort({ submittedAt: -1 });
 
+    console.log(`Found ${results.length} submitted results for student ${requestingUser._id}`);
     res.json({ results });
 
   } catch (error) {
@@ -489,6 +480,38 @@ export const getAllPapersForStudent = async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Get all papers for student error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get a single student attempt for a paper
+export const getStudentAttemptForPaper = async (req: Request, res: Response) => {
+  try {
+    const { paperId } = req.params;
+    const requestingUser = (req as any).user;
+
+    if (requestingUser.role !== 'student') {
+      return res.status(403).json({ message: 'Access denied. Only students can view their attempts.' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(paperId)) {
+      return res.status(400).json({ message: 'Invalid paper ID' });
+    }
+
+    const studentAttempt = await StudentAttempt.findOne({
+      paperId: paperId,
+      studentId: requestingUser._id,
+      status: 'submitted'
+    }).populate('paperId', 'title description deadline timeLimit totalQuestions'); // Populate paper details
+
+    if (!studentAttempt) {
+      return res.status(404).json({ message: 'Student attempt not found for this paper.' });
+    }
+
+    res.json({ studentAttempt });
+
+  } catch (error) {
+    console.error('Get student attempt for paper error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

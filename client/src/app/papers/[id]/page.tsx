@@ -1,160 +1,125 @@
-"use client";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Navbar from "@/components/Navbar";
+'use client';
+
+import { use, useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import {
-  FileText,
   Clock,
-  AlertTriangle,
   CheckCircle,
-  ArrowLeft,
-  Timer,
+  AlertTriangle,
+  FileText,
   User,
+  Timer,
   Calendar,
+  ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  Save,
-  AlertCircle as AlertIcon,
-  Zap
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import axios from "axios";
-import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
-import { API_BASE_URL, API_URL } from "@/lib/constants";
+  Zap,
+  Eye
+} from 'lucide-react';
+import Navbar from '@/components/Navbar';
+import { Button } from '@/components/ui/button';
+import { API_URL, API_BASE_URL } from '@/lib/constants';
 
-interface Option {
-  _id: string;
-  optionText: string;
-}
-
-interface Question {
-  _id: string;
-  questionText: string;
-  options: Option[];
-  order: number;
-  imageUrl?: string;
-}
-
-interface Paper {
-  _id: string;
-  title: string;
-  description?: string;
-  deadline: string;
-  timeLimit: number;
-  totalQuestions: number;
-  questions: Question[];
-}
-
-
-
-export default function PaperAttemptPage() {
+export default function PaperAttempt({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { id: paperId } = useParams();
-  const [paper, setPaper] = useState<Paper | null>(null);
-  const { user, loading: authLoading } = useAuth();
+  const resolvedParams = use(params);
+  const paperId = resolvedParams.id;
+
+  // State management
+  const [paper, setPaper] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [answers, setAnswers] = useState<{ [questionId: string]: string }>({});
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [error, setError] = useState('');
   const [started, setStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [studentAttempt, setStudentAttempt] = useState<any>(null);
 
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          router.push('/login');
+          return;
+        }
+        const headers = { Authorization: `Bearer ${token}` };
+        const response = await axios.get(`${API_URL}/auth/me`, { headers });
+        setUser(response.data.user);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        router.push('/login');
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [router]);
+
+  // Helper function to get auth headers
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
-    return { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }; 
+    return {
+      Authorization: `Bearer ${token}`
+    };
   };
 
-  useEffect(() => {
-    if (!authLoading && user && paperId) {
-      fetchPaper();
+  // Format time display
+  const formatTime = useCallback((seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }, []);
+
+  // Get time warning level
+  const getTimeWarningLevel = useCallback(() => {
+    if (timeLeft <= 60) return "critical"; // 1 minute - red
+    if (timeLeft <= 300) return "warning"; // 5 minutes - orange
+    if (timeLeft <= 600) return "caution"; // 10 minutes - yellow
+    return "safe"; // green/blue
+  }, [timeLeft]);
+
+  // Get time warning style
+  const getTimeWarningStyle = useCallback(() => {
+    const level = getTimeWarningLevel();
+    switch (level) {
+      case "critical":
+        return "text-red-600 bg-red-100 animate-pulse";
+      case "warning":
+        return "text-orange-600 bg-orange-100";
+      case "caution":
+        return "text-yellow-600 bg-yellow-100";
+      default:
+        return "text-blue-600 bg-blue-100";
     }
-  }, [authLoading, user, paperId]);
+  }, [getTimeWarningLevel]);
 
-  // Timer effect with auto-save and warnings
-  useEffect(() => {
-    if (started && timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            handleSubmit(true); // Auto submit when time runs out
-            return 0;
-          }
-          
-          // Auto-save every 30 seconds
-          if (prev % 30 === 0) {
-            autoSave();
-          }
-          
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
+  // Time warning notifications
+  const showTimeWarning = useCallback(() => {
+    const level = getTimeWarningLevel();
+    if (level === "critical") {
+      return "⚠️ CRITICAL: Less than 1 minute remaining!";
+    } else if (level === "warning") {
+      return "⚠️ WARNING: Less than 5 minutes remaining!";
+    } else if (level === "caution") {
+      return "⚠️ CAUTION: Less than 10 minutes remaining!";
     }
-  }, [started, timeLeft, answers]);
+    return null;
+  }, [getTimeWarningLevel]);
 
-  // Auto-save when answer changes (debounced)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (started && Object.keys(answers).length > 0) {
-        autoSave();
-      }
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [answers]);
-
-  const fetchPaper = async () => {
-    if (!paperId) {
-      setError("Paper ID is missing.");
-      setLoading(false);
-      return;
-    }
-    try {
-      setLoading(true);
-      console.log("Fetching paper with ID:", paperId, "for user role:", user?.role); // Added log
-      const headers = getAuthHeaders();
-      const response = await axios.get(`${API_URL}/papers/${paperId}`, { headers });
-      setPaper(response.data.paper);
-      setTimeLeft(response.data.paper.timeLimit * 60); // Convert to seconds
-    } catch (error) {
-      console.error("Error fetching paper:", error);
-      if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message;
-        if (error.response?.status === 400) {
-          if (errorMessage === 'Invalid paper ID') {
-            setError('Invalid paper ID. Please check the URL.');
-          } else if (errorMessage === 'You have already attempted this paper') {
-            setError('You have already attempted this paper. Please check your results.');
-            router.push('/papers/results/my-results'); // Redirect to results page
-          } else if (errorMessage === 'This paper is no longer available') {
-            setError('This paper is no longer available. The deadline has passed.');
-          } else {
-            setError(errorMessage || "Failed to load paper due to a bad request.");
-          }
-        } else if (error.response?.status === 404) {
-          setError('Paper not found.');
-        } else {
-          setError(errorMessage || "Failed to load paper.");
-        }
-      } else {
-        setError("Failed to load paper due to a network error.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const autoSave = async () => {
-    if (!started || Object.keys(answers).length === 0) return;
+  // Auto-save function
+  const autoSave = useCallback(async () => {
+    if (!started || Object.keys(answers).length === 0 || isReviewMode) return;
     
     try {
       setAutoSaving(true);
@@ -167,49 +132,10 @@ export default function PaperAttemptPage() {
     } finally {
       setAutoSaving(false);
     }
-  };
+  }, [started, answers, isReviewMode]);
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const getTimeWarningLevel = () => {
-    if (timeLeft <= 60) return "critical"; // 1 minute - red
-    if (timeLeft <= 300) return "warning"; // 5 minutes - orange
-    if (timeLeft <= 600) return "caution"; // 10 minutes - yellow
-    return "safe"; // green/blue
-  };
-
-  const getTimeWarningStyle = () => {
-    const level = getTimeWarningLevel();
-    switch (level) {
-      case "critical":
-        return "text-red-600 bg-red-100 animate-pulse";
-      case "warning":
-        return "text-orange-600 bg-orange-100";
-      case "caution":
-        return "text-yellow-600 bg-yellow-100";
-      default:
-        return "text-blue-600 bg-blue-100";
-    }
-  };
-
-  const handleAnswerChange = (questionId: string, optionId: string) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: optionId
-    }));
-  };
-
-  const goToQuestion = (index: number) => {
-    if (index >= 0 && index < (paper?.questions.length || 0)) {
-      setCurrentQuestion(index);
-    }
-  };
-
-  const handleSubmit = async (autoSubmit = false) => {
+  // Handle submit
+  const handleSubmit = useCallback(async (autoSubmit = false) => {
     if (!autoSubmit) {
       const confirmSubmit = window.confirm(
         "Are you sure you want to submit your paper? You cannot change your answers after submission."
@@ -254,33 +180,121 @@ export default function PaperAttemptPage() {
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [answers, paper, timeLeft, paperId, router]);
 
-  const startPaper = () => {
+  // Fetch paper
+  const fetchPaper = useCallback(async () => {
+    if (!paperId) {
+      setError("Paper ID is missing.");
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      console.log("Fetching paper with ID:", paperId, "for user role:", user?.role);
+      const headers = getAuthHeaders();
+      const response = await axios.get(`${API_URL}/papers/${paperId}`, { headers });
+      setPaper(response.data.paper);
+      setTimeLeft(response.data.paper.timeLimit * 60); // Convert to seconds
+    } catch (error) {
+      console.error("Error fetching paper:", error);
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message;
+        if (error.response?.status === 400) {
+          if (errorMessage === 'Invalid paper ID') {
+            setError('Invalid paper ID. Please check the URL.');
+          } else if (errorMessage === 'You have already attempted this paper') {
+            console.log("Attempted paper detected, redirecting to results.");
+            setError('You have already attempted this paper. Please check your results.');
+            router.push('/papers/results/my-results');
+            return;
+          } else {
+            setError(errorMessage || "Failed to load paper due to a bad request.");
+          }
+        } else if (error.response?.status === 404) {
+          setError('Paper not found.');
+        } else {
+          setError(errorMessage || "Failed to load paper.");
+        }
+      } else {
+        setError("Failed to load paper due to a network error.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [paperId, user?.role, router]);
+
+  // Handle answer change
+  const handleAnswerChange = useCallback((questionId: string, optionId: string) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: optionId
+    }));
+  }, []);
+
+  // Go to question
+  const goToQuestion = useCallback((index: number) => {
+    if (index >= 0 && index < (paper?.questions.length || 0)) {
+      setCurrentQuestion(index);
+    }
+  }, [paper?.questions.length]);
+
+  // Start paper
+  const startPaper = useCallback(() => {
     setStarted(true);
     setCurrentQuestion(0);
-  };
+  }, []);
 
-  const isExpired = () => {
+  // Check if expired
+  const isExpired = useCallback(() => {
     return paper && new Date() > new Date(paper.deadline);
-  };
+  }, [paper]);
 
+  // Timer effect with auto-save and warnings
+  useEffect(() => {
+    if (started && timeLeft > 0 && !isReviewMode) {
+      const timer = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            handleSubmit(true); // Auto submit when time runs out
+            return 0;
+          }
+          
+          // Auto-save every 30 seconds
+          if (prev % 30 === 0) {
+            autoSave();
+          }
+          
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [started, timeLeft, isReviewMode, handleSubmit, autoSave]);
+
+  // Auto-save when answer changes (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (started && Object.keys(answers).length > 0 && !isReviewMode) {
+        autoSave();
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [answers, isReviewMode, started, autoSave]);
+
+  // Fetch paper on mount
+  useEffect(() => {
+    if (paperId && user) {
+      fetchPaper();
+    }
+  }, [paperId, user, fetchPaper]);
+
+  // Calculate stats
   const answeredCount = Object.keys(answers).length;
   const totalQuestions = paper?.questions.length || 0;
   const currentQuestionData = paper?.questions[currentQuestion];
-
-  // Time warning notifications
-  const showTimeWarning = () => {
-    const level = getTimeWarningLevel();
-    if (level === "critical") {
-      return "⚠️ CRITICAL: Less than 1 minute remaining!";
-    } else if (level === "warning") {
-      return "⚠️ WARNING: Less than 5 minutes remaining!";
-    } else if (level === "caution") {
-      return "⚠️ CAUTION: Less than 10 minutes remaining!";
-    }
-    return null;
-  };
 
   if (authLoading || loading) {
     return (
@@ -329,25 +343,6 @@ export default function PaperAttemptPage() {
                 <Button>View Results</Button>
               </Link>
             </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (isExpired()) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <Navbar user={user} />
-
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-            <AlertTriangle className="text-red-500 text-5xl mb-4 mx-auto" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Paper Expired</h1>
-            <p className="text-gray-600 mb-6">This paper is no longer available for submission.</p>
-            <Link href="/papers">
-              <Button>Back to Papers</Button>
-            </Link>
           </div>
         </main>
       </div>
@@ -419,9 +414,15 @@ export default function PaperAttemptPage() {
                   Back to Papers
                 </Button>
               </Link>
-              <Button onClick={startPaper} className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
-                Start Paper
-              </Button>
+              {!isExpired() ? (
+                <Button onClick={startPaper} className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                  Start Paper
+                </Button>
+              ) : (
+                <div className="flex-1 text-center text-gray-600 font-medium py-3 px-4 rounded-xl bg-gray-100 border border-gray-200">
+                  This paper is expired. Answers are shown below.
+                </div>
+              )}
             </div>
           </motion.div>
         ) : (
@@ -460,7 +461,7 @@ export default function PaperAttemptPage() {
                     ) : null}
                   </div>
                   
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-4">
                     <Clock size={20} className={getTimeWarningLevel() === "critical" ? "animate-pulse" : ""} />
                     <span className={`font-bold text-2xl ${getTimeWarningLevel() === "critical" ? "animate-pulse" : ""}`}>
                       {formatTime(timeLeft)}
@@ -487,13 +488,29 @@ export default function PaperAttemptPage() {
               </AnimatePresence>
             </motion.div>
 
+            {/* Review Mode Header */}
+            {isReviewMode && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6"
+              >
+                <div className="flex items-center gap-3 text-blue-800">
+                  <Eye size={20} />
+                  <p className="font-semibold">
+                    Review Mode: Correct answers are highlighted in green. Your answers (if any) are highlighted in red if incorrect.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
             {/* Question Navigation Sidebar */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               <div className="lg:col-span-1">
                 <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-4 sticky top-32">
                   <h3 className="font-semibold text-gray-900 mb-3">Question Navigator</h3>
                   <div className="grid grid-cols-5 gap-2">
-                    {paper.questions.map((_, index) => (
+                    {paper.questions.map((_: any, index: number) => (
                       <button
                         key={index}
                         onClick={() => goToQuestion(index)}
@@ -554,22 +571,33 @@ export default function PaperAttemptPage() {
                           )}
                           
                           <div className="space-y-3">
-                            {currentQuestionData.options.map((option, optionIndex) => (
+                            {currentQuestionData.options.map((option: any, optionIndex: number) => (
                               <label
                                 key={option._id}
-                                className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                                  answers[currentQuestionData._id] === option._id
-                                    ? 'border-blue-500 bg-blue-50'
-                                    : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25'
-                                }`}
+                                className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-200 ${
+                                  // If in review mode
+                                  isReviewMode
+                                    ? // If this is the correct answer
+                                      option.isCorrect
+                                      ? 'border-green-500 bg-green-50'
+                                      : // If this is the student's selected answer and it's incorrect
+                                        studentAttempt?.answers.find((a: any) => a.questionId === currentQuestionData._id)?.selectedOptionId === option._id
+                                        ? 'border-red-500 bg-red-50'
+                                        : 'border-gray-200' // Default for other options in review mode
+                                    : // If not in review mode (i.e., actively taking the exam)
+                                      answers[currentQuestionData._id] === option._id
+                                      ? 'border-blue-500 bg-blue-50'
+                                      : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25'
+                                } ${isReviewMode ? 'cursor-default' : 'cursor-pointer'}`}
                               >
                                 <input
                                   type="radio"
                                   name={`question-${currentQuestionData._id}`}
                                   value={option._id}
-                                  checked={answers[currentQuestionData._id] === option._id}
+                                  checked={answers[currentQuestionData._id] === option._id || (isReviewMode && studentAttempt?.answers.find((a: any) => a.questionId === currentQuestionData._id)?.selectedOptionId === option._id)}
                                   onChange={() => handleAnswerChange(currentQuestionData._id, option._id)}
                                   className="w-5 h-5 text-blue-600"
+                                  disabled={isReviewMode}
                                 />
                                 <span className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium">
                                   {String.fromCharCode(65 + optionIndex)}
@@ -581,7 +609,7 @@ export default function PaperAttemptPage() {
                             ))}
                           </div>
                         </div>
-                        {answers[currentQuestionData._id] && (
+                        {answers[currentQuestionData._id] && !isReviewMode && (
                           <CheckCircle className="text-green-500 flex-shrink-0" size={24} />
                         )}
                       </div>
@@ -618,43 +646,45 @@ export default function PaperAttemptPage() {
             </div>
 
             {/* Submit Section */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Ready to Submit?</h3>
-                  <p className="text-gray-600">
-                    You have answered {answeredCount} out of {totalQuestions} questions.
-                  </p>
-                  
-                  {answeredCount < totalQuestions && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3">
-                      <p className="text-yellow-700 text-sm">
-                        ⚠️ You haven&apos;t answered all questions. Unanswered questions will be marked as incorrect.
-                      </p>
-                    </div>
-                  )}
-                </div>
+            {!isReviewMode && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Ready to Submit?</h3>
+                    <p className="text-gray-600">
+                      You have answered {answeredCount} out of {totalQuestions} questions.
+                    </p>
+                    
+                    {answeredCount < totalQuestions && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3">
+                        <p className="text-yellow-700 text-sm">
+                          ⚠️ You haven&apos;t answered all questions. Unanswered questions will be marked as incorrect.
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
-                <Button
-                  onClick={() => handleSubmit()}
-                  disabled={submitting}
-                  className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-8 py-3 rounded-xl font-semibold text-lg"
-                >
-                  {submitting ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Submitting...
-                    </div>
-                  ) : (
-                    "Submit Paper"
-                  )}
-                </Button>
-              </div>
-            </motion.div>
+                  <Button
+                    onClick={() => handleSubmit()}
+                    disabled={submitting}
+                    className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-8 py-3 rounded-xl font-semibold text-lg"
+                  >
+                    {submitting ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Submitting...
+                      </div>
+                    ) : (
+                      "Submit Paper"
+                    )}
+                  </Button>
+                </div>
+              </motion.div>
+            )}
           </div>
         )}
       </main>

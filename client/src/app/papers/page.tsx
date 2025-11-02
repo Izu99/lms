@@ -71,7 +71,7 @@ export default function PapersPage() {
       });
       setPapers(response.data.papers || []);
       if (user?.role === 'student') {
-        setAnsweredPapers(response.data.answeredPapers || []);
+        setAnsweredPapers(response.data.attemptedPapers || []);
         setActiveTab('not-answered');
       }
     } catch (error) {
@@ -151,15 +151,22 @@ export default function PapersPage() {
     if (isStudent) {
       const isAnswered = answeredPapers.includes(paper._id);
       const expired = isExpired(paper.deadline);
+      console.log(`Paper: ${paper.title} (ID: ${paper._id}) - isAnswered: ${isAnswered}, expired: ${expired}, activeTab: ${activeTab}`);
 
       if (activeTab === 'not-answered') {
-        return matchesSearch && !isAnswered && !expired;
+        const shouldShow = matchesSearch && !isAnswered && !expired;
+        console.log(`  -> not-answered tab: shouldShow = ${shouldShow}`);
+        return shouldShow;
       }
       if (activeTab === 'answered') {
-        return matchesSearch && isAnswered;
+        const shouldShow = matchesSearch && isAnswered;
+        console.log(`  -> answered tab: shouldShow = ${shouldShow}`);
+        return shouldShow;
       }
       if (activeTab === 'expired') {
-        return matchesSearch && expired;
+        const shouldShow = matchesSearch && expired;
+        console.log(`  -> expired tab: shouldShow = ${shouldShow}`);
+        return shouldShow;
       }
       return false;
     } else { // Teacher/Admin view
@@ -450,7 +457,7 @@ export default function PapersPage() {
                 transition={{ delay: index * 0.1 }}
                 className="group"
               >
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 h-full flex flex-col hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
@@ -475,12 +482,12 @@ export default function PapersPage() {
                   </div>
 
                   {paper.description && (
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-grow">
                       {paper.description}
                     </p>
                   )}
 
-                  <div className="space-y-3 mb-6">
+                  <div className="space-y-3 mb-6 mt-auto">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Users size={16} className="text-blue-500" />
                       <span>{paper.totalQuestions} Questions</span>
@@ -507,18 +514,39 @@ export default function PapersPage() {
                   </div>
 
                   {/* Action Buttons - Different for Students vs Teachers */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 mt-auto">
                     {isStudent ? (
                       /* Student View */
-                      <Link href={`/papers/${paper._id}`} className="w-full">
-                        <Button 
-                          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={isExpired(paper.deadline)}
-                        >
-                          <Play size={16} className="mr-2" />
-                          {isExpired(paper.deadline) ? 'Expired' : 'Start Exam'}
-                        </Button>
-                      </Link>
+                      <>
+                        {answeredPapers.includes(paper._id) ? (
+                          <Link href={`/papers/${paper._id}`} className="w-full">
+                            <Button 
+                              className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
+                            >
+                              <Trophy size={16} className="mr-2" />
+                              See Answer
+                            </Button>
+                          </Link>
+                        ) : isExpired(paper.deadline) ? (
+                          <Link href={`/papers/${paper._id}`} className="w-full">
+                            <Button 
+                              className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
+                            >
+                              <Eye size={16} className="mr-2" />
+                              See Answer
+                            </Button>
+                          </Link>
+                        ) : (
+                          <Link href={`/papers/${paper._id}`} className="w-full">
+                            <Button 
+                              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                            >
+                              <Play size={16} className="mr-2" />
+                              Start Exam
+                            </Button>
+                          </Link>
+                        )}
+                      </>
                     ) : (
                       /* Teacher View */
                       <>

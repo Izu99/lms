@@ -5,9 +5,11 @@ import {
   getPaperById,
   submitPaper,
   getStudentResults,
+  getAllPapersForStudent,
   getPaperResults,
   updatePaper, // Add these
   deletePaper, // Add these
+  getStudentAttemptForPaper,
 } from '../controllers/paperController';
 import { protect } from '../middleware/auth';
 
@@ -25,5 +27,6 @@ router.post('/:id/submit', protect, submitPaper);
 router.get('/results/my-results', protect, getStudentResults);
 router.get('/:id/results', protect, getPaperResults);
 router.get('/student/all', protect, getAllPapersForStudent);
+router.get('/:paperId/attempt', protect, getStudentAttemptForPaper);
 
 export default router;

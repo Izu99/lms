@@ -255,82 +255,89 @@ export default function MyResultsPage() {
         ) : (
           <div className="space-y-6">
             {results.map((result, index) => (
-              <motion.div
-                key={result._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 hover:shadow-xl transition-all duration-300"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
-                      {result.paperId.title}
-                    </h3>
-                    {result.paperId.description && (
-                      <p className="text-gray-600 mb-2">{result.paperId.description}</p>
-                    )}
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Calendar size={14} />
-                      <span>Submitted: {formatDate(result.submittedAt)}</span>
+              result.paperId ? ( // Add conditional check here
+                <motion.div
+                  key={result._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 p-6 hover:shadow-xl transition-all duration-300"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">
+                        {result.paperId.title}
+                      </h3>
+                      {result.paperId.description && (
+                        <p className="text-gray-600 mb-2">{result.paperId.description}</p>
+                      )}
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Calendar size={14} />
+                        <span>Submitted: {formatDate(result.submittedAt)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="text-right">
+                      <div className={`px-4 py-2 rounded-xl font-bold text-lg mb-2 ${getGradeColor(result.percentage)}`}>
+                        {getGradeLetter(result.percentage)}
+                      </div>
+                      <div className="flex items-center justify-end gap-1">
+                        {getPerformanceIcon(result.percentage)}
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="text-right">
-                    <div className={`px-4 py-2 rounded-xl font-bold text-lg mb-2 ${getGradeColor(result.percentage)}`}>
-                      {getGradeLetter(result.percentage)}
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600 text-sm">Score</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {result.score}/{result.totalQuestions}
+                      </p>
                     </div>
-                    <div className="flex items-center justify-end gap-1">
-                      {getPerformanceIcon(result.percentage)}
+
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600 text-sm">Percentage</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {result.percentage}%
+                      </p>
+                    </div>
+
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <p className="text-gray-600 text-sm">Time Spent</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        {result.timeSpent} min
+                      </p>
+                    </div>
+
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <p className="text-lg font-bold text-gray-900">
+                        {result.totalQuestions}
+                      </p>
                     </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-gray-600 text-sm">Score</p>
-                    <p className="text-lg font-bold text-gray-900">
-                      {result.score}/{result.totalQuestions}
-                    </p>
+                  {/* Enhanced Progress Bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-4 relative overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${result.percentage}%` }}
+                      transition={{ duration: 1, delay: index * 0.2 }}
+                      className={`h-4 rounded-full transition-all duration-1000 ${
+                        result.percentage >= 90 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
+                        result.percentage >= 80 ? 'bg-gradient-to-r from-blue-500 to-indigo-500' :
+                        result.percentage >= 60 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                        result.percentage >= 40 ? 'bg-gradient-to-r from-orange-500 to-red-500' :
+                        'bg-gradient-to-r from-red-500 to-red-600'
+                      }`}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-xs font-medium text-white drop-shadow">
+                        {result.percentage}%
+                      </span>
+                    </div>
                   </div>
-
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-gray-600 text-sm">Percentage</p>
-                    <p className="text-lg font-bold text-gray-900">{result.percentage}%</p>
-                  </div>
-
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-gray-600 text-sm">Time Spent</p>
-                    <p className="text-lg font-bold text-gray-900">{result.timeSpent} min</p>
-                  </div>
-
-                  <div className="text-center p-3 bg-gray-50 rounded-lg">
-                    <p className="text-gray-600 text-sm">Questions</p>
-                    <p className="text-lg font-bold text-gray-900">{result.totalQuestions}</p>
-                  </div>
-                </div>
-
-                {/* Enhanced Progress Bar */}
-                <div className="w-full bg-gray-200 rounded-full h-4 relative overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${result.percentage}%` }}
-                    transition={{ duration: 1, delay: index * 0.2 }}
-                    className={`h-4 rounded-full transition-all duration-1000 ${
-                      result.percentage >= 90 ? 'bg-gradient-to-r from-green-500 to-emerald-500' :
-                      result.percentage >= 80 ? 'bg-gradient-to-r from-blue-500 to-indigo-500' :
-                      result.percentage >= 60 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
-                      result.percentage >= 40 ? 'bg-gradient-to-r from-orange-500 to-red-500' :
-                      'bg-gradient-to-r from-red-500 to-red-600'
-                    }`}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xs font-medium text-white drop-shadow">
-                      {result.percentage}%
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              ) : null // Render nothing if result.paperId is null
             ))}
           </div>
         )}
