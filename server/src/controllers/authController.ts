@@ -7,7 +7,9 @@ if (!JWT_SECRET) throw new Error('JWT_SECRET is not set!');
 
 // Registration controller
 export const register = async (req: Request, res: Response) => {
-  const { username, password, firstName, lastName, address, institute, district, phoneNumber, whatsappNumber, telegramNumber } = req.body;
+  const { username, password, firstName, lastName, address, institute, year, phoneNumber, whatsappNumber, telegram } = req.body;
+  const idCardImage = req.file ? `/uploads/id-cards/${req.file.filename}` : undefined;
+
 
   if (!username || !password) {
     return res.status(400).json({ message: 'Username and password are required' });
@@ -27,10 +29,11 @@ export const register = async (req: Request, res: Response) => {
       lastName,
       address,
       institute,
-      district,
+      year,
       phoneNumber,
       whatsappNumber,
-      telegramNumber,
+      telegram,
+      idCardImage,
       role: 'student',
     });
 
@@ -69,12 +72,14 @@ export const getCurrentUser = async (req: Request, res: Response) => {
     
     // Return more complete user info
     res.json({ 
-      username: user.username, 
-      role: user.role,
-      _id: user._id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName
+      user: {
+        username: user.username, 
+        role: user.role,
+        _id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
     });
   } catch (error) {
     console.error('Get current user error:', error);

@@ -13,10 +13,11 @@ export interface IUser extends Document {
   lastName?: string;
   address?: string;
   institute?: string;
-  district?: string;
+  year?: Types.ObjectId;
   phoneNumber?: string;
   whatsappNumber?: string;
-  telegramNumber?: string;
+  telegram?: string;
+  idCardImage?: string;
   role: Role;
   status?: StudentStatus; // Added status field
   notes?: string; // Added notes for teachers to add comments
@@ -31,10 +32,11 @@ const userSchema = new mongoose.Schema<IUser>({
   lastName: { type: String },
   address: { type: String },
   institute: { type: String },
-  district: { type: String },
+  year: { type: mongoose.Schema.Types.ObjectId, ref: 'Year' },
   phoneNumber: { type: String },
   whatsappNumber: { type: String },
-  telegramNumber: { type: String },
+  telegram: { type: String },
+  idCardImage: { type: String },
   role: { type: String, enum: ['student', 'teacher', 'admin'], default: 'student' },
   status: { 
     type: String, 

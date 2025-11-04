@@ -519,7 +519,7 @@ export default function PapersPage() {
                       /* Student View */
                       <>
                         {answeredPapers.includes(paper._id) ? (
-                          <Link href={`/papers/${paper._id}`} className="w-full">
+                          <Link href={`/papers/answers/${paper._id}`} className="w-full">
                             <Button 
                               className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
                             >
@@ -528,7 +528,7 @@ export default function PapersPage() {
                             </Button>
                           </Link>
                         ) : isExpired(paper.deadline) ? (
-                          <Link href={`/papers/${paper._id}`} className="w-full">
+                          <Link href={`/papers/answers/${paper._id}`} className="w-full">
                             <Button 
                               className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
                             >

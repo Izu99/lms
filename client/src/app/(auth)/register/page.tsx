@@ -25,11 +25,13 @@ export default function RegisterPage() {
     confirmPassword: "",
     address: "",
     institute: "",
-    district: "",
+    year: "",
+    telegram: "",
+    idCardImage: null,
     phoneNumber: "",
     whatsappNumber: "",
-    telegramNumber: "",
   });
+  const [years, setYears] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -66,6 +68,18 @@ export default function RegisterPage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    async function fetchYears() {
+      try {
+        const response = await axios.get(`${API_URL}/years`);
+        setYears(response.data);
+      } catch (error) {
+        console.error("Failed to fetch years", error);
+      }
+    }
+    fetchYears();
+  }, []);
+
   const nextStep = () => setStep((prev) => prev + 1);
   const prevStep = () => setStep((prev) => prev - 1);
 
@@ -80,8 +94,17 @@ export default function RegisterPage() {
       return;
     }
 
+    const formData = new FormData();
+    Object.keys(data).forEach((key) => {
+      formData.append(key, data[key]);
+    });
+
     try {
-      await axios.post(`${API_URL}/auth/register`, data);
+      await axios.post(`${API_URL}/auth/register`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       window.location.href = "/login";
     } catch (e: unknown) {
       if (axios.isAxiosError(e)) {
@@ -272,6 +295,7 @@ export default function RegisterPage() {
                   setData={setData}
                   nextStep={nextStep}
                   prevStep={prevStep}
+                  years={years}
                 />
               )}
               {step === 3 && (

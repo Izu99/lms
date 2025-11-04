@@ -30,8 +30,8 @@ export const useAuth = () => {
       });
       
       setUser({
-        username: response.data.username,
-        role: response.data.role
+        username: response.data.user.username,
+        role: response.data.user.role
       });
     } catch (error) {
       // If API fails, try to get from localStorage

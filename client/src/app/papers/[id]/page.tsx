@@ -41,8 +41,7 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [user, setUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [isReviewMode, setIsReviewMode] = useState(false);
-  const [studentAttempt, setStudentAttempt] = useState<any>(null);
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -119,7 +118,7 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
 
   // Auto-save function
   const autoSave = useCallback(async () => {
-    if (!started || Object.keys(answers).length === 0 || isReviewMode) return;
+    if (!started || Object.keys(answers).length === 0) return;
     
     try {
       setAutoSaving(true);
@@ -132,7 +131,7 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
     } finally {
       setAutoSaving(false);
     }
-  }, [started, answers, isReviewMode]);
+  }, [started, answers]);
 
   // Handle submit
   const handleSubmit = useCallback(async (autoSubmit = false) => {
@@ -191,8 +190,8 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
     }
     try {
       setLoading(true);
-      console.log("Fetching paper with ID:", paperId, "for user role:", user?.role);
       const headers = getAuthHeaders();
+
       const response = await axios.get(`${API_URL}/papers/${paperId}`, { headers });
       setPaper(response.data.paper);
       setTimeLeft(response.data.paper.timeLimit * 60); // Convert to seconds
@@ -204,7 +203,6 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
           if (errorMessage === 'Invalid paper ID') {
             setError('Invalid paper ID. Please check the URL.');
           } else if (errorMessage === 'You have already attempted this paper') {
-            console.log("Attempted paper detected, redirecting to results.");
             setError('You have already attempted this paper. Please check your results.');
             router.push('/papers/results/my-results');
             return;
@@ -252,7 +250,7 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
 
   // Timer effect with auto-save and warnings
   useEffect(() => {
-    if (started && timeLeft > 0 && !isReviewMode) {
+    if (started && timeLeft > 0) {
       const timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 1) {
@@ -271,18 +269,18 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
 
       return () => clearInterval(timer);
     }
-  }, [started, timeLeft, isReviewMode, handleSubmit, autoSave]);
+  }, [started, timeLeft, handleSubmit, autoSave]);
 
   // Auto-save when answer changes (debounced)
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (started && Object.keys(answers).length > 0 && !isReviewMode) {
+      if (started && Object.keys(answers).length > 0) {
         autoSave();
       }
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [answers, isReviewMode, started, autoSave]);
+  }, [answers, started, autoSave]);
 
   // Fetch paper on mount
   useEffect(() => {
@@ -303,11 +301,29 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading paper...</p>
+              {/* Debug info for stuck loading */}
+              <DebugLoading />
           </div>
         </div>
       </div>
     );
   }
+// Debug component to show if loading is stuck
+function DebugLoading() {
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setStuck(true), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+  if (!stuck) return null;
+  return (
+    <div className="mt-4 text-red-600 text-sm">
+      Loading is taking longer than expected.<br />
+      Please check your network, authentication, or API server.<br />
+      If this persists, try logging out and back in, or contact support.
+    </div>
+  );
+}
 
   if (error || !paper) {
     return (
@@ -326,28 +342,7 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
     );
   }
 
-  if (user?.role === 'teacher') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <Navbar user={user} />
 
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">{paper.title}</h1>
-            <p className="text-gray-600 mb-6">Teachers cannot attempt papers. Use the results page to view submissions.</p>
-            <div className="flex gap-4 justify-center">
-              <Link href="/papers">
-                <Button variant="outline">Back to Papers</Button>
-              </Link>
-              <Link href={`/papers/${paper._id}/results`}>
-                <Button>View Results</Button>
-              </Link>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -488,21 +483,7 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
               </AnimatePresence>
             </motion.div>
 
-            {/* Review Mode Header */}
-            {isReviewMode && (
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6"
-              >
-                <div className="flex items-center gap-3 text-blue-800">
-                  <Eye size={20} />
-                  <p className="font-semibold">
-                    Review Mode: Correct answers are highlighted in green. Your answers (if any) are highlighted in red if incorrect.
-                  </p>
-                </div>
-              </motion.div>
-            )}
+
 
             {/* Question Navigation Sidebar */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -575,29 +556,19 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
                               <label
                                 key={option._id}
                                 className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-200 ${
-                                  // If in review mode
-                                  isReviewMode
-                                    ? // If this is the correct answer
-                                      option.isCorrect
-                                      ? 'border-green-500 bg-green-50'
-                                      : // If this is the student's selected answer and it's incorrect
-                                        studentAttempt?.answers.find((a: any) => a.questionId === currentQuestionData._id)?.selectedOptionId === option._id
-                                        ? 'border-red-500 bg-red-50'
-                                        : 'border-gray-200' // Default for other options in review mode
-                                    : // If not in review mode (i.e., actively taking the exam)
-                                      answers[currentQuestionData._id] === option._id
-                                      ? 'border-blue-500 bg-blue-50'
-                                      : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25'
-                                } ${isReviewMode ? 'cursor-default' : 'cursor-pointer'}`}
+                                  answers[currentQuestionData._id] === option._id
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25'
+                                } cursor-pointer`}
                               >
                                 <input
                                   type="radio"
                                   name={`question-${currentQuestionData._id}`}
                                   value={option._id}
-                                  checked={answers[currentQuestionData._id] === option._id || (isReviewMode && studentAttempt?.answers.find((a: any) => a.questionId === currentQuestionData._id)?.selectedOptionId === option._id)}
+                                  checked={answers[currentQuestionData._id] === option._id}
                                   onChange={() => handleAnswerChange(currentQuestionData._id, option._id)}
                                   className="w-5 h-5 text-blue-600"
-                                  disabled={isReviewMode}
+                                  disabled={false}
                                 />
                                 <span className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium">
                                   {String.fromCharCode(65 + optionIndex)}
@@ -605,6 +576,7 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
                                 <span className="text-gray-900 flex-1 text-lg">
                                   {option.optionText}
                                 </span>
+
                               </label>
                             ))}
                           </div>
@@ -646,45 +618,43 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
             </div>
 
             {/* Submit Section */}
-            {!isReviewMode && (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">Ready to Submit?</h3>
-                    <p className="text-gray-600">
-                      You have answered {answeredCount} out of {totalQuestions} questions.
-                    </p>
-                    
-                    {answeredCount < totalQuestions && (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3">
-                        <p className="text-yellow-700 text-sm">
-                          ⚠️ You haven&apos;t answered all questions. Unanswered questions will be marked as incorrect.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <Button
-                    onClick={() => handleSubmit()}
-                    disabled={submitting}
-                    className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-8 py-3 rounded-xl font-semibold text-lg"
-                  >
-                    {submitting ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Submitting...
-                      </div>
-                    ) : (
-                      "Submit Paper"
-                    )}
-                  </Button>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-6"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Ready to Submit?</h3>
+                  <p className="text-gray-600">
+                    You have answered {answeredCount} out of {totalQuestions} questions.
+                  </p>
+                  
+                  {answeredCount < totalQuestions && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3">
+                      <p className="text-yellow-700 text-sm">
+                        ⚠️ You haven&apos;t answered all questions. Unanswered questions will be marked as incorrect.
+                      </p>
+                    </div>
+                  )}
                 </div>
-              </motion.div>
-            )}
+
+                <Button
+                  onClick={() => handleSubmit()}
+                  disabled={submitting}
+                  className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white px-8 py-3 rounded-xl font-semibold text-lg"
+                >
+                  {submitting ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Submitting...
+                    </div>
+                  ) : (
+                    "Submit Paper"
+                  )}
+                </Button>
+              </div>
+            </motion.div>
           </div>
         )}
       </main>

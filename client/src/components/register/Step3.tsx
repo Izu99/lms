@@ -2,7 +2,7 @@
 "use client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Phone, MessageSquare, Send, ArrowLeft } from "lucide-react";
+import { Phone, MessageSquare, ArrowLeft } from "lucide-react";
 
 export default function Step3({ data, setData, prevStep, handleSubmit, loading }) {
   return (
@@ -31,19 +31,6 @@ export default function Step3({ data, setData, prevStep, handleSubmit, loading }
           placeholder="Enter your WhatsApp number"
           value={data.whatsappNumber}
           onChange={(e) => setData({ ...data, whatsappNumber: e.target.value })}
-          className="pl-12 h-14 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl text-lg font-medium bg-white/80 transition-all duration-200"
-        />
-      </div>
-      <div className="space-y-2">
-        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-          <Send size={16} className="text-emerald-500" />
-          Telegram Number
-        </label>
-        <Input
-          name="telegramNumber"
-          placeholder="Enter your Telegram number"
-          value={data.telegramNumber}
-          onChange={(e) => setData({ ...data, telegramNumber: e.target.value })}
           className="pl-12 h-14 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl text-lg font-medium bg-white/80 transition-all duration-200"
         />
       </div>

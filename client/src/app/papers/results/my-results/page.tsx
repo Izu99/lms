@@ -315,6 +315,11 @@ export default function MyResultsPage() {
                       </p>
                     </div>
                   </div>
+                  <div className="mt-4 flex justify-end">
+                    <Link href={`/papers/answers/${result.paperId._id}`}>
+                      <Button variant="outline">See Answers</Button>
+                    </Link>
+                  </div>
 
                   {/* Enhanced Progress Bar */}
                   <div className="w-full bg-gray-200 rounded-full h-4 relative overflow-hidden">

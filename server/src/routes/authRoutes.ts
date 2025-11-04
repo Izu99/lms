@@ -9,10 +9,11 @@ import {
   updateStudentStatus
 } from '../controllers/authController';
 import { protect } from '../middleware/auth';
+import { uploadIdCard } from '../config/idCardUpload';
 
 const router = express.Router();
 
-router.post('/register', register);
+router.post('/register', uploadIdCard.single('idCardImage'), register);
 router.post('/login', login);
 router.get('/me', protect, getCurrentUser);
 
