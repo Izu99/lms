@@ -1,24 +1,25 @@
 import mongoose, { Document, Types } from 'mongoose';
 import bcrypt from 'bcrypt';
+import { UserRole, StudentStatus } from '../modules/shared/types/common.types';
 
-export type Role = 'student' | 'teacher' | 'admin';
-export type StudentStatus = 'active' | 'inactive' | 'pending' | 'paid' | 'unpaid';
+export type Role = UserRole;
 
 export interface IUser extends Document {
   _id: Types.ObjectId;
   username: string;
   password: string;
-  email?: string;
+  email: string;
   firstName?: string;
   lastName?: string;
   address?: string;
-  institute?: string;
+  institute?: Types.ObjectId;
   year?: Types.ObjectId;
-  phoneNumber?: string;
+  phoneNumber: string;
   whatsappNumber?: string;
   telegram?: string;
-  idCardImage?: string;
-  role: Role;
+  idCardFrontImage?: string;
+  idCardBackImage?: string;
+  role: UserRole;
   status?: StudentStatus; // Added status field
   notes?: string; // Added notes for teachers to add comments
   comparePassword(candidate: string): Promise<boolean>;
@@ -27,16 +28,17 @@ export interface IUser extends Document {
 const userSchema = new mongoose.Schema<IUser>({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  email: { type: String },
+  email: { type: String, required: true, unique: true },
   firstName: { type: String },
   lastName: { type: String },
   address: { type: String },
-  institute: { type: String },
+  institute: { type: mongoose.Schema.Types.ObjectId, ref: 'Institute' },
   year: { type: mongoose.Schema.Types.ObjectId, ref: 'Year' },
-  phoneNumber: { type: String },
+  phoneNumber: { type: String, required: true, unique: true },
   whatsappNumber: { type: String },
   telegram: { type: String },
-  idCardImage: { type: String },
+  idCardFrontImage: { type: String },
+  idCardBackImage: { type: String },
   role: { type: String, enum: ['student', 'teacher', 'admin'], default: 'student' },
   status: { 
     type: String, 

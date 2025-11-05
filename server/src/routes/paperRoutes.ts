@@ -11,7 +11,7 @@ import {
   deletePaper, // Add these
   getStudentAttemptForPaper,
 } from '../controllers/paperController';
-import { protect } from '../middleware/auth';
+import { protect } from '../modules/shared/middleware/auth';
 
 const router = express.Router();
 

@@ -22,6 +22,25 @@ import {
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { API_URL, API_BASE_URL } from '@/lib/constants';
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { InfoDialog } from "@/components/InfoDialog";
+
+// Debug component to show if loading is stuck
+function DebugLoading() {
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setStuck(true), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+  if (!stuck) return null;
+  return (
+    <div className="mt-4 text-red-600 text-sm">
+      Loading is taking longer than expected.<br />
+      Please check your network, authentication, or API server.<br />
+      If this persists, try logging out and back in, or contact support.
+    </div>
+  );
+}
 
 export default function PaperAttempt({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -41,6 +60,18 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [user, setUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [infoDialogContent, setInfoDialogContent] = useState({ title: "", description: "" });
+
+  // Utility functions
+
+
+
+
+
+
+
 
 
   useEffect(() => {
@@ -133,15 +164,16 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
     }
   }, [started, answers]);
 
-  // Handle submit
-  const handleSubmit = useCallback(async (autoSubmit = false) => {
+  const handleSubmit = useCallback((autoSubmit = false) => {
     if (!autoSubmit) {
-      const confirmSubmit = window.confirm(
-        "Are you sure you want to submit your paper? You cannot change your answers after submission."
-      );
-      if (!confirmSubmit) return;
+      setIsConfirmOpen(true);
+      return;
     }
+    onConfirmSubmit(autoSubmit);
+  }, []);
 
+  const onConfirmSubmit = useCallback(async (autoSubmit = false) => {
+    setIsConfirmOpen(false);
     try {
       setSubmitting(true);
       const headers = getAuthHeaders();
@@ -166,8 +198,8 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
         ? `⏰ Time's up! Paper submitted automatically.\n\n✅ Score: ${result.score}/${result.totalQuestions}\n📊 Percentage: ${result.percentage}%\n⏱️ Time Used: ${result.timeSpent} minutes`
         : `🎉 Paper submitted successfully!\n\n✅ Score: ${result.score}/${result.totalQuestions}\n📊 Percentage: ${result.percentage}%\n⏱️ Time Used: ${result.timeSpent} minutes`;
       
-      alert(resultMessage);
-      router.push('/papers/results/my-results');
+      setInfoDialogContent({ title: "Submission Successful", description: resultMessage });
+      setIsInfoOpen(true);
       
     } catch (error) {
       console.error("Error submitting paper:", error);
@@ -308,22 +340,6 @@ export default function PaperAttempt({ params }: { params: { id: string } }) {
       </div>
     );
   }
-// Debug component to show if loading is stuck
-function DebugLoading() {
-  const [stuck, setStuck] = useState(false);
-  useEffect(() => {
-    const timer = setTimeout(() => setStuck(true), 5000);
-    return () => clearTimeout(timer);
-  }, []);
-  if (!stuck) return null;
-  return (
-    <div className="mt-4 text-red-600 text-sm">
-      Loading is taking longer than expected.<br />
-      Please check your network, authentication, or API server.<br />
-      If this persists, try logging out and back in, or contact support.
-    </div>
-  );
-}
 
   if (error || !paper) {
     return (
@@ -581,7 +597,7 @@ function DebugLoading() {
                             ))}
                           </div>
                         </div>
-                        {answers[currentQuestionData._id] && !isReviewMode && (
+                        {answers[currentQuestionData._id] && (
                           <CheckCircle className="text-green-500 flex-shrink-0" size={24} />
                         )}
                       </div>
@@ -657,6 +673,32 @@ function DebugLoading() {
             </motion.div>
           </div>
         )}
+        <InfoDialog
+          isOpen={isInfoOpen}
+          onClose={() => {
+            setIsInfoOpen(false);
+            router.push('/papers/results/my-results');
+          }}
+          title={infoDialogContent.title}
+          description={infoDialogContent.description}
+        />
+        <InfoDialog
+          isOpen={isInfoOpen}
+          onClose={() => {
+            setIsInfoOpen(false);
+            router.push('/papers/results/my-results');
+          }}
+          title={infoDialogContent.title}
+          description={infoDialogContent.description}
+        />
+        <ConfirmationDialog
+          isOpen={isConfirmOpen}
+          onClose={() => setIsConfirmOpen(false)}
+          onConfirm={() => onConfirmSubmit(false)}
+          title="Are you sure you want to submit?"
+          description="You cannot change your answers after submission."
+          confirmText="Submit"
+        />
       </main>
     </div>
   );

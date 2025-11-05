@@ -74,7 +74,11 @@ export default function PaperResultsPage() {
   const { user, loading: authLoading } = useAuth();
 
   const getAuthHeaders = () => {
-    return { 'Content-Type': 'application/json' }; // No Authorization header needed for cookie-based auth
+    const token = localStorage.getItem('token');
+    return { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
   };
 
   useEffect(() => {

@@ -8,7 +8,7 @@ export const getAllVideos = async (req: Request, res: Response) => {
   try {
     const videos = await Video.find()
       .populate('uploadedBy', 'username role')
-      .populate('class', 'name location')
+      .populate('institute', 'name location')
       .populate('year', 'year name');
     res.json({ videos });
   } catch (error) {
@@ -31,7 +31,7 @@ export const uploadVideo = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Title, class, and year are required' });
     }
 
-    const userId = (req as any).user._id;
+    const userId = (req as any).user.id;
     if (!userId) {
       return res.status(401).json({ message: 'Authentication failed - no user ID' });
     }

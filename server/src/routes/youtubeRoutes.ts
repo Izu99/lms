@@ -1,5 +1,5 @@
 import express from 'express';
-import { protect } from '../middleware/auth';
+import { protect } from '../modules/shared/middleware/auth';
 import * as youtubeController from '../controllers/youtubeController';
 
 const router = express.Router();

@@ -12,12 +12,17 @@ const MONGO_URI = process.env.MONGO_URI as string;
 
 // Import routes
 import authRoutes from './routes/authRoutes';
-import classRoutes from './routes/classRoutes';
+import instituteRoutes from './routes/classRoutes';
 import imageUploadRoutes from './routes/imageUploadRoutes';
 import paperRoutes from './routes/paperRoutes';
 import videoRoutes from './routes/videoRoutes';
 import yearRoutes from './routes/yearRoutes';
 import youtubeRoutes from './routes/youtubeRoutes';
+
+// Import new modular routes
+import { protect } from './modules/shared/middleware/auth';
+import studentRoutes from './modules/student/routes';
+import teacherRoutes from './modules/teacher/routes';
 
 const app = express();
 
@@ -44,19 +49,23 @@ app.use(cors({
 
 console.log('Allowed origins:', allowedOrigins);
 
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use('/api/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Use routes
 app.use('/api/auth', authRoutes);
-app.use('/api/classes', classRoutes);
+app.use('/api/institutes', instituteRoutes);
 app.use('/api/images', imageUploadRoutes);
 app.use('/api/papers', paperRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/years', yearRoutes);
 app.use('/api/youtube', youtubeRoutes);
 
+// Add new modular routes
+app.use('/api/student', protect, studentRoutes);
+app.use('/api/teacher', protect, teacherRoutes);
+
 app.get('/', (req, res) => {
-  res.send('✅ Backend is running on Azure');
+  res.send('✅ ezyICT Backend is running on Azure');
 });
 
 // Global error handler

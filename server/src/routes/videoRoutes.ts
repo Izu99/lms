@@ -1,6 +1,6 @@
 import express from 'express';
 import { upload } from '../config/multer';
-import { protect } from '../middleware/auth';
+import { protect } from '../modules/shared/middleware/auth';
 import * as videoController from '../controllers/videoController';
 
 const router = express.Router();

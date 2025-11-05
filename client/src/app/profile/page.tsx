@@ -12,9 +12,12 @@ import {
   GraduationCap,
   Shield,
   Calendar,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Image from "next/image";
 import axios from "axios";
 import { API_URL } from "@/lib/constants";
 
@@ -22,9 +25,17 @@ interface UserData {
   _id?: string;
   id?: string;
   username: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  address?: string;
+  institute?: string;
+  year?: string;
+  phoneNumber: string;
+  whatsappNumber?: string;
+  telegram?: string;
+  idCardFrontImage?: string;
+  idCardBackImage?: string;
   role: "student" | "teacher" | "admin";
   createdAt?: string;
   updatedAt?: string;
@@ -32,8 +43,17 @@ interface UserData {
 
 interface FormData {
   username: string;
+  email: string;
   firstName: string;
   lastName: string;
+  address: string;
+  institute: string;
+  year: string;
+  phoneNumber: string;
+  whatsappNumber: string;
+  telegram: string;
+  idCardFront: File | null;
+  idCardBack: File | null;
   newPassword: string;
   confirmPassword: string;
 }
@@ -50,11 +70,25 @@ export default function ProfilePage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>("");
+  const [frontPreviewUrl, setFrontPreviewUrl] = useState<string | null>(null);
+  const [backPreviewUrl, setBackPreviewUrl] = useState<string | null>(null);
+  const [institutes, setInstitutes] = useState<any[]>([]);
+  const [years, setYears] = useState<any[]>([]);
+  const [loadingInstitutesYears, setLoadingInstitutesYears] = useState(true);
 
   const [formData, setFormData] = useState<FormData>({
     username: "",
+    email: "",
     firstName: "",
     lastName: "",
+    address: "",
+    institute: "",
+    year: "",
+    phoneNumber: "",
+    whatsappNumber: "",
+    telegram: "",
+    idCardFront: null,
+    idCardBack: null,
     newPassword: "",
     confirmPassword: "",
   });
@@ -71,7 +105,7 @@ export default function ProfilePage() {
       return { Authorization: `Bearer ${token}` };
     } catch (error) {
       console.error("Error getting auth headers:", error);
-      redirectToLogin("Authentication token not found");
+      redirectToLogin("Authentication required");
       return {};
     }
   };
@@ -136,11 +170,28 @@ export default function ProfilePage() {
         // Load form data immediately
         setFormData({
           username: userData.username || "",
+          email: userData.email || "",
           firstName: userData.firstName || "",
           lastName: userData.lastName || "",
+          address: userData.address || "",
+          institute: userData.institute || "",
+          year: userData.year || "",
+          phoneNumber: userData.phoneNumber || "",
+          whatsappNumber: userData.whatsappNumber || "",
+          telegram: userData.telegram || "",
+          idCardFront: null, // Files are not pre-filled, only their URLs for preview
+          idCardBack: null, // Files are not pre-filled, only their URLs for preview
           newPassword: "",
           confirmPassword: "",
         });
+
+        // Set image preview URLs if images exist
+        if (userData.idCardFrontImage) {
+          setFrontPreviewUrl(`${API_URL}${userData.idCardFrontImage}`);
+        }
+        if (userData.idCardBackImage) {
+          setBackPreviewUrl(`${API_URL}${userData.idCardBackImage}`);
+        }
 
         // Fetch fresh profile data
         await fetchUserProfile(userId);
@@ -157,6 +208,26 @@ export default function ProfilePage() {
     };
 
     initializeProfile();
+  }, []);
+
+  useEffect(() => {
+    const fetchInstitutesAndYears = async () => {
+      try {
+        setLoadingInstitutesYears(true);
+        const [institutesResponse, yearsResponse] = await Promise.all([
+          axios.get(`${API_URL}/institutes`),
+          axios.get(`${API_URL}/years`)
+        ]);
+        setInstitutes(institutesResponse.data.institutes);
+        setYears(yearsResponse.data.years);
+      } catch (error) {
+        console.error("Failed to fetch institutes or years", error);
+        setError("Failed to load institute and year options.");
+      } finally {
+        setLoadingInstitutesYears(false);
+      }
+    };
+    fetchInstitutesAndYears();
   }, []);
 
   const fetchCurrentUserProfile = async () => {
@@ -179,8 +250,17 @@ export default function ProfilePage() {
       
       setFormData({
         username: userData.username || "",
+        email: userData.email || "",
         firstName: userData.firstName || "",
         lastName: userData.lastName || "",
+        address: userData.address || "",
+        institute: userData.institute || "",
+        year: userData.year || "",
+        phoneNumber: userData.phoneNumber || "",
+        whatsappNumber: userData.whatsappNumber || "",
+        telegram: userData.telegram || "",
+        idCardFront: null, // Files are not pre-filled, only their URLs for preview
+        idCardBack: null, // Files are not pre-filled, only their URLs for preview
         newPassword: "",
         confirmPassword: "",
       });
@@ -207,27 +287,31 @@ export default function ProfilePage() {
       
       setFormData({
         username: userData.username || "",
+        email: userData.email || "",
         firstName: userData.firstName || "",
         lastName: userData.lastName || "",
+        address: userData.address || "",
+        institute: userData.institute || "",
+        year: userData.year || "",
+        phoneNumber: userData.phoneNumber || "",
+        whatsappNumber: userData.whatsappNumber || "",
+        telegram: userData.telegram || "",
+        idCardFront: null, // Files are not pre-filled, only their URLs for preview
+        idCardBack: null, // Files are not pre-filled, only their URLs for preview
         newPassword: "",
         confirmPassword: "",
       });
-      
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          redirectToLogin("Session expired");
-          return;
-        } else if (error.response && error.response.status >= 500) {
-          setError("Server error. Please try again later.");
-        } else {
-          setError(`Failed to load profile: ${error.response?.statusText || error.message}`);
-        }
-      } else {
-        setError("Network error. Please check your connection.");
+
+      // Set image preview URLs if images exist
+      if (userData.idCardFrontImage) {
+        setFrontPreviewUrl(`${API_URL}${userData.idCardFrontImage}`);
       }
+      if (userData.idCardBackImage) {
+        setBackPreviewUrl(`${API_URL}${userData.idCardBackImage}`);
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      throw error;
     }
   };
 
@@ -238,6 +322,46 @@ export default function ProfilePage() {
       newErrors.username = "Username is required";
     } else if (formData.username.trim().length < 3) {
       newErrors.username = "Username must be at least 3 characters";
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(formData.email)) {
+      newErrors.email = "Invalid email format";
+    }
+
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First Name is required";
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last Name is required";
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = "Address is required";
+    }
+
+    if (!formData.institute) {
+      newErrors.institute = "Institute is required";
+    }
+
+    if (!formData.year) {
+      newErrors.year = "Year is required";
+    }
+
+    if (!formData.phoneNumber.trim()) {
+      newErrors.phoneNumber = "Phone Number is required";
+    } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = "Phone Number must be 10 digits";
+    }
+
+    // Only require ID card images if they are not already present and no new file is uploaded
+    if (!user?.idCardFrontImage && !formData.idCardFront) {
+      newErrors.idCardFront = "ID Card Front Image is required";
+    }
+    if (!user?.idCardBackImage && !formData.idCardBack) {
+      newErrors.idCardBack = "ID Card Back Image is required";
     }
 
     if (formData.newPassword) {
@@ -271,14 +395,27 @@ export default function ProfilePage() {
       setSaving(true);
       setError("");
       
-      const updateData: Partial<UserData & { newPassword?: string }> = {
-        username: formData.username.trim(),
-        firstName: formData.firstName.trim() || undefined,
-        lastName: formData.lastName.trim() || undefined,
-      };
+      const updateFormData = new FormData();
+      updateFormData.append('username', formData.username.trim());
+      updateFormData.append('email', formData.email.trim());
+      updateFormData.append('firstName', formData.firstName.trim());
+      updateFormData.append('lastName', formData.lastName.trim());
+      updateFormData.append('address', formData.address.trim());
+      updateFormData.append('institute', formData.institute);
+      updateFormData.append('year', formData.year);
+      updateFormData.append('phoneNumber', formData.phoneNumber.trim());
+      updateFormData.append('whatsappNumber', formData.whatsappNumber.trim());
+      updateFormData.append('telegram', formData.telegram.trim());
 
       if (formData.newPassword) {
-        updateData.newPassword = formData.newPassword;
+        updateFormData.append('newPassword', formData.newPassword);
+      }
+
+      if (formData.idCardFront) {
+        updateFormData.append('idCardFront', formData.idCardFront);
+      }
+      if (formData.idCardBack) {
+        updateFormData.append('idCardBack', formData.idCardBack);
       }
 
       const headers = getAuthHeaders();
@@ -291,8 +428,13 @@ export default function ProfilePage() {
 
       const response = await axios.put(
         `${API_URL}/auth/users/${userId}`,
-        updateData,
-        { headers }
+        updateFormData,
+        { 
+          headers: {
+            ...headers,
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
       const updatedUser = response.data.user || response.data;
@@ -303,11 +445,27 @@ export default function ProfilePage() {
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
       
+      // Reset password fields and image files after successful update
       setFormData(prev => ({
         ...prev,
+        idCardFront: null,
+        idCardBack: null,
         newPassword: "",
         confirmPassword: "",
       }));
+
+      // Update image preview URLs from the updated user data with cache-busting
+      const timestamp = new Date().getTime();
+      if (updatedUser.idCardFrontImage) {
+        setFrontPreviewUrl(`${API_URL}${updatedUser.idCardFrontImage}?t=${timestamp}`);
+      } else {
+        setFrontPreviewUrl(null);
+      }
+      if (updatedUser.idCardBackImage) {
+        setBackPreviewUrl(`${API_URL}${updatedUser.idCardBackImage}?t=${timestamp}`);
+      } else {
+        setBackPreviewUrl(null);
+      }
       
       setIsEditing(false);
       setError("");
@@ -323,7 +481,7 @@ export default function ProfilePage() {
         } else if (error.response?.status === 400) {
           setError(`Update failed: ${error.response.data?.message || "Invalid data"}`);
         } else if (error.response?.status === 409) {
-          setError("Username already exists");
+          setError("A user with this username, email, or phone number already exists.");
         } else if (error.response && error.response.status >= 500) {
           setError("Server error. Please try again later.");
         } else {
@@ -337,7 +495,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+  const handleInputChange = (field: keyof FormData, value: string | File | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     if (errors[field]) {
@@ -349,17 +507,68 @@ export default function ProfilePage() {
     }
   };
 
+  const handleFrontImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleInputChange("idCardFront", file);
+      setFrontPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleBackImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleInputChange("idCardBack", file);
+      setBackPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const removeImage = (type: 'front' | 'back') => {
+    if (type === 'front') {
+      handleInputChange("idCardFront", null);
+      setFrontPreviewUrl(null);
+      // Also clear the user's stored image if it exists
+      if (user) setUser(prev => prev ? { ...prev, idCardFrontImage: undefined } : null);
+    } else {
+      handleInputChange("idCardBack", null);
+      setBackPreviewUrl(null);
+      // Also clear the user's stored image if it exists
+      if (user) setUser(prev => prev ? { ...prev, idCardBackImage: undefined } : null);
+    }
+  };
+
   const handleCancelEdit = () => {
     if (!user) return;
     
     setFormData({
       username: user.username || "",
+      email: user.email || "",
       firstName: user.firstName || "",
       lastName: user.lastName || "",
+      address: user.address || "",
+      institute: user.institute || "",
+      year: user.year || "",
+      phoneNumber: user.phoneNumber || "",
+      whatsappNumber: user.whatsappNumber || "",
+      telegram: user.telegram || "",
+      idCardFront: null,
+      idCardBack: null,
       newPassword: "",
       confirmPassword: "",
     });
     
+    // Reset image previews
+    if (user.idCardFrontImage) {
+      setFrontPreviewUrl(`${API_URL}${user.idCardFrontImage}`);
+    } else {
+      setFrontPreviewUrl(null);
+    }
+    if (user.idCardBackImage) {
+      setBackPreviewUrl(`${API_URL}${user.idCardBackImage}`);
+    } else {
+      setBackPreviewUrl(null);
+    }
+
     setErrors({});
     setError("");
     setIsEditing(false);
@@ -566,13 +775,166 @@ export default function ProfilePage() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        First Name (Optional)
+                        Email *
+                      </label>
+                      <Input
+                        value={formData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        disabled={!isEditing || saving}
+                        className={errors.email ? "border-red-500" : ""}
+                        placeholder="Enter your email"
+                        type="email"
+                      />
+                      {errors.email && (
+                        <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        First Name *
                       </label>
                       <Input
                         value={formData.firstName}
                         onChange={(e) => handleInputChange("firstName", e.target.value)}
                         disabled={!isEditing || saving}
+                        className={errors.firstName ? "border-red-500" : ""}
                         placeholder="Enter your first name"
+                      />
+                      {errors.firstName && (
+                        <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Last Name *
+                      </label>
+                      <Input
+                        value={formData.lastName}
+                        onChange={(e) => handleInputChange("lastName", e.target.value)}
+                        disabled={!isEditing || saving}
+                        className={errors.lastName ? "border-red-500" : ""}
+                        placeholder="Enter your last name"
+                      />
+                      {errors.lastName && (
+                        <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Address *
+                      </label>
+                      <Input
+                        value={formData.address}
+                        onChange={(e) => handleInputChange("address", e.target.value)}
+                        disabled={!isEditing || saving}
+                        className={errors.address ? "border-red-500" : ""}
+                        placeholder="Enter your address"
+                      />
+                      {errors.address && (
+                        <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Institute *
+                      </label>
+                      <Select
+                        onValueChange={(value) => handleInputChange("institute", value)}
+                        value={formData.institute}
+                        disabled={!isEditing || saving || loadingInstitutesYears}
+                      >
+                        <SelectTrigger
+                          className={`w-full h-10 ${errors.institute ? "border-red-500" : ""}`}
+                        >
+                          <SelectValue placeholder="Select an institute" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {loadingInstitutesYears ? (
+                            <SelectItem value="loading" disabled>
+                              Loading...
+                            </SelectItem>
+                          ) : (
+                            institutes.map((inst) => (
+                              <SelectItem key={inst._id} value={inst._id}>
+                                {inst.name} - {inst.location}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {errors.institute && (
+                        <p className="text-red-500 text-xs mt-1">{errors.institute}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Year *
+                      </label>
+                      <Select
+                        onValueChange={(value) => handleInputChange("year", value)}
+                        value={formData.year}
+                        disabled={!isEditing || saving || loadingInstitutesYears}
+                      >
+                        <SelectTrigger
+                          className={`w-full h-10 ${errors.year ? "border-red-500" : ""}`}
+                        >
+                          <SelectValue placeholder="Select a year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {loadingInstitutesYears ? (
+                            <SelectItem value="loading" disabled>
+                              Loading...
+                            </SelectItem>
+                          ) : (
+                            years.map((yr) => (
+                              <SelectItem key={yr._id} value={yr._id}>
+                                {yr.name}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {errors.year && (
+                        <p className="text-red-500 text-xs mt-1">{errors.year}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Phone Number *
+                      </label>
+                      <Input
+                        value={formData.phoneNumber}
+                        onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
+                        disabled={!isEditing || saving}
+                        className={errors.phoneNumber ? "border-red-500" : ""}
+                        placeholder="Enter your phone number"
+                      />
+                      {errors.phoneNumber && (
+                        <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        WhatsApp Number (Optional)
+                      </label>
+                      <Input
+                        value={formData.whatsappNumber}
+                        onChange={(e) => handleInputChange("whatsappNumber", e.target.value)}
+                        disabled={!isEditing || saving}
+                        placeholder="Enter your WhatsApp number"
                       />
                     </div>
                   </div>
@@ -580,14 +942,112 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Last Name (Optional)
+                        Telegram Username (Optional)
                       </label>
                       <Input
-                        value={formData.lastName}
-                        onChange={(e) => handleInputChange("lastName", e.target.value)}
+                        value={formData.telegram}
+                        onChange={(e) => handleInputChange("telegram", e.target.value)}
                         disabled={!isEditing || saving}
-                        placeholder="Enter your last name"
+                        placeholder="Enter your Telegram username"
                       />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ID Card Images */}
+                <div className="mt-8">
+                  <h4 className="font-medium text-gray-900 mb-4">ID Card Images</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        ID Card Front Image
+                      </label>
+                      {!frontPreviewUrl && !user?.idCardFrontImage ? (
+                        <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                          <input
+                            type="file"
+                            id="idCardFront"
+                            accept="image/*"
+                            onChange={handleFrontImageChange}
+                            className="hidden"
+                            disabled={!isEditing || saving}
+                          />
+                          <label htmlFor="idCardFront" className="cursor-pointer block">
+                            <div className="mx-auto w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
+                              <User size={20} className="text-blue-500" />
+                            </div>
+                            <p className="text-gray-600 text-sm">Upload Front</p>
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="relative w-full h-32 border border-gray-200 rounded-lg overflow-hidden">
+                          <Image
+                            src={frontPreviewUrl || `${API_URL}${user?.idCardFrontImage}`}
+                            alt="ID Card Front Preview"
+                            layout="fill"
+                            objectFit="contain"
+                          />
+                          {isEditing && (
+                            <Button
+                              type="button"
+                              onClick={() => removeImage("front")}
+                              className="absolute top-1 right-1 p-1 h-auto w-auto bg-red-500 hover:bg-red-600 text-white rounded-full"
+                              disabled={saving}
+                            >
+                              <X size={14} />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      {errors.idCardFront && (
+                        <p className="text-red-500 text-xs mt-1">{errors.idCardFront}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        ID Card Back Image
+                      </label>
+                      {!backPreviewUrl && !user?.idCardBackImage ? (
+                        <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                          <input
+                            type="file"
+                            id="idCardBack"
+                            accept="image/*"
+                            onChange={handleBackImageChange}
+                            className="hidden"
+                            disabled={!isEditing || saving}
+                          />
+                          <label htmlFor="idCardBack" className="cursor-pointer block">
+                            <div className="mx-auto w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
+                              <User size={20} className="text-blue-500" />
+                            </div>
+                            <p className="text-gray-600 text-sm">Upload Back</p>
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="relative w-full h-32 border border-gray-200 rounded-lg overflow-hidden">
+                          <Image
+                            src={backPreviewUrl || `${API_URL}${user?.idCardBackImage}`}
+                            alt="ID Card Back Preview"
+                            layout="fill"
+                            objectFit="contain"
+                          />
+                          {isEditing && (
+                            <Button
+                              type="button"
+                              onClick={() => removeImage("back")}
+                              className="absolute top-1 right-1 p-1 h-auto w-auto bg-red-500 hover:bg-red-600 text-white rounded-full"
+                              disabled={saving}
+                            >
+                              <X size={14} />
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                      {errors.idCardBack && (
+                        <p className="text-red-500 text-xs mt-1">{errors.idCardBack}</p>
+                      )}
                     </div>
                   </div>
                 </div>

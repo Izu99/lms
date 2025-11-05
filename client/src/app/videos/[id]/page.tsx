@@ -485,7 +485,7 @@ export default function VideoViewPage() {
                   : "ICT A-Level Lessons"}
               </h2>
               <p className="text-sm text-gray-600">
-                AL ICT / EduForm Platform{" "}
+                AL ICT / ezyICT Platform{" "}
                 {video.year ? `${video.year.name} ` : ""}
               </p>
             </div>

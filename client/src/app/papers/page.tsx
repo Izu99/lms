@@ -24,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import axios from "axios";
 import Link from "next/link";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
+import { ConfirmationDialog } from "@/components/ConfirmationDialog";
+import { InfoDialog } from "@/components/InfoDialog";
 
 interface Paper {
   _id: string;
@@ -33,6 +35,7 @@ interface Paper {
   deadline: string;
   timeLimit: number;
   createdAt: string;
+  attemptCount?: number; // Number of students who attempted this paper
 }
 
 
@@ -46,6 +49,10 @@ export default function PapersPage() {
   const [deleting, setDeleting] = useState<string>("");
   const [activeTab, setActiveTab] = useState<'available' | 'expired' | 'not-answered' | 'answered'>('available');
   const [answeredPapers, setAnsweredPapers] = useState<string[]>([]);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [paperToDelete, setPaperToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [infoDialogContent, setInfoDialogContent] = useState({ title: "", description: "" });
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -86,33 +93,40 @@ export default function PapersPage() {
     }
   };
 
-  const handleDeletePaper = async (paperId: string, paperTitle: string) => {
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete "${paperTitle}"?\n\nThis action cannot be undone!`
-    );
-    
-    if (!confirmDelete) return;
+
+  const handleDeletePaper = (paperId: string, paperTitle: string) => {
+    setPaperToDelete({ id: paperId, title: paperTitle });
+    setIsConfirmOpen(true);
+  };
+
+  const onConfirmDelete = async () => {
+    if (!paperToDelete) return;
 
     try {
-      setDeleting(paperId);
+      setDeleting(paperToDelete.id);
       const token = localStorage.getItem('token');
-      await axios.delete(`${API_URL}/papers/${paperId}`, {
+      await axios.delete(`${API_URL}/papers/${paperToDelete.id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
-      setPapers(prev => prev.filter(paper => paper._id !== paperId));
-      alert("Paper deleted successfully!");
+
+      setPapers(prev => prev.filter(paper => paper._id !== paperToDelete.id));
+      setInfoDialogContent({ title: "Success", description: "Paper deleted successfully!" });
+      setIsInfoOpen(true);
     } catch (error) {
       console.error("Error deleting paper:", error);
       if (axios.isAxiosError(error)) {
-        alert(error.response?.data?.message || "Failed to delete paper");
+        setInfoDialogContent({ title: "Error", description: error.response?.data?.message || "Failed to delete paper" });
       } else {
-        alert("Failed to delete paper");
+        setInfoDialogContent({ title: "Error", description: "Failed to delete paper" });
       }
+      setIsInfoOpen(true);
     } finally {
       setDeleting("");
+      setIsConfirmOpen(false);
+      setPaperToDelete(null);
     }
   };
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -503,6 +517,14 @@ export default function PapersPage() {
                       <span>Due: {formatDate(paper.deadline)}</span>
                     </div>
 
+                    {/* Show attempt count for teachers */}
+                    {!isStudent && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Trophy size={16} className="text-purple-500" />
+                        <span>{paper.attemptCount || 0} Students Attempted</span>
+                      </div>
+                    )}
+
                     {!isExpired(paper.deadline) && (
                       <div className="flex items-center gap-2 text-sm">
                         <Clock size={16} className="text-yellow-500" />
@@ -528,14 +550,9 @@ export default function PapersPage() {
                             </Button>
                           </Link>
                         ) : isExpired(paper.deadline) ? (
-                          <Link href={`/papers/answers/${paper._id}`} className="w-full">
-                            <Button 
-                              className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
-                            >
-                              <Eye size={16} className="mr-2" />
-                              See Answer
-                            </Button>
-                          </Link>
+                          <Button variant="outline" disabled className="w-full bg-black text-white">
+                            Expired
+                          </Button>
                         ) : (
                           <Link href={`/papers/${paper._id}`} className="w-full">
                             <Button 
@@ -585,6 +602,21 @@ export default function PapersPage() {
             ))}
           </div>
         )}
+
+        <InfoDialog
+          isOpen={isInfoOpen}
+          onClose={() => setIsInfoOpen(false)}
+          title={infoDialogContent.title}
+          description={infoDialogContent.description}
+        />
+        <ConfirmationDialog
+          isOpen={isConfirmOpen}
+          onClose={() => setIsConfirmOpen(false)}
+          onConfirm={onConfirmDelete}
+          title={`Delete "${paperToDelete?.title}"?`}
+          description="This action cannot be undone. This will permanently delete the paper and all associated attempts."
+          confirmText="Delete"
+        />
       </main>
     </div>
   );

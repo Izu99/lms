@@ -88,7 +88,7 @@ export const createYoutubeLink = async (req: Request, res: Response) => {
       title,
       description,
       youtubeUrl,
-      uploadedBy: (req as any).user?.id || (req as any).user?._id,
+      uploadedBy: (req as any).user?.id,
       class: classId,
       year: yearId,
       thumbnailUrl: finalThumbnailUrl,

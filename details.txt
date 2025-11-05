@@ -1,0 +1,327 @@
+# ICT A-Level Learning Management System (LMS) - Detailed Project Analysis
+
+## Project Overview
+
+This is a comprehensive **Learning Management System (LMS)** specifically designed for ICT A-Level education. It's a full-stack web application that connects teachers and students through video-based learning and assessment tools, built with modern web technologies.
+
+## Main Features & Functionality
+
+### For Students:
+- **Video Learning**: Watch educational videos organized by class and year
+- **Online Assessments**: Take timed multiple-choice assessments/papers
+- **Progress Tracking**: View learning statistics and progress metrics
+- **Course Organization**: Access materials organized by subject and academic year
+- **Dashboard**: Personalized dashboard showing available videos, progress, and recent activity
+- **Search Functionality**: Find specific videos and content easily
+
+### For Teachers:
+- **Content Management**: Upload and manage educational videos
+- **Assessment Creation**: Create and manage online papers with multiple-choice questions
+- **Student Analytics**: Track student engagement, video views, and performance
+- **Content Organization**: Organize content by class and year
+- **Student Management**: Monitor student progress and add notes
+- **Upload Statistics**: View total views, student reach, and engagement metrics
+
+### For Admins:
+- **User Management**: Manage students, teachers, and their roles
+- **Platform Oversight**: Monitor the entire system
+- **Status Management**: Control user status (active, inactive, pending, paid, unpaid)
+
+## Technical Architecture
+
+### Frontend (Client) - Next.js Application
+**Technology Stack:**
+- Next.js 15 with App Router
+- React 19 with TypeScript
+- Tailwind CSS for styling
+- Shadcn/ui component library
+- Framer Motion for animations
+- React Hook Form with Zod validation
+- Axios for API communication
+
+**Folder Structure:**
+```
+client/
+├── src/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── (auth)/            # Authentication routes
+│   │   │   ├── login/         # Login page
+│   │   │   └── register/      # Multi-step registration
+│   │   ├── videos/            # Video management
+│   │   │   ├── [id]/          # Individual video pages
+│   │   │   └── create/        # Video upload form
+│   │   ├── papers/            # Assessment system
+│   │   │   ├── [id]/          # Individual paper pages
+│   │   │   ├── create/        # Paper creation
+│   │   │   ├── answers/       # Answer submission
+│   │   │   └── results/       # Results display
+│   │   ├── profile/           # User profile management
+│   │   ├── students/          # Student management (teachers)
+│   │   ├── class-year/        # Class and year selection
+│   │   └── test-page/         # Testing components
+│   ├── components/            # Reusable components
+│   │   ├── ui/               # Shadcn/ui components
+│   │   ├── register/         # Registration steps
+│   │   ├── Navbar.tsx        # Navigation component
+│   │   ├── ClassForm.tsx     # Class management
+│   │   ├── VideoForm.tsx     # Video upload form
+│   │   └── YearForm.tsx      # Year management
+│   ├── hooks/                # Custom React hooks
+│   │   └── useAuth.ts        # Authentication hook
+│   └── lib/                  # Utilities and constants
+│       ├── constants.ts      # API URLs and constants
+│       ├── theme.ts          # Theme configuration
+│       └── utils.ts          # Utility functions
+├── public/                   # Static assets
+└── package.json             # Dependencies and scripts
+```
+
+### Backend (Server) - Node.js/Express API
+**Technology Stack:**
+- Node.js with Express.js
+- TypeScript for type safety
+- MongoDB with Mongoose ODM
+- JWT for authentication
+- Bcrypt for password hashing
+- Multer for file uploads
+- CORS for cross-origin requests
+- Cookie-parser for session management
+
+**Folder Structure:**
+```
+server/
+├── src/
+│   ├── models/               # Database models
+│   │   ├── User.ts          # User model (students, teachers, admins)
+│   │   ├── Video.ts         # Video content model
+│   │   ├── Paper.ts         # Assessment model
+│   │   ├── Class.ts         # Subject/class model
+│   │   ├── Year.ts          # Academic year model
+│   │   ├── StudentAttempt.ts # Assessment attempts
+│   │   └── Youtube.ts       # YouTube integration
+│   ├── controllers/          # Business logic
+│   │   ├── authController.ts     # Authentication logic
+│   │   ├── videoController.ts    # Video management
+│   │   ├── paperController.ts    # Assessment logic
+│   │   ├── classController.ts    # Class management
+│   │   ├── yearController.ts     # Year management
+│   │   └── imageUploadController.ts # File uploads
+│   ├── routes/              # API endpoints
+│   │   ├── authRoutes.ts    # Authentication routes
+│   │   ├── videoRoutes.ts   # Video CRUD operations
+│   │   ├── paperRoutes.ts   # Assessment routes
+│   │   ├── classRoutes.ts   # Class management routes
+│   │   └── yearRoutes.ts    # Year management routes
+│   ├── middleware/          # Custom middleware
+│   │   ├── auth.ts          # JWT authentication
+│   │   └── roles.ts         # Role-based access control
+│   ├── config/              # Configuration files
+│   │   ├── multer.ts        # File upload configuration
+│   │   ├── imageUpload.ts   # Image upload settings
+│   │   └── paperContentUpload.ts # Paper content uploads
+│   ├── db/                  # Database configuration
+│   │   └── connection.ts    # MongoDB connection
+│   └── types/               # TypeScript type definitions
+├── uploads/                 # File storage directory
+├── dist/                   # Compiled JavaScript output
+└── package.json            # Dependencies and scripts
+```
+
+## Data Models & Relationships
+
+### User Model
+```typescript
+interface IUser {
+  username: string;           // Unique identifier
+  password: string;          // Hashed password
+  email?: string;            // Optional email
+  firstName?: string;        // First name
+  lastName?: string;         // Last name
+  address?: string;          // Physical address
+  institute?: string;        // Educational institution
+  year?: ObjectId;           // Reference to Year model
+  phoneNumber?: string;      // Contact number
+  whatsappNumber?: string;   // WhatsApp contact
+  telegram?: string;         // Telegram handle
+  idCardImage?: string;      // ID card upload
+  role: 'student' | 'teacher' | 'admin';  // User role
+  status: 'active' | 'inactive' | 'pending' | 'paid' | 'unpaid';
+  notes?: string;            // Teacher notes about student
+}
+```
+
+### Video Model
+```typescript
+interface IVideo {
+  title: string;             // Video title
+  description: string;       // Video description
+  videoUrl: string;          // Video file URL
+  uploadedBy: ObjectId;      // Reference to User (teacher)
+  class: ObjectId;           // Reference to Class
+  year: ObjectId;            // Reference to Year
+  views: number;             // View counter
+  createdAt: Date;           // Upload timestamp
+  updatedAt: Date;           // Last modified
+}
+```
+
+### Paper Model (Assessment)
+```typescript
+interface IPaper {
+  title: string;             // Assessment title
+  description?: string;      // Assessment description
+  teacherId: ObjectId;       // Reference to User (teacher)
+  questions: IQuestion[];    // Array of questions
+  deadline: Date;            // Submission deadline
+  timeLimit: number;         // Time limit in minutes
+  totalQuestions: number;    // Auto-calculated question count
+}
+
+interface IQuestion {
+  questionText: string;      // Question content
+  options: IOption[];        // Multiple choice options
+  order: number;             // Question order
+  imageUrl?: string;         // Optional question image
+}
+
+interface IOption {
+  optionText: string;        // Option content
+  isCorrect: boolean;        // Correct answer flag
+  imageUrl?: string;         // Optional option image
+}
+```
+
+## Key Application Flows
+
+### 1. Authentication Flow
+1. **Registration**: Multi-step process collecting user details, role selection, and ID verification
+2. **Login**: Username/password authentication with JWT token generation
+3. **Authorization**: Role-based access control using middleware
+4. **Session Management**: JWT tokens stored in localStorage with automatic refresh
+
+### 2. Video Management Flow
+**For Teachers:**
+1. Upload video files through VideoForm component
+2. Add metadata (title, description, class, year)
+3. Videos stored in uploads directory with database references
+4. View analytics (views, engagement) on dashboard
+
+**For Students:**
+1. Browse videos by class/year on dashboard
+2. Search functionality for finding specific content
+3. Click to watch videos with automatic view tracking
+4. Progress tracking and learning statistics
+
+### 3. Assessment System Flow
+**Paper Creation (Teachers):**
+1. Create new paper with title, description, deadline
+2. Add multiple-choice questions with options
+3. Mark correct answers for each question
+4. Set time limits and publish to students
+
+**Taking Assessments (Students):**
+1. View available papers on dashboard
+2. Start timed assessment session
+3. Answer questions within time limit
+4. Submit answers and receive immediate results
+5. View detailed results and correct answers
+
+### 4. File Upload System
+- **Multer Configuration**: Handles multipart/form-data uploads
+- **Storage Strategy**: Files stored in server/uploads directory
+- **File Types**: Support for images, videos, and documents
+- **Security**: File type validation and size limits
+- **Organization**: Files organized by type (papers, videos, id-cards)
+
+## Security Features
+
+### Authentication & Authorization
+- **JWT Tokens**: Secure token-based authentication
+- **Password Hashing**: Bcrypt with salt for password security
+- **Role-Based Access**: Different permissions for students, teachers, admins
+- **Route Protection**: Middleware guards for protected routes
+- **CORS Configuration**: Controlled cross-origin access
+
+### Data Validation
+- **Zod Schemas**: Frontend form validation
+- **Mongoose Validation**: Backend data validation
+- **File Upload Security**: File type and size restrictions
+- **Input Sanitization**: Protection against injection attacks
+
+## Deployment & Environment
+
+### Development Environment
+- **Client**: Next.js development server on port 3000
+- **Server**: Express server on port 5000
+- **Database**: MongoDB (local or cloud)
+- **File Storage**: Local uploads directory
+
+### Production Environment
+- **Frontend**: Deployed on Azure Web Apps
+- **Backend**: Deployed on Azure Web Apps
+- **Database**: MongoDB Atlas (cloud)
+- **File Storage**: Azure Blob Storage or local uploads
+- **Environment Variables**: Secure configuration management
+
+## API Endpoints Structure
+
+### Authentication Routes (`/api/auth`)
+- `POST /register` - User registration
+- `POST /login` - User login
+- `GET /profile` - Get user profile
+- `PUT /profile` - Update user profile
+
+### Video Routes (`/api/videos`)
+- `GET /` - List all videos (filtered by role)
+- `POST /` - Upload new video (teachers only)
+- `GET /:id` - Get specific video
+- `PUT /:id` - Update video (teachers only)
+- `DELETE /:id` - Delete video (teachers only)
+- `POST /:id/view` - Increment view count
+
+### Paper Routes (`/api/papers`)
+- `GET /` - List papers
+- `POST /` - Create new paper (teachers only)
+- `GET /:id` - Get specific paper
+- `POST /:id/submit` - Submit paper answers (students)
+- `GET /:id/results` - Get paper results
+
+### Class & Year Routes
+- `GET /api/classes` - List all classes
+- `POST /api/classes` - Create new class
+- `GET /api/years` - List all years
+- `POST /api/years` - Create new year
+
+## Performance Considerations
+
+### Frontend Optimization
+- **Next.js App Router**: Optimized routing and rendering
+- **Code Splitting**: Automatic code splitting by routes
+- **Image Optimization**: Next.js built-in image optimization
+- **Caching**: Browser caching for static assets
+- **Lazy Loading**: Components loaded on demand
+
+### Backend Optimization
+- **Database Indexing**: Optimized MongoDB queries
+- **Pagination**: Large datasets handled with pagination
+- **File Streaming**: Efficient file upload/download
+- **Caching**: Response caching for frequently accessed data
+- **Connection Pooling**: MongoDB connection optimization
+
+## Future Enhancement Opportunities
+
+### Features
+- **Real-time Chat**: Student-teacher communication
+- **Video Streaming**: Direct video streaming instead of file uploads
+- **Advanced Analytics**: Detailed learning analytics
+- **Mobile App**: React Native mobile application
+- **Offline Support**: PWA with offline capabilities
+
+### Technical Improvements
+- **Microservices**: Break down monolithic backend
+- **CDN Integration**: Content delivery network for videos
+- **Advanced Search**: Elasticsearch integration
+- **Real-time Updates**: WebSocket implementation
+- **API Documentation**: Swagger/OpenAPI documentation
+
+This LMS represents a modern, scalable approach to educational technology, specifically tailored for ICT A-Level curriculum delivery and assessment.

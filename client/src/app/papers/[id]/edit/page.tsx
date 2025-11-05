@@ -24,6 +24,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
+import { InfoDialog } from "@/components/InfoDialog";
 
 interface Option {
   _id?: string;
@@ -55,6 +56,8 @@ export default function EditPaperPage() {
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [infoDialogContent, setInfoDialogContent] = useState({ title: "", description: "" });
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -230,8 +233,8 @@ export default function EditPaperPage() {
 
       await axios.put(`${API_URL}/papers/${paperId}`, paperData, { headers });
       
-      alert("Paper updated successfully!");
-      router.push("/papers");
+      setInfoDialogContent({ title: "Success", description: "Paper updated successfully!" });
+      setIsInfoOpen(true);
 
     } catch (error) {
       console.error("Error updating paper:", error);
@@ -470,6 +473,15 @@ export default function EditPaperPage() {
             </Button>
           </div>
         </motion.div>
+        <InfoDialog
+          isOpen={isInfoOpen}
+          onClose={() => {
+            setIsInfoOpen(false);
+            router.push("/papers");
+          }}
+          title={infoDialogContent.title}
+          description={infoDialogContent.description}
+        />
       </main>
     </div>
   );

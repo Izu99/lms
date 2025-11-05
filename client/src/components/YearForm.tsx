@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Calendar, GraduationCap, Hash } from "lucide-react";
+import { InfoDialog } from "@/components/InfoDialog";
 
 interface YearData {
   _id: string;
@@ -23,6 +24,8 @@ export default function YearForm({ yearData, onSave, onClose }: YearFormProps) {
     name: ""
   });
   const [loading, setLoading] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [infoDialogContent, setInfoDialogContent] = useState({ title: "", description: "" });
 
   useEffect(() => {
     if (yearData) {
@@ -38,12 +41,14 @@ export default function YearForm({ yearData, onSave, onClose }: YearFormProps) {
     
     const yearNum = parseInt(formData.year);
     if (!formData.year.trim() || !formData.name.trim() || isNaN(yearNum)) {
-      alert("Please fill in all required fields with valid values");
+      setInfoDialogContent({ title: "Validation Error", description: "Please fill in all required fields with valid values" });
+      setIsInfoOpen(true);
       return;
     }
 
     if (yearNum < 1 || yearNum > 20) {
-      alert("Please enter a valid year between 1 and 20");
+      setInfoDialogContent({ title: "Validation Error", description: "Please enter a valid year between 1 and 20" });
+      setIsInfoOpen(true);
       return;
     }
 
@@ -180,6 +185,12 @@ export default function YearForm({ yearData, onSave, onClose }: YearFormProps) {
             </Button>
           </div>
         </form>
+        <InfoDialog
+          isOpen={isInfoOpen}
+          onClose={() => setIsInfoOpen(false)}
+          title={infoDialogContent.title}
+          description={infoDialogContent.description}
+        />
       </div>
     </div>
   );

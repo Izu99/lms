@@ -3,41 +3,45 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, School, MapPin, Users } from "lucide-react";
+import { InfoDialog } from "@/components/InfoDialog";
 
-interface ClassData {
+interface InstituteData {
   _id: string;
   name: string;
   location: string;
   isActive: boolean;
 }
 
-interface ClassFormProps {
-  classData?: ClassData | null;
+interface InstituteFormProps {
+  instituteData?: InstituteData | null;
   onSave: (formData: { name: string; location: string }) => void;
   onClose: () => void;
 }
 
-export default function ClassForm({ classData, onSave, onClose }: ClassFormProps) {
+export default function InstituteForm({ instituteData, onSave, onClose }: InstituteFormProps) {
   const [formData, setFormData] = useState({
     name: "",
     location: ""
   });
   const [loading, setLoading] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [infoDialogContent, setInfoDialogContent] = useState({ title: "", description: "" });
 
   useEffect(() => {
-    if (classData) {
+    if (instituteData) {
       setFormData({
-        name: classData.name,
-        location: classData.location
+        name: instituteData.name,
+        location: instituteData.location
       });
     }
-  }, [classData]);
+  }, [instituteData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name.trim() || !formData.location.trim()) {
-      alert("Please fill in all required fields");
+      setInfoDialogContent({ title: "Validation Error", description: "Please fill in all required fields" });
+      setIsInfoOpen(true);
       return;
     }
 
@@ -45,7 +49,7 @@ export default function ClassForm({ classData, onSave, onClose }: ClassFormProps
     try {
       await onSave(formData);
     } catch (error) {
-      console.error("Error saving class:", error);
+      console.error("Error saving institute:", error);
     } finally {
       setLoading(false);
     }
@@ -61,7 +65,7 @@ export default function ClassForm({ classData, onSave, onClose }: ClassFormProps
               <School className="text-blue-600" size={20} />
             </div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {classData ? "Edit Class" : "Add New Class"}
+              {instituteData ? "Edit Institute" : "Add New Institute"}
             </h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -71,23 +75,23 @@ export default function ClassForm({ classData, onSave, onClose }: ClassFormProps
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Class Name */}
+          {/* Institute Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Class Name *
+              Institute Name *
             </label>
             <div className="relative">
               <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., A1, A2, Science A"
+                placeholder="e.g., ezyICT, TechVision"
                 className="pl-10"
                 required
               />
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Enter the class identifier (A1, A2, etc.)
+              Enter the institute identifier (e.g., ezyICT)
             </p>
           </div>
 
@@ -141,14 +145,20 @@ export default function ClassForm({ classData, onSave, onClose }: ClassFormProps
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  {classData ? "Updating..." : "Creating..."}
+                  {instituteData ? "Updating..." : "Creating..."}
                 </div>
               ) : (
-                classData ? "Update Class" : "Create Class"
+                instituteData ? "Update Institute" : "Create Institute"
               )}
             </Button>
           </div>
         </form>
+        <InfoDialog
+          isOpen={isInfoOpen}
+          onClose={() => setIsInfoOpen(false)}
+          title={infoDialogContent.title}
+          description={infoDialogContent.description}
+        />
       </div>
     </div>
   );

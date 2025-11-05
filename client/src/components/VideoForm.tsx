@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { X, Upload, Video, File, School, Calendar } from "lucide-react";
 import axios from "axios";
 import { API_URL } from "@/lib/constants";
+import { InfoDialog } from "@/components/InfoDialog";
 
 interface VideoData {
   _id: string;
@@ -62,6 +63,8 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
   const [classes, setClasses] = useState<ClassData[]>([]);
   const [years, setYears] = useState<YearData[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [infoDialogContent, setInfoDialogContent] = useState({ title: "", description: "" });
 
   useEffect(() => {
     fetchClassesAndYears();
@@ -93,7 +96,8 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
       setYears(yearRes.data.years || []);
     } catch (error) {
       console.error("Error fetching classes and years:", error);
-      alert("Error loading classes and years. Please try again.");
+      setInfoDialogContent({ title: "Error", description: "Error loading classes and years. Please try again." });
+      setIsInfoOpen(true);
     } finally {
       setDataLoading(false);
     }
@@ -106,25 +110,29 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
     try {
       // Validation
       if (!formData.title.trim()) {
-        alert("Please enter a video title");
+        setInfoDialogContent({ title: "Validation Error", description: "Please enter a video title" });
+        setIsInfoOpen(true);
         setLoading(false);
         return;
       }
 
       if (!formData.classId) {
-        alert("Please select a class");
+        setInfoDialogContent({ title: "Validation Error", description: "Please select a class" });
+        setIsInfoOpen(true);
         setLoading(false);
         return;
       }
 
       if (!formData.yearId) {
-        alert("Please select a year");
+        setInfoDialogContent({ title: "Validation Error", description: "Please select a year" });
+        setIsInfoOpen(true);
         setLoading(false);
         return;
       }
 
       if (!video && !videoFile) {
-        alert("Please select a video file");
+        setInfoDialogContent({ title: "Validation Error", description: "Please select a video file" });
+        setIsInfoOpen(true);
         setLoading(false);
         return;
       }
@@ -143,7 +151,8 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
       await onSave(submitData);
     } catch (error) {
       console.error("Error saving video:", error);
-      alert("Error saving video. Please try again.");
+      setInfoDialogContent({ title: "Error", description: "Error saving video. Please try again." });
+      setIsInfoOpen(true);
     } finally {
       setLoading(false);
     }
@@ -154,7 +163,8 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
     if (file) {
       // Only check file type - NO SIZE LIMIT
       if (!file.type.startsWith('video/')) {
-        alert('Please select a video file');
+        setInfoDialogContent({ title: "Invalid File Type", description: "Please select a video file" });
+        setIsInfoOpen(true);
         return;
       }
       
@@ -414,6 +424,12 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
             </Button>
           </div>
         </form>
+        <InfoDialog
+          isOpen={isInfoOpen}
+          onClose={() => setIsInfoOpen(false)}
+          title={infoDialogContent.title}
+          description={infoDialogContent.description}
+        />
       </div>
     </div>
   );

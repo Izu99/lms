@@ -12,7 +12,11 @@ import {
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
-  Eye
+  Eye,
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+  Image as ImageIcon
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -32,6 +36,7 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
   const [user, setUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [studentAttempt, setStudentAttempt] = useState<any>(null);
+  const [showExplanation, setShowExplanation] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -83,12 +88,16 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
       
       const [attemptResponse, paperResponse] = await Promise.all([
         axios.get(`${API_URL}/papers/results/my-results`, { headers }),
-        axios.get(`${API_URL}/papers/${paperId}`, { headers })
+        axios.get(`${API_URL}/papers/${paperId}?showAnswers=true`, { headers })
       ]);
 
       console.log("Data fetched successfully", { attemptResponse: attemptResponse.data, paperResponse: paperResponse.data });
 
-      const attempt = attemptResponse.data.results.find((r: any) => r.paperId && r.paperId._id === paperId);
+      const attempt = attemptResponse.data.results?.find((a: any) => a.paperId && a.paperId._id === paperId);
+
+      setPaper(paperResponse.data.paper);
+
+      const isPaperExpired = new Date() > new Date(paperResponse.data.paper.deadline);
 
       if (attempt) {
         console.log("Attempt found", attempt);
@@ -100,24 +109,34 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
           });
           setAnswers(attemptAnswers);
         }
+      } else if (!isPaperExpired) {
+        console.log("Attempt not found for paperId and paper is not expired:", paperId);
+        setError("You have not attempted this paper yet, and it is not yet expired.");
       } else {
-        console.log("Attempt not found for paperId:", paperId);
-        setError("You have not attempted this paper yet.");
+        // Paper is expired, and no attempt found, but we still want to show answers
+        console.log("Attempt not found for paperId, but paper is expired. Displaying answers.", paperId);
+        // No error, just no studentAttempt data
       }
-
-      setPaper(paperResponse.data.paper);
 
     } catch (error) {
       console.error("Error fetching paper or attempt:", error);
       if (axios.isAxiosError(error)) {
         const errorMessage = error.response?.data?.message;
         if (error.response?.status === 404) {
-          setError('Paper not found.');
-        } else {
-          setError(errorMessage || "Failed to load paper data.");
+          setError('The paper you are looking for could not be found.');
+        } else if (error.response?.status === 401) {
+          setError("You are not authorized to view this page. Please log in again.");
+          router.push('/login');
         }
-      } else {
-        setError("Failed to load paper data due to a network error.");
+        else {
+          setError(errorMessage || "An error occurred while loading the paper data.");
+        }
+      } else if (error instanceof ReferenceError) {
+        console.error("ReferenceError:", error.message);
+        setError("A data processing error occurred. Please try again later.");
+      }
+      else {
+        setError("Failed to load paper data due to a network issue. Please check your connection.");
       }
     } finally {
       console.log("Finished fetchPaperAndAttempt, setting loading to false");
@@ -131,6 +150,14 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
       setCurrentQuestion(index);
     }
   }, [paper?.questions.length]);
+
+  // Toggle explanation visibility
+  const toggleExplanation = useCallback((questionId: string) => {
+    setShowExplanation(prev => ({
+      ...prev,
+      [questionId]: !prev[questionId]
+    }));
+  }, []);
 
   // Fetch paper on mount
   useEffect(() => {
@@ -215,20 +242,25 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
                 <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-4 sticky top-32">
                   <h3 className="font-semibold text-gray-900 mb-3">Question Navigator</h3>
                   <div className="grid grid-cols-5 gap-2">
-                    {paper.questions.map((_: any, index: number) => (
-                      <button
-                        key={index}
-                        onClick={() => goToQuestion(index)}
-                        className={`w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 ${
-                          currentQuestion === index
-                            ? 'bg-blue-600 text-white shadow-lg'
-                            : answers[paper.questions[index]._id]
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        {index + 1}
-                      </button>
+                    {paper.questions.map((question: any, index: number) => (
+                      <div key={index} className="relative">
+                        <button
+                          onClick={() => goToQuestion(index)}
+                          className={`w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200 ${
+                            currentQuestion === index
+                              ? 'bg-blue-600 text-white shadow-lg'
+                              : answers[paper.questions[index]._id]
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          {index + 1}
+                        </button>
+                        {/* Small indicator for questions with explanations */}
+                        {question.explanation && (question.explanation.text || question.explanation.imageUrl) && (
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full border border-white" title="Has explanation"></div>
+                        )}
+                      </div>
                     ))}
                   </div>
                   
@@ -241,9 +273,13 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
                       <div className="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
                       <span>Answered</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mb-1">
                       <div className="w-3 h-3 bg-gray-100 border border-gray-300 rounded"></div>
                       <span>Unanswered</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                      <span>Has Explanation</span>
                     </div>
                   </div>
                 </div>
@@ -321,6 +357,82 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
                               </label>
                             ))}
                           </div>
+
+                          {/* Detailed Explanation (විවරණ - Wiwarana) */}
+                          {currentQuestionData.explanation && (currentQuestionData.explanation.text || currentQuestionData.explanation.imageUrl) && (
+                            <div className="mt-8 border-t-2 border-gray-100 pt-6">
+                              <div 
+                                className="flex items-center justify-between cursor-pointer p-4 bg-amber-50 hover:bg-amber-100 rounded-xl border-2 border-amber-200 transition-colors"
+                                onClick={() => toggleExplanation(currentQuestionData._id)}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                                    <BookOpen size={20} className="text-amber-600" />
+                                  </div>
+                                  <div>
+                                    <h3 className="font-bold text-amber-800 text-lg">Detailed Explanation (විවරණ)</h3>
+                                    <p className="text-amber-700 text-sm">Click to {showExplanation[currentQuestionData._id] ? 'hide' : 'view'} the detailed explanation</p>
+                                  </div>
+                                </div>
+                                <div className="text-amber-600">
+                                  {showExplanation[currentQuestionData._id] ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+                                </div>
+                              </div>
+
+                              <AnimatePresence>
+                                {showExplanation[currentQuestionData._id] && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="p-6 bg-white border-2 border-amber-200 rounded-b-xl space-y-4">
+                                      {/* Explanation Text */}
+                                      {currentQuestionData.explanation.text && (
+                                        <div>
+                                          <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                            <BookOpen size={18} className="text-amber-600" />
+                                            Explanation
+                                          </h4>
+                                          <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-amber-400">
+                                            <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                              {currentQuestionData.explanation.text}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* Explanation Image */}
+                                      {currentQuestionData.explanation.imageUrl && (
+                                        <div>
+                                          <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                            <ImageIcon size={18} className="text-amber-600" />
+                                            Visual Explanation
+                                          </h4>
+                                          <div className="bg-gray-50 rounded-lg p-4 text-center">
+                                            <img 
+                                              src={`${API_BASE_URL}${currentQuestionData.explanation.imageUrl}`} 
+                                              alt="Detailed explanation" 
+                                              className="rounded-lg max-w-full h-auto max-h-96 mx-auto shadow-md border border-gray-200" 
+                                            />
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                        <p className="text-blue-800 text-sm flex items-center gap-2">
+                                          <Eye size={16} />
+                                          This explanation helps you understand the reasoning behind the correct answer.
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                          )}
                         </div>
                       </div>
 

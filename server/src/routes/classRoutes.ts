@@ -1,13 +1,13 @@
 import express from 'express';
-import { protect } from '../middleware/auth';
-import * as classController from '../controllers/classController';
+import { protect } from '../modules/shared/middleware/auth';
+import * as instituteController from '../controllers/classController';
 
 const router = express.Router();
 
-router.get('/', protect, classController.getAllClasses);
-router.post('/', protect, classController.createClass);
-router.get('/:id', protect, classController.getClassById);
-router.put('/:id', protect, classController.updateClass);
-router.delete('/:id', protect, classController.deleteClass);
+router.get('/', instituteController.getAllInstitutes);
+router.post('/', protect, instituteController.createInstitute);
+router.get('/:id', protect, instituteController.getInstituteById);
+router.put('/:id', protect, instituteController.updateInstitute);
+router.delete('/:id', protect, instituteController.deleteInstitute);
 
 export default router;

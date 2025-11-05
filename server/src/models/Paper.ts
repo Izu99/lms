@@ -10,6 +10,11 @@ export interface IQuestion {
   }[];
   order: number;
   imageUrl?: string;
+  // Detailed explanation (විවරණ - wiwarana)
+  explanation?: {
+    text?: string;
+    imageUrl?: string;
+  };
 }
 
 export interface IPaper extends Document {
@@ -31,9 +36,14 @@ const questionSchema = new mongoose.Schema({
   options: [{
     optionText: { type: String, required: true },
     isCorrect: { type: Boolean, required: true, default: false },
-    imageUrl: { type: String } // Added imageUrl field
+    imageUrl: { type: String }
   }],
-  order: { type: Number, required: true }
+  order: { type: Number, required: true },
+  // Detailed explanation (විවරණ - wiwarana)
+  explanation: {
+    text: { type: String },
+    imageUrl: { type: String }
+  }
 });
 
 const paperSchema = new mongoose.Schema<IPaper>({

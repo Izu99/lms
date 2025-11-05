@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
-import ClassForm from "@/components/ClassForm";
+import InstituteForm from "@/components/ClassForm";
 import YearForm from "@/components/YearForm";
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Edit,
+  Trash2,
   School,
   Calendar,
   Settings,
@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { API_URL } from "@/lib/constants";
 
-interface ClassData {
+interface InstituteData {
   _id: string;
   name: string;
   location: string;
@@ -44,15 +44,15 @@ interface UserData {
 
 export default function SettingsPage() {
   const [user, setUser] = useState<UserData | null>(null);
-  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [institutes, setInstitutes] = useState<InstituteData[]>([]);
   const [years, setYears] = useState<YearData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   
   // Form states
-  const [showClassForm, setShowClassForm] = useState(false);
+  const [showInstituteForm, setShowInstituteForm] = useState(false);
   const [showYearForm, setShowYearForm] = useState(false);
-  const [editingClass, setEditingClass] = useState<ClassData | null>(null);
+  const [editingInstitute, setEditingInstitute] = useState<InstituteData | null>(null);
   const [editingYear, setEditingYear] = useState<YearData | null>(null);
 
   useEffect(() => {
@@ -81,12 +81,12 @@ export default function SettingsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [classRes, yearRes] = await Promise.all([
-        axios.get(`${API_URL}/classes`, { headers: getAuthHeaders() }),
+      const [instituteRes, yearRes] = await Promise.all([
+        axios.get(`${API_URL}/institutes`, { headers: getAuthHeaders() }),
         axios.get(`${API_URL}/years`, { headers: getAuthHeaders() })
       ]);
       
-      setClasses(classRes.data.classes || []);
+      setInstitutes(instituteRes.data.institutes || []);
       setYears(yearRes.data.years || []);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -100,36 +100,36 @@ export default function SettingsPage() {
     }
   };
 
-  // Class operations
-  const handleSaveClass = async (classData: { name: string; location: string }) => {
+  // Institute operations
+  const handleSaveInstitute = async (instituteData: { name: string; location: string }) => {
     try {
-      if (editingClass) {
-        await axios.put(`${API_URL}/classes/${editingClass._id}`, 
-          classData, { headers: getAuthHeaders() });
+      if (editingInstitute) {
+        await axios.put(`${API_URL}/institutes/${editingInstitute._id}`,
+          instituteData, { headers: getAuthHeaders() });
       } else {
-        await axios.post(`${API_URL}/classes`, 
-          classData, { headers: getAuthHeaders() });
+        await axios.post(`${API_URL}/institutes`,
+          instituteData, { headers: getAuthHeaders() });
       }
       
       await fetchData();
-      setShowClassForm(false);
-      setEditingClass(null);
+      setShowInstituteForm(false);
+      setEditingInstitute(null);
     } catch (error) {
-      console.error("Error saving class:", error);
-      alert("Error saving class. Please try again.");
+      console.error("Error saving institute:", error);
+      alert("Error saving institute. Please try again.");
     }
   };
 
-  const handleDeleteClass = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this class?")) return;
+  const handleDeleteInstitute = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this institute?")) return;
     
     try {
-      await axios.delete(`${API_URL}/classes/${id}`, 
+      await axios.delete(`${API_URL}/institutes/${id}`,
         { headers: getAuthHeaders() });
       await fetchData();
     } catch (error) {
-      console.error("Error deleting class:", error);
-      alert("Error deleting class. Please try again.");
+      console.error("Error deleting institute:", error);
+      alert("Error deleting institute. Please try again.");
     }
   };
 
@@ -137,10 +137,10 @@ export default function SettingsPage() {
   const handleSaveYear = async (yearData: { year: number; name: string }) => {
     try {
       if (editingYear) {
-        await axios.put(`${API_URL}/years/${editingYear._id}`, 
+        await axios.put(`${API_URL}/years/${editingYear._id}`,
           yearData, { headers: getAuthHeaders() });
       } else {
-        await axios.post(`${API_URL}/years`, 
+        await axios.post(`${API_URL}/years`,
           yearData, { headers: getAuthHeaders() });
       }
       
@@ -157,7 +157,7 @@ export default function SettingsPage() {
     if (!confirm("Are you sure you want to delete this year?")) return;
     
     try {
-      await axios.delete(`${API_URL}/years/${id}`, 
+      await axios.delete(`${API_URL}/years/${id}`,
         { headers: getAuthHeaders() });
       await fetchData();
     } catch (error) {
@@ -166,9 +166,9 @@ export default function SettingsPage() {
     }
   };
 
-  const openClassForm = (classData?: ClassData) => {
-    setEditingClass(classData || null);
-    setShowClassForm(true);
+  const openInstituteForm = (instituteData?: InstituteData) => {
+    setEditingInstitute(instituteData || null);
+    setShowInstituteForm(true);
   };
 
   const openYearForm = (yearData?: YearData) => {
@@ -182,9 +182,9 @@ export default function SettingsPage() {
     window.location.href = "/login";
   };
 
-  const filteredClasses = classes.filter(classItem => 
-    classItem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    classItem.location.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredInstitutes = institutes.filter(instituteItem => 
+    instituteItem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    instituteItem.location.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredYears = years.filter(yearItem =>
@@ -212,8 +212,8 @@ export default function SettingsPage() {
               <Settings className="text-blue-600" size={28} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Location & Management</h1>
-              <p className="text-gray-600">Manage classes, years, and academic settings for your ICT program</p>
+              <h1 className="text-3xl font-bold text-gray-900">Institute & Year Management</h1>
+              <p className="text-gray-600">Manage institutes, years, and academic settings for your ICT program</p>
             </div>
           </div>
 
@@ -221,7 +221,7 @@ export default function SettingsPage() {
           <div className="bg-white rounded-lg shadow-sm border p-4">
             <div className="relative max-w-md">
               <Input
-                placeholder="Search classes or years..."
+                placeholder="Search institutes or years..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-4"
@@ -238,8 +238,8 @@ export default function SettingsPage() {
                 <School className="text-blue-600" size={24} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Total Classes</p>
-                <p className="text-2xl font-bold text-gray-900">{classes.length}</p>
+                <p className="text-sm text-gray-500">Total Institutes</p>
+                <p className="text-2xl font-bold text-gray-900">{institutes.length}</p>
               </div>
             </div>
           </div>
@@ -264,7 +264,7 @@ export default function SettingsPage() {
               <div>
                 <p className="text-sm text-gray-500">Locations</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {[...new Set(classes.map(c => c.location))].length}
+                  {[...new Set(institutes.map(c => c.location))].length}
                 </p>
               </div>
             </div>
@@ -284,7 +284,7 @@ export default function SettingsPage() {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {/* Classes Section */}
+          {/* Institutes Section */}
           <div className="bg-white rounded-lg shadow-sm border">
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
@@ -293,13 +293,13 @@ export default function SettingsPage() {
                     <School className="text-blue-600" size={20} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Classes</h2>
-                    <p className="text-sm text-gray-500">Manage class groups and locations</p>
+                    <h2 className="text-xl font-semibold text-gray-900">Institutes</h2>
+                    <p className="text-sm text-gray-500">Manage institute groups and locations</p>
                   </div>
                 </div>
-                <Button onClick={() => openClassForm()} className="flex items-center gap-2">
+                <Button onClick={() => openInstituteForm()} className="flex items-center gap-2">
                   <Plus size={16} />
-                  Add Class
+                  Add Institute
                 </Button>
               </div>
             </div>
@@ -309,19 +309,19 @@ export default function SettingsPage() {
                 <div className="flex justify-center items-center h-32">
                   <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                 </div>
-              ) : filteredClasses.length > 0 ? (
+              ) : filteredInstitutes.length > 0 ? (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {filteredClasses.map((classItem) => (
-                    <div key={classItem._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all">
+                  {filteredInstitutes.map((instituteItem) => (
+                    <div key={instituteItem._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                           <Users className="text-blue-600" size={20} />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-gray-900">{classItem.name}</h3>
+                          <h3 className="font-semibold text-gray-900">{instituteItem.name}</h3>
                           <div className="flex items-center gap-1 text-sm text-gray-500">
                             <MapPin size={14} />
-                            <span>{classItem.location}</span>
+                            <span>{instituteItem.location}</span>
                           </div>
                         </div>
                       </div>
@@ -329,7 +329,7 @@ export default function SettingsPage() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          onClick={() => openClassForm(classItem)}
+                          onClick={() => openInstituteForm(instituteItem)}
                           className="hover:bg-blue-50"
                         >
                           <Edit size={16} />
@@ -337,7 +337,7 @@ export default function SettingsPage() {
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          onClick={() => handleDeleteClass(classItem._id)}
+                          onClick={() => handleDeleteInstitute(instituteItem._id)}
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 size={16} />
@@ -349,11 +349,11 @@ export default function SettingsPage() {
               ) : (
                 <div className="text-center py-12">
                   <School className="mx-auto text-gray-400 mb-4" size={48} />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No classes found</h3>
-                  <p className="text-gray-600 mb-6">Create your first class to get started</p>
-                  <Button onClick={() => openClassForm()}>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No institutes found</h3>
+                  <p className="text-gray-600 mb-6">Create your first institute to get started</p>
+                  <Button onClick={() => openInstituteForm()}>
                     <Plus size={20} className="mr-2" />
-                    Add Class
+                    Add Institute
                   </Button>
                 </div>
               )}
@@ -440,13 +440,13 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button 
               variant="outline" 
-              onClick={() => openClassForm()}
+              onClick={() => openInstituteForm()}
               className="flex items-center gap-2 p-4 h-auto border-dashed border-2 hover:border-blue-300 hover:bg-blue-50"
             >
               <Plus className="text-blue-600" size={20} />
               <div className="text-left">
-                <p className="font-medium text-gray-900">Add New Class</p>
-                <p className="text-sm text-gray-500">Create a new class group</p>
+                <p className="font-medium text-gray-900">Add New Institute</p>
+                <p className="text-sm text-gray-500">Create a new institute group</p>
               </div>
             </Button>
             
@@ -478,13 +478,13 @@ export default function SettingsPage() {
       </main>
 
       {/* Forms */}
-      {showClassForm && (
-        <ClassForm
-          classData={editingClass}
-          onSave={handleSaveClass}
+      {showInstituteForm && (
+        <InstituteForm
+          instituteData={editingInstitute}
+          onSave={handleSaveInstitute}
           onClose={() => {
-            setShowClassForm(false);
-            setEditingClass(null);
+            setShowInstituteForm(false);
+            setEditingInstitute(null);
           }}
         />
       )}

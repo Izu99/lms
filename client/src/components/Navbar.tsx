@@ -119,9 +119,9 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
             <GraduationCap size={32} className="text-blue-600" />
             <div>
               <h1 className="text-2xl font-black text-gray-900 tracking-wide" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                EduForm
+                ezyICT
               </h1>
-              <p className="text-xs text-gray-500 font-medium">A-Level Learning Portal</p>
+              <p className="text-xs text-gray-500 font-medium">Smart Learning Made Easy</p>
             </div>
           </Link>
 
@@ -213,8 +213,25 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t bg-white py-4">
+            {/* Mobile User Info */}
+            <div className="px-4 pb-4 border-b">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                  <User size={18} className="text-white" />
+                </div>
+                <div>
+                  {user && (
+                    <>
+                      <p className="font-medium text-gray-900">{user.username}</p>
+                      <p className="text-sm text-blue-600 capitalize">{user.role}</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Mobile Navigation Tabs */}
-            <nav className="space-y-1 px-4">
+            <nav className="space-y-1 px-4 py-4">
               {navTabs.map((tab) => (
                 <Link
                   key={tab.href}
@@ -227,6 +244,36 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 </Link>
               ))}
             </nav>
+
+            {/* Mobile Actions */}
+            <div className="px-4 pt-4 border-t space-y-2">
+              <Link
+                href="/profile"
+                className="flex items-center gap-3 px-3 py-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <User size={20} />
+                My Profile
+              </Link>
+              <Link
+                href="/settings"
+                className="flex items-center gap-3 px-3 py-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Settings size={20} />
+                Settings
+              </Link>
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                className="flex items-center gap-3 px-3 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium w-full text-left"
+              >
+                <LogOut size={20} />
+                Logout
+              </button>
+            </div>
           </div>
         )}
       </div>

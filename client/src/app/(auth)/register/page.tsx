@@ -11,6 +11,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { API_URL } from "@/lib/constants";
+import Cookies from 'js-cookie';
 import Step1 from "@/components/register/Step1";
 import Step2 from "@/components/register/Step2";
 import Step3 from "@/components/register/Step3";
@@ -23,15 +24,16 @@ export default function RegisterPage() {
     username: "",
     password: "",
     confirmPassword: "",
+    email: "",
     address: "",
     institute: "",
     year: "",
     telegram: "",
-    idCardImage: null,
+    idCardFront: null,
+    idCardBack: null,
     phoneNumber: "",
     whatsappNumber: "",
   });
-  const [years, setYears] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -68,18 +70,6 @@ export default function RegisterPage() {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    async function fetchYears() {
-      try {
-        const response = await axios.get(`${API_URL}/years`);
-        setYears(response.data);
-      } catch (error) {
-        console.error("Failed to fetch years", error);
-      }
-    }
-    fetchYears();
-  }, []);
-
   const nextStep = () => setStep((prev) => prev + 1);
   const prevStep = () => setStep((prev) => prev - 1);
 
@@ -94,23 +84,63 @@ export default function RegisterPage() {
       return;
     }
 
+    // Create FormData and append fields correctly
     const formData = new FormData();
-    Object.keys(data).forEach((key) => {
-      formData.append(key, data[key]);
-    });
+    formData.append('username', data.username);
+    formData.append('password', data.password);
+    formData.append('firstName', data.firstName);
+    formData.append('lastName', data.lastName);
+    formData.append('address', data.address || '');
+    formData.append('institute', data.institute);
+    formData.append('year', data.year);
+    formData.append('phoneNumber', data.phoneNumber);
+    formData.append('whatsappNumber', data.whatsappNumber || '');
+    formData.append('telegram', data.telegram || '');
+
+    // Handle files separately
+    if (data.idCardFront instanceof File) {
+      formData.append('idCardFront', data.idCardFront);
+    }
+    if (data.idCardBack instanceof File) {
+      formData.append('idCardBack', data.idCardBack);
+    }
 
     try {
-      await axios.post(`${API_URL}/auth/register`, formData, {
+      console.log('Sending registration data:', {
+        ...Object.fromEntries(formData.entries()),
+        idCardFront: data.idCardFront ? 'File present' : 'No file',
+        idCardBack: data.idCardBack ? 'File present' : 'No file'
+      });
+
+      const response = await axios.post(`${API_URL}/auth/register`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-      window.location.href = "/login";
+
+      console.log('Registration response:', response.data);
+      
+      // Clear any existing data
+      localStorage.removeItem("token");
+      Cookies.remove("token");
+      
+      // Registration successful - redirect to login
+      alert("Registration successful! Please login with your credentials.");
+      window.location.href = "/auth/login";
     } catch (e: unknown) {
+      console.error('Registration error:', e);
       if (axios.isAxiosError(e)) {
-        setError(e.response?.data?.error || "Something went wrong");
+        if (e.response?.status === 400) {
+          setError(e.response.data.message || "Please check your registration details and try again.");
+        } else if (e.response?.status === 409) {
+          setError("This username is already taken. Please choose another one.");
+        } else {
+          setError("Registration failed. Please try again later.");
+        }
+        console.error('Server response:', e.response?.data);
       } else {
-        setError("Something went wrong");
+        setError("An unexpected error occurred. Please try again.");
+        console.error('Unknown error:', e);
       }
     }
     setLoading(false);
@@ -120,7 +150,7 @@ export default function RegisterPage() {
   const QuoteIcon = quote.icon;
 
   return (
-    <div className="min-h-screen flex h-screen">
+    <div className="min-h-screen flex">
       {/* Left side - Enhanced Branding with Motivational Content */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 via-teal-700 to-cyan-800 relative overflow-hidden">
         {/* Animated Background Elements */}
@@ -162,10 +192,10 @@ export default function RegisterPage() {
             </div>
             <div>
               <h1 className="text-5xl font-bold bg-gradient-to-r mt-5 from-white to-emerald-100 bg-clip-text text-transparent">
-                EduFlow
+                ezyICT
               </h1>
               <p className="text-emerald-200 text-sm font-medium tracking-widest uppercase">
-                ICT Learning Hub
+                Smart Learning Made Easy
               </p>
             </div>
           </div>
@@ -183,7 +213,7 @@ export default function RegisterPage() {
               </span>
             </h2>
             <p className="text-xl text-emerald-100 max-w-lg mx-auto leading-relaxed">
-              Join our ICT A-Level community and unlock access to programming
+              Join ezyICT's ICT A-Level community and unlock access to programming
               tutorials, assignments, and exam preparation resources.
             </p>
           </div>
@@ -257,9 +287,9 @@ export default function RegisterPage() {
                 />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">EduFlow</h1>
+                <h1 className="text-3xl font-bold text-gray-900">ezyICT</h1>
                 <p className="text-xs text-emerald-600 font-medium tracking-wider uppercase">
-                  ICT Learning Hub
+                  Smart Learning Made Easy
                 </p>
               </div>
             </div>
@@ -285,23 +315,53 @@ export default function RegisterPage() {
               <div className="w-20 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full mx-auto mt-4"></div>
             </div>
 
-            <form onSubmit={handleRegister} className="space-y-6">
+            {/* Step Progress Indicator */}
+            <div className="flex justify-center mb-8">
+              <div className="flex items-center space-x-4">
+                {[1, 2, 3].map((stepNumber) => (
+                  <div key={stepNumber} className="flex items-center">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                        step >= stepNumber
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-gray-200 text-gray-500'
+                      }`}
+                    >
+                      {stepNumber}
+                    </div>
+                    {stepNumber < 3 && (
+                      <div
+                        className={`w-12 h-1 mx-2 transition-all duration-300 ${
+                          step > stepNumber ? 'bg-emerald-500' : 'bg-gray-200'
+                        }`}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Step Content */}
+            <div className="space-y-6">
               {step === 1 && (
-                <Step1 data={data} setData={setData} nextStep={nextStep} />
+                <Step1 
+                  data={data} 
+                  setData={(newData) => setData({ ...data, ...newData })} 
+                  nextStep={nextStep} 
+                />
               )}
               {step === 2 && (
                 <Step2
                   data={data}
-                  setData={setData}
+                  setData={(newData) => setData({ ...data, ...newData })}
                   nextStep={nextStep}
                   prevStep={prevStep}
-                  years={years}
                 />
               )}
               {step === 3 && (
                 <Step3
                   data={data}
-                  setData={setData}
+                  setData={(newData) => setData({ ...data, ...newData })}
                   prevStep={prevStep}
                   handleSubmit={handleRegister}
                   loading={loading}
@@ -313,7 +373,7 @@ export default function RegisterPage() {
                   {error}
                 </div>
               )}
-            </form>
+            </div>
 
             <div className="mt-8 space-y-4">
               <div className="relative">
@@ -329,11 +389,11 @@ export default function RegisterPage() {
 
               <div className="text-center">
                 <Link
-                  href="/auth/login"
-                  className="relative text-green-600 hover:text-teal-700 font-semibold text-md transition-colors duration-300 group inline-block"
+                  href="/login"
+                  className="relative text-emerald-600 hover:text-teal-700 font-semibold text-lg transition-colors duration-300 group inline-block"
                 >
                   Sign In Instead
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-green-600 to-teal-600 group-hover:w-full transition-all duration-300"></span>
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-600 to-teal-600 group-hover:w-full transition-all duration-300"></span>
                 </Link>
               </div>
             </div>

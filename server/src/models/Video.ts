@@ -5,7 +5,7 @@ export interface IVideo extends Document {
   description: string;
   videoUrl: string; 
   uploadedBy: Types.ObjectId;
-  class: Types.ObjectId;  // Reference to Class
+  institute: Types.ObjectId;  // Reference to Institute
   year: Types.ObjectId;   // Reference to Year
   views: number;          // NEW: Simple view counter
 }
@@ -15,7 +15,7 @@ const videoSchema = new mongoose.Schema<IVideo>({
   description: String,
   videoUrl: { type: String, required: true },
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  class: { type: mongoose.Schema.Types.ObjectId, ref: 'Class', required: true },
+  institute: { type: mongoose.Schema.Types.ObjectId, ref: 'Institute', required: true },
   year: { type: mongoose.Schema.Types.ObjectId, ref: 'Year', required: true },
   views: { type: Number, default: 0 },  // NEW: Default to 0 views
 }, { timestamps: true });

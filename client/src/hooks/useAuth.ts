@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL, API_URL } from "@/lib/constants";
+import Cookies from 'js-cookie';
+import { API_URL } from "@/lib/constants";
 
 interface User {
   username: string;
@@ -18,7 +19,7 @@ export const useAuth = () => {
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = Cookies.get('token');
       if (!token) {
         setLoading(false);
         return;
@@ -34,23 +35,16 @@ export const useAuth = () => {
         role: response.data.user.role
       });
     } catch (error) {
-      // If API fails, try to get from localStorage
-      const savedUser = localStorage.getItem('user');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
-      } else {
-        // If no saved user, redirect to login
-        localStorage.removeItem('token');
-        window.location.href = '/login';
-      }
+      // If API fails, the user will not be authenticated
+      // The middleware will handle the redirect
+      setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    Cookies.remove('token');
     setUser(null);
     window.location.href = '/login';
   };

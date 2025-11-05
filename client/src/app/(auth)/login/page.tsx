@@ -15,9 +15,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { API_URL } from "@/lib/constants";
+import Cookies from 'js-cookie';
 
 export default function LoginPage() {
-  const [data, setData] = useState({ username: "", password: "" });
+  const [data, setData] = useState({ identifier: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -89,15 +90,21 @@ export default function LoginPage() {
 
       const result = await response.json();
 
-      // Store both token and user data
+      // Store token in localStorage (consistent with the rest of the app)
       localStorage.setItem("token", result.token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          username: result.username,
-          role: result.role,
-        })
-      );
+      
+      // Store user data for role-based routing
+      const userData = {
+        id: result.id || result.userId,
+        username: result.username,
+        role: result.role,
+        firstName: result.firstName,
+        lastName: result.lastName
+      };
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      // Also store in cookie as backup
+      Cookies.set("token", result.token, { expires: 7 });
 
       window.location.href = "/";
     } catch (e) {
@@ -110,7 +117,7 @@ export default function LoginPage() {
   const QuoteIcon = quote.icon;
 
   return (
-    <div className="min-h-screen flex h-screen">
+    <div className="min-h-screen flex">
       {/* Left side - Enhanced Branding with Motivational Content */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
         {/* Animated Background Elements */}
@@ -145,10 +152,10 @@ export default function LoginPage() {
             </div>
             <div>
               <h1 className="text-5xl font-bold bg-gradient-to-r mt-5 from-white to-blue-100 bg-clip-text text-transparent">
-                EduFlow
+                ezyICT
               </h1>
               <p className="text-blue-200 text-sm font-medium tracking-widest uppercase">
-                ICT Learning Hub
+                Smart Learning Made Easy
               </p>
             </div>
           </div>
@@ -252,9 +259,9 @@ export default function LoginPage() {
                 <GraduationCap size={40} className="relative text-blue-600" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">EduFlow</h1>
+                <h1 className="text-3xl font-bold text-gray-900">ezyICT</h1>
                 <p className="text-xs text-blue-600 font-medium tracking-wider uppercase">
-                  ICT Learning Hub
+                  Smart Learning Made Easy
                 </p>
               </div>
             </div>
@@ -281,11 +288,11 @@ export default function LoginPage() {
             </div>
 
             {/* THIS IS THE KEY FIX - Added the form element with onSubmit */}
-            <form onSubmit={handleLogin} className="space-y-6">
+            <form onSubmit={handleLogin} className="space-y-6" role="form">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <label htmlFor="login-identifier" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                   <User size={16} className="text-blue-500" />
-                  Username
+                  Username, Email, or Phone Number
                 </label>
                 <div className="relative group">
                   <User
@@ -293,11 +300,12 @@ export default function LoginPage() {
                     size={20}
                   />
                   <Input
-                    name="username"
-                    placeholder="Enter your username"
-                    value={data.username}
+                    id="login-identifier"
+                    name="identifier"
+                    placeholder="Enter your username, email, or phone number"
+                    value={data.identifier}
                     onChange={(e) =>
-                      setData({ ...data, username: e.target.value })
+                      setData({ ...data, identifier: e.target.value })
                     }
                     className="pl-12 h-14 border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 rounded-xl text-lg font-medium bg-white/80 transition-all duration-200"
                     required
@@ -306,7 +314,7 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                <label htmlFor="login-password" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                   <Lock size={16} className="text-blue-500" />
                   Password
                 </label>
@@ -316,6 +324,7 @@ export default function LoginPage() {
                     size={20}
                   />
                   <Input
+                    id="login-password"
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
@@ -375,14 +384,14 @@ export default function LoginPage() {
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-6 bg-white text-gray-500 font-medium">
-                    New to EduFlow?
+                    New to ezyICT?
                   </span>
                 </div>
               </div>
 
               <div className="text-center">
                 <Link
-                  href="/auth/register"
+                  href="/register"
                   className="relative text-blue-600 hover:text-blue-700 font-semibold text-lg transition-colors duration-300 group inline-block"
                 >
                   Create New Account
