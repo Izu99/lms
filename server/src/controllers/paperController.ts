@@ -359,6 +359,8 @@ export const getPaperResults = async (req: Request, res: Response) => {
     .populate('studentId', 'username firstName lastName')
     .sort({ percentage: -1, submittedAt: 1 });
 
+    console.log('DEBUG - Populated results for paper:', results);
+
     const stats = {
       totalSubmissions: results.length,
       averageScore: results.length ? Math.round(results.reduce((sum, r) => sum + r.percentage, 0) / results.length) : 0,

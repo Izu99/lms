@@ -9,7 +9,7 @@ import { API_URL } from "@/lib/constants";
 
 interface StudentResult {
   _id: string;
-  student: {
+  studentId: { // Changed from 'student' to 'studentId'
     _id: string;
     firstName?: string;
     lastName?: string;
@@ -194,10 +194,10 @@ export default function PaperResultsPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {result.student
-                                ? (result.student.firstName && result.student.lastName
-                                  ? `${result.student.firstName} ${result.student.lastName}`
-                                  : result.student.username)
+                              {result.studentId
+                                ? (result.studentId.firstName && result.studentId.lastName
+                                  ? `${result.studentId.firstName} ${result.studentId.lastName}`
+                                  : result.studentId.username)
                                 : "Unknown Student"}
                             </div>
                           </td>
