@@ -45,6 +45,91 @@
 
 :root {
   --radius: 0.625rem;
+  
+  /* ezyICT Brand Colors - Easy to change! */
+  --brand-primary: #2563eb; /* Blue from logo */
+  --brand-primary-light: #93c5fd; /* Light blue */
+  --brand-primary-dark: #1e40af; /* Dark blue */
+  --brand-accent: #60a5fa; /* Accent blue */
+  
+  /* Theme Colors - Light Mode (Default) */
+  --theme-bg-primary: #ffffff; /* Main background */
+  --theme-bg-secondary: #f9fafb; /* Secondary background */
+  --theme-bg-tertiary: #f3f4f6; /* Tertiary background */
+  --theme-text-primary: #111827; /* Main text */
+  --theme-text-secondary: #6b7280; /* Secondary text */
+  --theme-text-tertiary: #9ca3af; /* Tertiary text */
+  --theme-border: #e5e7eb; /* Borders */
+  --theme-border-light: #f3f4f6; /* Light borders */
+  --theme-shadow: rgba(0, 0, 0, 0.1); /* Shadows */
+  --theme-shadow-lg: rgba(0, 0, 0, 0.15); /* Large shadows */
+  
+  /* Sidebar Colors - Light Mode */
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #111827;
+  --sidebar-text-secondary: #6b7280;
+  --sidebar-border: #e5e7eb;
+  --sidebar-hover: #f3f4f6;
+  
+  /* Sidebar Menu Icon Colors - Change these to update all icons! */
+  --sidebar-icon-dashboard: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Purple gradient */
+  --sidebar-icon-videos: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); /* Pink gradient */
+  --sidebar-icon-papers: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); /* Blue gradient */
+  --sidebar-icon-students: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); /* Green gradient */
+  --sidebar-icon-analytics: linear-gradient(135deg, #fa709a 0%, #fee140 100%); /* Orange gradient */
+  --sidebar-icon-settings: linear-gradient(135deg, #30cfd0 0%, #330867 100%); /* Teal gradient */
+  --sidebar-icon-logout: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); /* Red gradient */
+  
+  /* Sidebar Icon Background (when active) */
+  --sidebar-icon-bg-active: var(--brand-primary);
+  --sidebar-icon-bg-hover: #f3f4f6;
+  
+  /* Card Colors */
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Theme */
+.dark {
+  /* Theme Colors - Dark Mode */
+  --theme-bg-primary: #0f172a; /* Main background - Dark blue-gray */
+  --theme-bg-secondary: #1e293b; /* Secondary background */
+  --theme-bg-tertiary: #334155; /* Tertiary background */
+  --theme-text-primary: #f1f5f9; /* Main text */
+  --theme-text-secondary: #cbd5e1; /* Secondary text */
+  --theme-text-tertiary: #94a3b8; /* Tertiary text */
+  --theme-border: #334155; /* Borders */
+  --theme-border-light: #475569; /* Light borders */
+  --theme-shadow: rgba(0, 0, 0, 0.3); /* Shadows */
+  --theme-shadow-lg: rgba(0, 0, 0, 0.5); /* Large shadows */
+  
+  /* Sidebar Colors - Dark Mode */
+  --sidebar-bg: #1e293b;
+  --sidebar-text: #f1f5f9;
+  --sidebar-text-secondary: #cbd5e1;
+  --sidebar-border: #334155;
+  --sidebar-hover: #334155;
+  
+  /* Sidebar Icons - Dark Mode (Same colorful gradients) */
+  --sidebar-icon-dashboard: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Purple gradient */
+  --sidebar-icon-videos: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); /* Pink gradient */
+  --sidebar-icon-papers: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); /* Blue gradient */
+  --sidebar-icon-students: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); /* Green gradient */
+  --sidebar-icon-analytics: linear-gradient(135deg, #fa709a 0%, #fee140 100%); /* Orange gradient */
+  --sidebar-icon-settings: linear-gradient(135deg, #30cfd0 0%, #330867 100%); /* Teal gradient */
+  --sidebar-icon-logout: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); /* Red gradient */
+  
+  --sidebar-icon-bg-hover: #334155;
+  
+  /* Card Colors - Dark Mode */
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  
+  /* Base Colors */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -128,5 +213,254 @@
 /* Example for a placeholder text inside SelectValue component */
 .SelectValue-placeholder {
   @apply text-sm;
+}
+
+/* ezyICT Sidebar Icon Styles - Use these classes for consistent styling */
+.sidebar-icon {
+  @apply w-10 h-10 rounded-xl flex items-center justify-center shadow-md transition-all;
+}
+
+.sidebar-icon-collapsed {
+  @apply w-11 h-11;
+}
+
+/* Individual icon colors - controlled by CSS variables */
+.sidebar-icon-dashboard {
+  background: var(--sidebar-icon-dashboard);
+}
+
+.sidebar-icon-videos {
+  background: var(--sidebar-icon-videos);
+}
+
+.sidebar-icon-papers {
+  background: var(--sidebar-icon-papers);
+}
+
+.sidebar-icon-students {
+  background: var(--sidebar-icon-students);
+}
+
+.sidebar-icon-analytics {
+  background: var(--sidebar-icon-analytics);
+}
+
+.sidebar-icon-settings {
+  background: var(--sidebar-icon-settings);
+}
+
+.sidebar-icon-logout {
+  background: var(--sidebar-icon-logout) !important;
+}
+
+/* Logout button when expanded - full width with proper layout */
+button.sidebar-icon-logout {
+  background: transparent !important;
+}
+
+button.sidebar-icon-logout:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.sidebar-icon-logout svg {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+}
+
+.sidebar-icon-logout svg path,
+.sidebar-icon-logout svg circle,
+.sidebar-icon-logout svg rect,
+.sidebar-icon-logout svg line,
+.sidebar-icon-logout svg polyline,
+.sidebar-icon-logout svg polygon {
+  stroke: white !important;
+  fill: none !important;
+}
+
+/* Active state - uses brand primary color */
+.sidebar-icon-active {
+  background-color: var(--sidebar-icon-bg-active) !important;
+}
+
+/* Hover state */
+.sidebar-icon:hover {
+  transform: scale(1.05);
+}
+
+/* Icon text color - always white for contrast */
+.sidebar-icon svg {
+  color: white !important;
+  stroke: white !important;
+  fill: none !important;
+}
+
+/* Force all paths and shapes inside sidebar icons to be white */
+.sidebar-icon svg path,
+.sidebar-icon svg circle,
+.sidebar-icon svg rect,
+.sidebar-icon svg line,
+.sidebar-icon svg polyline,
+.sidebar-icon svg polygon {
+  stroke: white !important;
+  fill: none !important;
+}
+
+/* Brand color utilities */
+.bg-brand-primary {
+  background-color: var(--brand-primary);
+}
+
+.text-brand-primary {
+  color: var(--brand-primary);
+}
+
+.border-brand-primary {
+  border-color: var(--brand-primary);
+}
+
+.bg-brand-accent {
+  background-color: var(--brand-accent);
+}
+
+.text-brand-accent {
+  color: var(--brand-accent);
+}
+
+/* Theme Utility Classes */
+.theme-bg-primary {
+  background-color: var(--theme-bg-primary);
+}
+
+.theme-bg-secondary {
+  background-color: var(--theme-bg-secondary);
+}
+
+.theme-bg-tertiary {
+  background-color: var(--theme-bg-tertiary);
+}
+
+.theme-text-primary {
+  color: var(--theme-text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--theme-text-secondary);
+}
+
+.theme-text-tertiary {
+  color: var(--theme-text-tertiary);
+}
+
+.theme-border {
+  border-color: var(--theme-border);
+}
+
+.theme-card {
+  background-color: var(--card-bg);
+  border-color: var(--card-border);
+  box-shadow: var(--card-shadow);
+}
+
+.theme-card:hover {
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* Sidebar Theme Classes */
+.sidebar-themed {
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  border-color: var(--sidebar-border);
+}
+
+/* Dashboard Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.6s ease-out;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+.delay-1000 {
+  animation-delay: 1s;
+}
+
+@keyframes expandWidth {
+  from {
+    width: 0;
+  }
+}
+
+@keyframes expandHeight {
+  from {
+    height: 0;
+  }
+}
+
+/* Chart animations */
+.chart-bar {
+  animation: expandWidth 1s ease-out forwards;
+}
+
+/* Smooth transitions for interactive elements */
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

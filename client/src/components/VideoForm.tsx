@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Upload, Video, File, School, Calendar } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import axios from "axios";
 import { API_URL } from "@/lib/constants";
 import { InfoDialog } from "@/components/InfoDialog";
+import Cookies from "js-cookie";
 
 interface VideoData {
   _id: string;
@@ -17,7 +19,7 @@ interface VideoData {
     username: string;
     role: string;
   };
-  class?: {
+  institute?: {
     _id: string;
     name: string;
     location: string;
@@ -31,7 +33,7 @@ interface VideoData {
   updatedAt: string;
 }
 
-interface ClassData {
+interface InstituteData {
   _id: string;
   name: string;
   location: string;
@@ -47,56 +49,56 @@ interface YearData {
 
 interface VideoFormProps {
   video?: VideoData | null;
-  onSave: (formData: FormData) => void;
+  onSuccess: () => void;
   onClose: () => void;
 }
 
-export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
+export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    classId: "",
+    instituteId: "",
     yearId: ""
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [classes, setClasses] = useState<ClassData[]>([]);
+  const [institutes, setInstitutes] = useState<InstituteData[]>([]);
   const [years, setYears] = useState<YearData[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [infoDialogContent, setInfoDialogContent] = useState({ title: "", description: "" });
 
   useEffect(() => {
-    fetchClassesAndYears();
+    fetchInstitutesAndYears();
     
     if (video) {
       setFormData({
         title: video.title,
         description: video.description || "",
-        classId: video.class ? video.class._id : "",
+        instituteId: video.institute ? video.institute._id : "",
         yearId: video.year ? video.year._id : ""
       });
     }
   }, [video]);
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
+    const token = Cookies.get('token');
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   };
 
-  const fetchClassesAndYears = async () => {
+  const fetchInstitutesAndYears = async () => {
     try {
       setDataLoading(true);
       const [classRes, yearRes] = await Promise.all([
-        axios.get(`${API_URL}/classes`, { headers: getAuthHeaders() }),
+        axios.get(`${API_URL}/institutes`, { headers: getAuthHeaders() }),
         axios.get(`${API_URL}/years`, { headers: getAuthHeaders() })
       ]);
       
-      setClasses(classRes.data.classes || []);
+      setInstitutes(classRes.data.institutes || []);
       setYears(yearRes.data.years || []);
     } catch (error) {
-      console.error("Error fetching classes and years:", error);
-      setInfoDialogContent({ title: "Error", description: "Error loading classes and years. Please try again." });
+      console.error("Error fetching institutes and years:", error);
+      setInfoDialogContent({ title: "Error", description: "Error loading institutes and years. Please try again." });
       setIsInfoOpen(true);
     } finally {
       setDataLoading(false);
@@ -116,8 +118,8 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
         return;
       }
 
-      if (!formData.classId) {
-        setInfoDialogContent({ title: "Validation Error", description: "Please select a class" });
+      if (!formData.instituteId) {
+        setInfoDialogContent({ title: "Validation Error", description: "Please select an institute" });
         setIsInfoOpen(true);
         setLoading(false);
         return;
@@ -140,7 +142,7 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
       const submitData = new FormData();
       submitData.append('title', formData.title);
       submitData.append('description', formData.description);
-      submitData.append('class', formData.classId);
+      submitData.append('institute', formData.instituteId);
       submitData.append('year', formData.yearId);
       
       // Only append video file if one is selected
@@ -148,7 +150,19 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
         submitData.append('video', videoFile);
       }
 
-      await onSave(submitData);
+      if (video) {
+        // Update existing video
+        await axios.put(`${API_URL}/videos/${video._id}`, submitData, {
+          headers: getAuthHeaders(),
+        });
+      } else {
+        // Create new video
+        await axios.post(`${API_URL}/videos`, submitData, {
+          headers: getAuthHeaders(),
+        });
+      }
+
+      onSuccess();
     } catch (error) {
       console.error("Error saving video:", error);
       setInfoDialogContent({ title: "Error", description: "Error saving video. Please try again." });
@@ -182,24 +196,24 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const selectedClass = classes.find(c => c._id === formData.classId);
+  const selectedInstitute = institutes.find(i => i._id === formData.instituteId);
   const selectedYear = years.find(y => y._id === formData.yearId);
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Video className="text-blue-600" size={20} />
+            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+              <Video className="text-blue-600 dark:text-blue-400" size={20} />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               {video ? "Edit Video" : "Upload New Video"}
             </h2>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X size={20} />
+          <Button variant="ghost" size="icon" onClick={onClose} className="hover:bg-gray-100 dark:hover:bg-gray-700">
+            <X size={20} className="text-gray-600 dark:text-gray-400" />
           </Button>
         </div>
 
@@ -207,7 +221,7 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Video Title *
             </label>
             <Input
@@ -215,6 +229,7 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="Enter video title"
               required
+              className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
             />
           </div>
 
@@ -222,61 +237,63 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Class Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Class *
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Institute *
               </label>
               <div className="relative">
-                <School className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <select
-                  value={formData.classId}
-                  onChange={(e) => setFormData({ ...formData, classId: e.target.value })}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
-                  required
+                <School className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                <Select
+                  value={formData.instituteId}
+                  onValueChange={(value) => setFormData({ ...formData, instituteId: value })}
                   disabled={dataLoading}
+                  required
                 >
-                  <option value="">
-                    {dataLoading ? "Loading classes..." : "Select a class"}
-                  </option>
-                  {classes.map(classItem => (
-                    <option key={classItem._id} value={classItem._id}>
-                      {classItem.name} - {classItem.location}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <SelectValue placeholder={dataLoading ? "Loading institutes..." : "Select an institute"} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                    {institutes.map(instituteItem => (
+                      <SelectItem key={instituteItem._id} value={instituteItem._id} className="text-gray-900 dark:text-white">
+                        {instituteItem.name} - {instituteItem.location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              {classes.length === 0 && !dataLoading && (
-                <p className="text-xs text-amber-600 mt-1">
-                  No classes available. Please create a class first.
+              {institutes.length === 0 && !dataLoading && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                  No institutes available. Please create an institute first.
                 </p>
               )}
             </div>
 
             {/* Year Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Academic Year *
               </label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                <select
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                <Select
                   value={formData.yearId}
-                  onChange={(e) => setFormData({ ...formData, yearId: e.target.value })}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
-                  required
+                  onValueChange={(value) => setFormData({ ...formData, yearId: value })}
                   disabled={dataLoading}
+                  required
                 >
-                  <option value="">
-                    {dataLoading ? "Loading years..." : "Select a year"}
-                  </option>
-                  {years.map(yearItem => (
-                    <option key={yearItem._id} value={yearItem._id}>
-                      {yearItem.name} (A-Level Year {yearItem.year})
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <SelectValue placeholder={dataLoading ? "Loading years..." : "Select a year"} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                    {years.map(yearItem => (
+                      <SelectItem key={yearItem._id} value={yearItem._id} className="text-gray-900 dark:text-white">
+                        {yearItem.name} (A-Level Year {yearItem.year})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {years.length === 0 && !dataLoading && (
-                <p className="text-xs text-amber-600 mt-1">
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
                   No years available. Please create a year first.
                 </p>
               )}
@@ -284,18 +301,18 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
           </div>
 
           {/* Quick Actions for missing data */}
-          {((classes.length === 0 || years.length === 0) && !dataLoading) && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-amber-800 mb-2">Setup Required</h4>
-              <p className="text-sm text-amber-700 mb-3">
-                You need to create classes and years before uploading videos.
+          {((institutes.length === 0 || years.length === 0) && !dataLoading) && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-amber-800 dark:text-amber-300 mb-2">Setup Required</h4>
+              <p className="text-sm text-amber-700 dark:text-amber-400 mb-3">
+                You need to create institutes and years before uploading videos.
               </p>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => window.open('/settings', '_blank')}
-                className="text-amber-700 border-amber-300 hover:bg-amber-50"
+                className="text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/30"
               >
                 Open Settings Page
               </Button>
@@ -304,7 +321,7 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Description
             </label>
             <textarea
@@ -312,16 +329,16 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Enter video description (optional)"
               rows={4}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
 
           {/* Video File Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Video File {!video && "*"}
             </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-blue-300 transition-colors">
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 hover:border-blue-300 dark:hover:border-blue-600 transition-colors bg-gray-50 dark:bg-gray-900/30">
               <input
                 type="file"
                 accept="video/*"
@@ -334,22 +351,22 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
                 className="cursor-pointer flex flex-col items-center justify-center"
               >
                 {videoFile ? (
-                  <div className="flex items-center gap-2 text-green-600">
+                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
                     <File size={24} />
                     <div className="text-center">
                       <span className="font-medium block">{videoFile.name}</span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
                         {formatFileSize(videoFile.size)}
                       </span>
                     </div>
                   </div>
                 ) : (
                   <div className="text-center">
-                    <Upload className="mx-auto text-gray-400 mb-2" size={32} />
-                    <p className="text-gray-600">
+                    <Upload className="mx-auto text-gray-400 dark:text-gray-500 mb-2" size={32} />
+                    <p className="text-gray-600 dark:text-gray-300">
                       {video ? "Upload new video file (optional)" : "Click to upload video file"}
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                       MP4, WebM, or other video formats (no size limit)
                     </p>
                   </div>
@@ -357,31 +374,31 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
               </label>
             </div>
             {video && !videoFile && (
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 Current video will be kept if no new file is uploaded
               </p>
             )}
           </div>
 
           {/* Preview */}
-          {formData.title && formData.classId && formData.yearId && (
-            <div className="border-t pt-6">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Preview</h3>
-              <div className="bg-gray-50 rounded-lg p-4 border">
+          {formData.title && formData.instituteId && formData.yearId && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Preview</h3>
+              <div className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-start gap-4">
-                  <div className="w-20 h-14 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                    <Video className="text-gray-400" size={20} />
+                  <div className="w-20 h-14 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center flex-shrink-0">
+                    <Video className="text-gray-400 dark:text-gray-500" size={20} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 mb-1">{formData.title}</h4>
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-1">{formData.title}</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
                       {formData.description || "No description"}
                     </p>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                      {selectedClass && (
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                      {selectedInstitute && (
                         <div className="flex items-center gap-1">
                           <School size={12} />
-                          <span>{selectedClass.name} - {selectedClass.location}</span>
+                          <span>{selectedInstitute.name} - {selectedInstitute.location}</span>
                         </div>
                       )}
                       {selectedYear && (
@@ -404,14 +421,14 @@ export default function VideoForm({ video, onSave, onClose }: VideoFormProps) {
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-6 border-t">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+          <div className="flex gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
               Cancel
             </Button>
             <Button 
               type="submit" 
-              disabled={loading || dataLoading || classes.length === 0 || years.length === 0} 
-              className="flex-1"
+              disabled={loading || dataLoading || institutes.length === 0 || years.length === 0} 
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
             >
               {loading ? (
                 <div className="flex items-center gap-2">

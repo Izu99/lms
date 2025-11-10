@@ -1,7 +1,7 @@
 "use client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, ImagePlus, X, ChevronLeft } from "lucide-react";
+import { MessageCircle, ImagePlus, X, ChevronLeft, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useState } from "react";
@@ -93,7 +93,6 @@ export default function Step3({ data, setData, prevStep, handleSubmit, loading }
                 accept="image/*"
                 onChange={handleFrontImageChange}
                 className="hidden"
-                required
               />
               <label
                 htmlFor="idCardImage"
@@ -146,7 +145,6 @@ export default function Step3({ data, setData, prevStep, handleSubmit, loading }
                 accept="image/*"
                 onChange={handleBackImageChange}
                 className="hidden"
-                required
               />
               <label
                 htmlFor="idCardBackImage"
@@ -207,7 +205,7 @@ export default function Step3({ data, setData, prevStep, handleSubmit, loading }
           <Button
             type="submit"
             disabled={loading}
-            className="flex-1 h-14 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-lg rounded-xl transition-all duration-500 transform hover:scale-104 hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group"
+            className="w-14 h-14 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-lg rounded-xl transition-all duration-500 transform hover:scale-104 hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 relative overflow-hidden group"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
             {loading ? (
@@ -216,7 +214,9 @@ export default function Step3({ data, setData, prevStep, handleSubmit, loading }
                 <span>Creating Account...</span>
               </div>
             ) : (
-              <span className="relative z-10">Create Account</span>
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                <CheckCircle size={20} />
+              </span>
             )}
           </Button>
         </div>

@@ -34,7 +34,7 @@ const getUserIdCardFolder = (userId: string): string => {
 
 // Registration controller
 export const register = async (req: Request, res: Response) => {
-  const { username, password, firstName, lastName, address, institute, year, phoneNumber, whatsappNumber, telegram, email } = req.body;
+  const { username, password, firstName, lastName, address, phoneNumber, whatsappNumber, telegram, email } = req.body;
   let idCardFrontImage: string | undefined;
   let idCardBackImage: string | undefined;
   let uploadedFiles: Express.Multer.File[] = [];
@@ -55,8 +55,6 @@ export const register = async (req: Request, res: Response) => {
     firstName,
     lastName,
     address,
-    institute,
-    year,
     phoneNumber,
     whatsappNumber,
     telegram,
@@ -85,22 +83,7 @@ export const register = async (req: Request, res: Response) => {
     return res.status(400).json({ message: 'First name and last name are required' });
   }
 
-  if (!address || !institute || !year) {
-    console.log('Registration failed: Missing address, institute, or year');
-    return res.status(400).json({ message: 'Address, institute, and year are required' });
-  }
 
-  if (!frontFile) {
-    console.log('Registration failed: Missing ID card front image');
-    if (uploadedFiles.length > 0) deleteAllUploadedFiles(uploadedFiles);
-    return res.status(400).json({ message: 'ID card front image is required' });
-  }
-
-  if (!backFile) {
-    console.log('Registration failed: Missing ID card back image');
-    deleteAllUploadedFiles(uploadedFiles);
-    return res.status(400).json({ message: 'ID card back image is required' });
-  }
 
   try {
 
@@ -132,8 +115,6 @@ export const register = async (req: Request, res: Response) => {
       firstName,
       lastName,
       address,
-      institute,
-      year: year,
       phoneNumber,
       whatsappNumber,
       telegram,
@@ -156,7 +137,7 @@ export const register = async (req: Request, res: Response) => {
       // Create user-specific directory
       const userDir = path.join(__dirname, '..', '..', 'uploads', 'id-cards', user._id.toString());
       if (!fs.existsSync(userDir)) {
-        fs.mkdirSync(userDir, { recursive: true });
+        fs.mkdirSync(userDir, { recurmakesive: true });
       }
       
       try {

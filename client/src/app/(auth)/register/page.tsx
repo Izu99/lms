@@ -26,8 +26,6 @@ export default function RegisterPage() {
     confirmPassword: "",
     email: "",
     address: "",
-    institute: "",
-    year: "",
     telegram: "",
     idCardFront: null,
     idCardBack: null,
@@ -38,6 +36,17 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [currentQuote, setCurrentQuote] = useState(0);
+  const [floatingElements, setFloatingElements] = useState<React.CSSProperties[]>([]);
+
+  useEffect(() => {
+    const elements = Array.from({ length: 15 }, () => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      animation: `float ${4 + Math.random() * 4}s ease-in-out infinite`,
+      animationDelay: `${Math.random() * 4}s`,
+    }));
+    setFloatingElements(elements);
+  }, []);
 
   const motivationalQuotes = [
     {
@@ -90,9 +99,8 @@ export default function RegisterPage() {
     formData.append('password', data.password);
     formData.append('firstName', data.firstName);
     formData.append('lastName', data.lastName);
+    formData.append('email', data.email);
     formData.append('address', data.address || '');
-    formData.append('institute', data.institute);
-    formData.append('year', data.year);
     formData.append('phoneNumber', data.phoneNumber);
     formData.append('whatsappNumber', data.whatsappNumber || '');
     formData.append('telegram', data.telegram || '');
@@ -158,18 +166,11 @@ export default function RegisterPage() {
           <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
           <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-emerald-300/20 rounded-full blur-3xl"></div>
           {/* Floating Elements */}
-          {[...Array(15)].map((_, i) => (
+          {floatingElements.map((style, i) => (
             <div
               key={i}
               className="absolute w-2 h-2 bg-white/20 rounded-full"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animation: `float ${
-                  4 + Math.random() * 4
-                }s ease-in-out infinite`,
-                animationDelay: `${Math.random() * 4}s`,
-              }}
+              style={style}
             />
           ))}
         </div>
@@ -236,7 +237,7 @@ export default function RegisterPage() {
                   className="text-lg font-medium text-white leading-relaxed mb-4 transition-all duration-500"
                   key={currentQuote}
                 >
-                  `{quote.text}`
+                  {quote.text}
                 </blockquote>
                 <cite className="text-emerald-200 text-sm font-semibold">
                   — {quote.author}
@@ -271,7 +272,7 @@ export default function RegisterPage() {
           />
         </div>
 
-        <div className="w-full max-w-md relative z-10">
+        <div className="w-full max-w-2xl relative z-10">
           {/* Mobile branding */}
           <div
             className={`lg:hidden text-center mb-8 transform transition-all duration-700 ${

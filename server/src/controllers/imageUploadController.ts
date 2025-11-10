@@ -6,7 +6,7 @@ export const uploadPaperOptionImage = (req: Request, res: Response) => {
   }
 
   // Assuming the file is saved in 'uploads/paper-options/'
-  const imageUrl = `/uploads/paper-options/${req.file.filename}`;
+  const imageUrl = `/paper-options/${req.file.filename}`;
   res.status(200).json({ imageUrl, message: 'Image uploaded successfully.' });
 };
 
@@ -33,7 +33,7 @@ export const uploadExplanationImage = (req: Request, res: Response) => {
     return res.status(400).json({ message: 'No explanation image file provided.' });
   }
 
-  const imageUrl = `/uploads/explanations/${req.file.filename}`;
+  const imageUrl = `/explanations/${req.file.filename}`;
   res.status(200).json({ 
     imageUrl, 
     message: 'Explanation image uploaded successfully.',

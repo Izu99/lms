@@ -31,8 +31,11 @@ export const createYear = async (req: Request, res: Response) => {
     await newYear.save();
     
     res.status(201).json({ message: 'Year created successfully', year: newYear });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Create year error:", error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 };

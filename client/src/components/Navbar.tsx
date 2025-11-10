@@ -28,7 +28,7 @@ interface NavbarProps {
   onLogout?: () => void;
 }
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 
 
@@ -39,6 +39,7 @@ import { useRouter } from "next/navigation";
 export default function Navbar({ user, onLogout }: NavbarProps) {
 
   const router = useRouter();
+  const pathname = usePathname();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -58,8 +59,8 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
     if (user.role === "student") {
       return [
         { href: "/", label: "Dashboard", icon: BarChart3 },
-        { href: "/videos", label: "Video Lessons", icon: Video },
-        { href: "/papers", label: "Assignments", icon: FileText },
+        { href: "/student/videos", label: "Video Lessons", icon: Video },
+        { href: "/student/papers", label: "Assignments", icon: FileText },
         { href: "/grades", label: "My Grades", icon: BarChart3 },
         { href: "/schedule", label: "Schedule", icon: Calendar }
       ];
@@ -68,8 +69,8 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
     if (user.role === "teacher") {
       return [
         { href: "/", label: "Dashboard", icon: BarChart3 },
-        { href: "/videos", label: "Video Management", icon: Video },
-        { href: "/class-year", label: "Class & Year Setup", icon: School },
+        { href: "/teacher/videos", label: "Video Management", icon: Video },
+        { href: "/institute-year", label: "Institute & Year Setup", icon: School },
         { href: "/students", label: "Students", icon: Users },
         { href: "/papers", label: "Assignments", icon: FileText },
         // { href: "/grades", label: "Gradebook", icon: BarChart3 }
@@ -111,17 +112,17 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
 
 
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+    <header className="theme-bg-primary shadow-sm theme-border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
             <GraduationCap size={32} className="text-blue-600" />
             <div>
-              <h1 className="text-2xl font-black text-gray-900 tracking-wide" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <h1 className="text-2xl font-black theme-text-primary tracking-wide" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 ezyICT
               </h1>
-              <p className="text-xs text-gray-500 font-medium">Smart Learning Made Easy</p>
+              <p className="text-xs theme-text-secondary font-medium">Smart Learning Made Easy</p>
             </div>
           </Link>
 
@@ -131,7 +132,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                className={`flex items-center gap-2 px-4 py-2 theme-text-secondary hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-lg transition-colors font-medium ${pathname === tab.href || (tab.href !== '/' && pathname.startsWith(tab.href)) ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/50' : ''}`}
               >
                 <tab.icon size={16} />
                 {tab.label}
@@ -161,7 +162,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   {user && (
                     <>
                       <p className="text-sm font-medium">{user.username}</p>
-                      <p className="text-xs text-blue-600  rounded-full capitalize">{user.role}</p>
+                      <p className="text-xs text-blue-600 dark:text-blue-400 rounded-full capitalize">{user.role}</p>
                     </>
                   )}
                 </div>
@@ -169,10 +170,10 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
 
               {/* Dropdown Menu */}
               {isProfileDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-2 z-50">
+                <div className="absolute right-0 mt-2 w-48 theme-bg-primary rounded-lg shadow-lg theme-border py-2 z-50">
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center gap-2 px-4 py-2 text-sm theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"
                     onClick={() => setIsProfileDropdownOpen(false)}
                   >
                     <User size={16} />
@@ -180,16 +181,16 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   </Link>
                   <Link
                     href="/settings"
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center gap-2 px-4 py-2 text-sm theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"
                     onClick={() => setIsProfileDropdownOpen(false)}
                   >
                     <Settings size={16} />
                     Settings
                   </Link>
-                  <hr className="my-2" />
+                  <hr className="my-2 theme-border" />
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 w-full text-left"
                   >
                     <LogOut size={16} />
                     Logout
@@ -212,9 +213,9 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
 
         {/* Mobile Navigation */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t bg-white py-4">
+          <div className="md:hidden theme-border-t theme-bg-primary py-4">
             {/* Mobile User Info */}
-            <div className="px-4 pb-4 border-b">
+            <div className="px-4 pb-4 theme-border-b">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
                   <User size={18} className="text-white" />
@@ -222,8 +223,8 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 <div>
                   {user && (
                     <>
-                      <p className="font-medium text-gray-900">{user.username}</p>
-                      <p className="text-sm text-blue-600 capitalize">{user.role}</p>
+                      <p className="font-medium theme-text-primary">{user.username}</p>
+                      <p className="text-sm text-blue-600 dark:text-blue-400 capitalize">{user.role}</p>
                     </>
                   )}
                 </div>
@@ -236,7 +237,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 <Link
                   key={tab.href}
                   href={tab.href}
-                  className="flex items-center gap-3 px-3 py-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                  className={`flex items-center gap-3 px-3 py-3 theme-text-secondary hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-lg transition-colors font-medium ${pathname === tab.href || (tab.href !== '/' && pathname.startsWith(tab.href)) ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/50' : ''}`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <tab.icon size={20} />
@@ -246,10 +247,10 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
             </nav>
 
             {/* Mobile Actions */}
-            <div className="px-4 pt-4 border-t space-y-2">
+            <div className="px-4 pt-4 theme-border-t space-y-2">
               <Link
                 href="/profile"
-                className="flex items-center gap-3 px-3 py-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                className="flex items-center gap-3 px-3 py-3 theme-text-secondary hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-lg transition-colors font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <User size={20} />
@@ -257,7 +258,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               </Link>
               <Link
                 href="/settings"
-                className="flex items-center gap-3 px-3 py-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                className="flex items-center gap-3 px-3 py-3 theme-text-secondary hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-lg transition-colors font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Settings size={20} />
@@ -268,7 +269,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   setIsMobileMenuOpen(false);
                   handleLogout();
                 }}
-                className="flex items-center gap-3 px-3 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium w-full text-left"
+                className="flex items-center gap-3 px-3 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-lg transition-colors font-medium w-full text-left"
               >
                 <LogOut size={20} />
                 Logout

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Video } from '../models/Video';
+import { VideoWatch } from '../models/VideoWatch';
 import fs from 'fs';
 import path from 'path';
 
@@ -9,7 +10,8 @@ export const getAllVideos = async (req: Request, res: Response) => {
     const videos = await Video.find()
       .populate('uploadedBy', 'username role')
       .populate('institute', 'name location')
-      .populate('year', 'year name');
+      .populate('year', 'year name')
+      .sort({ createdAt: -1 });
     res.json({ videos });
   } catch (error) {
     console.error("Get all videos error:", error);
@@ -20,15 +22,15 @@ export const getAllVideos = async (req: Request, res: Response) => {
 // Upload new video
 export const uploadVideo = async (req: Request, res: Response) => {
   try {
-    const { title, description, class: classId, year: yearId } = req.body;
+    const { title, description, institute: instituteId, year: yearId } = req.body;
     const videoFile = req.file;
     
     if (!videoFile) {
       return res.status(400).json({ message: 'No video file uploaded' });
     }
     
-    if (!title || !classId || !yearId) {
-      return res.status(400).json({ message: 'Title, class, and year are required' });
+    if (!title || !instituteId || !yearId) {
+      return res.status(400).json({ message: 'Title, institute, and year are required' });
     }
 
     const userId = (req as any).user.id;
@@ -39,16 +41,16 @@ export const uploadVideo = async (req: Request, res: Response) => {
     const newVideo = new Video({
       title,
       description,
-      videoUrl: videoFile.path,
+      videoUrl: videoFile.filename,
       uploadedBy: userId,
-      class: classId,
+      institute: instituteId,
       year: yearId,
       views: 0,  // NEW: Initialize with 0 views
     });
 
     await newVideo.save();
     await newVideo.populate('uploadedBy', 'username role');
-    await newVideo.populate('class', 'name location');
+    await newVideo.populate('institute', 'name location');
     await newVideo.populate('year', 'year name');
     
     res.status(201).json({ message: 'Video uploaded successfully', video: newVideo });
@@ -84,11 +86,11 @@ export const incrementViewCount = async (req: Request, res: Response) => {
 export const updateVideo = async (req: Request, res: Response) => {
   try {
     const update: any = {};
-    const { title, description, class: classId, year: yearId } = req.body || {};
+    const { title, description, institute: instituteId, year: yearId } = req.body || {};
     
     if (title !== undefined) update.title = title;
     if (description !== undefined) update.description = description;
-    if (classId !== undefined) update.class = classId;
+    if (instituteId !== undefined) update.institute = instituteId;
     if (yearId !== undefined) update.year = yearId;
 
     // Handle new file if uploaded
@@ -101,7 +103,7 @@ export const updateVideo = async (req: Request, res: Response) => {
           console.log("Old file not found, continuing..."); 
         }
       }
-      update.videoUrl = req.file.path;
+      update.videoUrl = req.file.filename;
     }
 
     const video = await Video.findByIdAndUpdate(
@@ -110,7 +112,7 @@ export const updateVideo = async (req: Request, res: Response) => {
       { new: true, runValidators: true }
     )
       .populate('uploadedBy', 'username role')
-      .populate('class', 'name location')
+      .populate('institute', 'name location')
       .populate('year', 'year name');
     
     if (!video) {
@@ -154,7 +156,7 @@ export const getVideoById = async (req: Request, res: Response) => {
   try {
     const video = await Video.findById(req.params.id)
       .populate('uploadedBy', 'username role')
-      .populate('class', 'name location')
+      .populate('institute', 'name location')
       .populate('year', 'year name');
     if (!video) {
       return res.status(404).json({ message: 'Video not found' });
@@ -165,3 +167,57 @@ export const getVideoById = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// Record video watch data
+export const recordWatch = async (req: Request, res: Response) => {
+  try {
+    const { videoId, duration, completed } = req.body;
+    const studentId = (req as any).user.id;
+
+    let videoWatch = await VideoWatch.findOne({ video: videoId, student: studentId });
+
+    if (videoWatch) {
+      videoWatch.watchDuration = duration;
+      videoWatch.completed = completed;
+    } else {
+      videoWatch = new VideoWatch({
+        video: videoId,
+        student: studentId,
+        watchDuration: duration,
+        completed: completed,
+      });
+    }
+
+    await videoWatch.save();
+    res.status(200).json({ message: 'Watch data recorded' });
+  } catch (error) {
+    console.error("Record watch data error:", error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get video analytics
+export const getVideoAnalytics = async (req: Request, res: Response) => {
+  try {
+    const videoId = req.params.id;
+
+    const watches = await VideoWatch.find({ video: videoId }).populate('student', 'username');
+    
+    const totalWatches = watches.length;
+    const uniqueViewers = new Set(watches.map(w => w.student._id.toString())).size;
+    const averageWatchTime = totalWatches > 0 ? watches.reduce((acc, w) => acc + w.watchDuration, 0) / totalWatches : 0;
+    const completedCount = watches.filter(w => w.completed).length;
+
+    res.json({
+      totalWatches,
+      uniqueViewers,
+      averageWatchTime,
+      completedCount,
+      watches,
+    });
+  } catch (error) {
+    console.error("Get video analytics error:", error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+

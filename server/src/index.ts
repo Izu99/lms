@@ -12,7 +12,7 @@ const MONGO_URI = process.env.MONGO_URI as string;
 
 // Import routes
 import authRoutes from './routes/authRoutes';
-import instituteRoutes from './routes/classRoutes';
+import instituteRoutes from './routes/instituteRoutes';
 import imageUploadRoutes from './routes/imageUploadRoutes';
 import paperRoutes from './routes/paperRoutes';
 import videoRoutes from './routes/videoRoutes';

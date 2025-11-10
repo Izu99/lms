@@ -1,4 +1,4 @@
-"use client"; 
+"use client";  
 import { useState, useEffect } from "react";
 import {
   GraduationCap,
@@ -95,12 +95,14 @@ export default function LoginPage() {
       
       // Store user data for role-based routing
       const userData = {
-        id: result.id || result.userId,
-        username: result.username,
-        role: result.role,
-        firstName: result.firstName,
-        lastName: result.lastName
+        id: result.id || result.user?.id || result.userId,
+        username: result.username || result.user?.username,
+        role: result.role || result.user?.role,
+        firstName: result.firstName || result.user?.firstName,
+        lastName: result.lastName || result.user?.lastName
       };
+      
+      console.log("Login successful - User data:", userData);
       localStorage.setItem("user", JSON.stringify(userData));
 
       // Also store in cookie as backup

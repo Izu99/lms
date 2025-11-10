@@ -75,6 +75,7 @@ export default function ProfilePage() {
   const [institutes, setInstitutes] = useState<any[]>([]);
   const [years, setYears] = useState<any[]>([]);
   const [loadingInstitutesYears, setLoadingInstitutesYears] = useState(true);
+  const [activeTab, setActiveTab] = useState<'profile' | 'id' | 'security'>('profile');
 
   const [formData, setFormData] = useState<FormData>({
     username: "",
@@ -659,18 +660,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex justify-center items-center h-screen">
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Profile Not Found</h2>
-            <p className="text-gray-600">You will be redirected to login.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -752,404 +742,436 @@ export default function ProfilePage() {
                 </Button>
               </div>
 
-              <div className="space-y-6">
-                {/* Basic Information */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-4">Basic Information</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Username *
-                      </label>
-                      <Input
-                        value={formData.username}
-                        onChange={(e) => handleInputChange("username", e.target.value)}
-                        disabled={!isEditing || saving}
-                        className={errors.username ? "border-red-500" : ""}
-                        placeholder="Enter your username"
-                      />
-                      {errors.username && (
-                        <p className="text-red-500 text-xs mt-1">{errors.username}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email *
-                      </label>
-                      <Input
-                        value={formData.email}
-                        onChange={(e) => handleInputChange("email", e.target.value)}
-                        disabled={!isEditing || saving}
-                        className={errors.email ? "border-red-500" : ""}
-                        placeholder="Enter your email"
-                        type="email"
-                      />
-                      {errors.email && (
-                        <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        First Name *
-                      </label>
-                      <Input
-                        value={formData.firstName}
-                        onChange={(e) => handleInputChange("firstName", e.target.value)}
-                        disabled={!isEditing || saving}
-                        className={errors.firstName ? "border-red-500" : ""}
-                        placeholder="Enter your first name"
-                      />
-                      {errors.firstName && (
-                        <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Last Name *
-                      </label>
-                      <Input
-                        value={formData.lastName}
-                        onChange={(e) => handleInputChange("lastName", e.target.value)}
-                        disabled={!isEditing || saving}
-                        className={errors.lastName ? "border-red-500" : ""}
-                        placeholder="Enter your last name"
-                      />
-                      {errors.lastName && (
-                        <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Address *
-                      </label>
-                      <Input
-                        value={formData.address}
-                        onChange={(e) => handleInputChange("address", e.target.value)}
-                        disabled={!isEditing || saving}
-                        className={errors.address ? "border-red-500" : ""}
-                        placeholder="Enter your address"
-                      />
-                      {errors.address && (
-                        <p className="text-red-500 text-xs mt-1">{errors.address}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Institute *
-                      </label>
-                      <Select
-                        onValueChange={(value) => handleInputChange("institute", value)}
-                        value={formData.institute}
-                        disabled={!isEditing || saving || loadingInstitutesYears}
-                      >
-                        <SelectTrigger
-                          className={`w-full h-10 ${errors.institute ? "border-red-500" : ""}`}
-                        >
-                          <SelectValue placeholder="Select an institute" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {loadingInstitutesYears ? (
-                            <SelectItem value="loading" disabled>
-                              Loading...
-                            </SelectItem>
-                          ) : (
-                            institutes.map((inst) => (
-                              <SelectItem key={inst._id} value={inst._id}>
-                                {inst.name} - {inst.location}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      {errors.institute && (
-                        <p className="text-red-500 text-xs mt-1">{errors.institute}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Year *
-                      </label>
-                      <Select
-                        onValueChange={(value) => handleInputChange("year", value)}
-                        value={formData.year}
-                        disabled={!isEditing || saving || loadingInstitutesYears}
-                      >
-                        <SelectTrigger
-                          className={`w-full h-10 ${errors.year ? "border-red-500" : ""}`}
-                        >
-                          <SelectValue placeholder="Select a year" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {loadingInstitutesYears ? (
-                            <SelectItem value="loading" disabled>
-                              Loading...
-                            </SelectItem>
-                          ) : (
-                            years.map((yr) => (
-                              <SelectItem key={yr._id} value={yr._id}>
-                                {yr.name}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      {errors.year && (
-                        <p className="text-red-500 text-xs mt-1">{errors.year}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone Number *
-                      </label>
-                      <Input
-                        value={formData.phoneNumber}
-                        onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
-                        disabled={!isEditing || saving}
-                        className={errors.phoneNumber ? "border-red-500" : ""}
-                        placeholder="Enter your phone number"
-                      />
-                      {errors.phoneNumber && (
-                        <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        WhatsApp Number (Optional)
-                      </label>
-                      <Input
-                        value={formData.whatsappNumber}
-                        onChange={(e) => handleInputChange("whatsappNumber", e.target.value)}
-                        disabled={!isEditing || saving}
-                        placeholder="Enter your WhatsApp number"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Telegram Username (Optional)
-                      </label>
-                      <Input
-                        value={formData.telegram}
-                        onChange={(e) => handleInputChange("telegram", e.target.value)}
-                        disabled={!isEditing || saving}
-                        placeholder="Enter your Telegram username"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* ID Card Images */}
-                <div className="mt-8">
-                  <h4 className="font-medium text-gray-900 mb-4">ID Card Images</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        ID Card Front Image
-                      </label>
-                      {!frontPreviewUrl && !user?.idCardFrontImage ? (
-                        <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
-                          <input
-                            type="file"
-                            id="idCardFront"
-                            accept="image/*"
-                            onChange={handleFrontImageChange}
-                            className="hidden"
-                            disabled={!isEditing || saving}
-                          />
-                          <label htmlFor="idCardFront" className="cursor-pointer block">
-                            <div className="mx-auto w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
-                              <User size={20} className="text-blue-500" />
-                            </div>
-                            <p className="text-gray-600 text-sm">Upload Front</p>
-                          </label>
-                        </div>
-                      ) : (
-                        <div className="relative w-full h-32 border border-gray-200 rounded-lg overflow-hidden">
-                          <Image
-                            src={frontPreviewUrl || `${API_URL}${user?.idCardFrontImage}`}
-                            alt="ID Card Front Preview"
-                            layout="fill"
-                            objectFit="contain"
-                          />
-                          {isEditing && (
-                            <Button
-                              type="button"
-                              onClick={() => removeImage("front")}
-                              className="absolute top-1 right-1 p-1 h-auto w-auto bg-red-500 hover:bg-red-600 text-white rounded-full"
-                              disabled={saving}
-                            >
-                              <X size={14} />
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                      {errors.idCardFront && (
-                        <p className="text-red-500 text-xs mt-1">{errors.idCardFront}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        ID Card Back Image
-                      </label>
-                      {!backPreviewUrl && !user?.idCardBackImage ? (
-                        <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
-                          <input
-                            type="file"
-                            id="idCardBack"
-                            accept="image/*"
-                            onChange={handleBackImageChange}
-                            className="hidden"
-                            disabled={!isEditing || saving}
-                          />
-                          <label htmlFor="idCardBack" className="cursor-pointer block">
-                            <div className="mx-auto w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
-                              <User size={20} className="text-blue-500" />
-                            </div>
-                            <p className="text-gray-600 text-sm">Upload Back</p>
-                          </label>
-                        </div>
-                      ) : (
-                        <div className="relative w-full h-32 border border-gray-200 rounded-lg overflow-hidden">
-                          <Image
-                            src={backPreviewUrl || `${API_URL}${user?.idCardBackImage}`}
-                            alt="ID Card Back Preview"
-                            layout="fill"
-                            objectFit="contain"
-                          />
-                          {isEditing && (
-                            <Button
-                              type="button"
-                              onClick={() => removeImage("back")}
-                              className="absolute top-1 right-1 p-1 h-auto w-auto bg-red-500 hover:bg-red-600 text-white rounded-full"
-                              disabled={saving}
-                            >
-                              <X size={14} />
-                            </Button>
-                          )}
-                        </div>
-                      )}
-                      {errors.idCardBack && (
-                        <p className="text-red-500 text-xs mt-1">{errors.idCardBack}</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Password Change Section - Always Visible */}
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-4">
-                    <Lock size={18} className="inline mr-2" />
-                    Change Password
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        New Password
-                      </label>
-                      <div className="relative">
-                        <Input
-                          type={showNewPassword ? "text" : "password"}
-                          value={formData.newPassword}
-                          onChange={(e) => handleInputChange("newPassword", e.target.value)}
-                          placeholder="Enter new password"
-                          disabled={!isEditing || saving}
-                          className={errors.newPassword ? "border-red-500 pr-10" : "pr-10"}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
-                          disabled={!isEditing || saving}
-                        >
-                          {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                      {errors.newPassword && (
-                        <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Confirm New Password
-                      </label>
-                      <div className="relative">
-                        <Input
-                          type={showConfirmPassword ? "text" : "password"}
-                          value={formData.confirmPassword}
-                          onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                          placeholder="Confirm new password"
-                          disabled={!isEditing || saving}
-                          className={errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
-                          disabled={!isEditing || saving}
-                        >
-                          {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      </div>
-                      {errors.confirmPassword && (
-                        <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <p className="text-sm text-gray-500 mt-2">
-                    Leave password fields empty if you do not want to change your password.
-                  </p>
-                </div>
-
-                {/* Save Button - Only when editing */}
-                {isEditing && (
-                  <div className="flex gap-3 pt-6 border-t">
-                    <Button
-                      onClick={handleCancelEdit}
-                      variant="outline"
-                      className="flex-1"
-                      disabled={saving}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleSaveProfile}
-                      disabled={saving}
-                      className="flex-1"
-                    >
-                      {saving ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Saving...
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Save size={16} />
-                          Save Changes
-                        </div>
-                      )}
-                    </Button>
-                  </div>
-                )}
+              {/* Tab Navigation */}
+              <div className="flex border-b border-gray-200 mb-6">
+                <button
+                  className={`py-2 px-4 text-sm font-medium ${activeTab === 'profile' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setActiveTab('profile')}
+                >
+                  Profile Details
+                </button>
+                <button
+                  className={`py-2 px-4 text-sm font-medium ${activeTab === 'id' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setActiveTab('id')}
+                >
+                  ID Verification
+                </button>
+                <button
+                  className={`py-2 px-4 text-sm font-medium ${activeTab === 'security' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setActiveTab('security')}
+                >
+                  Security
+                </button>
               </div>
+
+              {/* Tab Content */}
+              {activeTab === 'profile' && (
+                <div className="space-y-6">
+                  {/* Basic Information */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-4">Basic Information</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Username *
+                        </label>
+                        <Input
+                          value={formData.username}
+                          onChange={(e) => handleInputChange("username", e.target.value)}
+                          disabled={!isEditing || saving}
+                          className={errors.username ? "border-red-500" : ""}
+                          placeholder="Enter your username"
+                        />
+                        {errors.username && (
+                          <p className="text-red-500 text-xs mt-1">{errors.username}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Email *
+                        </label>
+                        <Input
+                          value={formData.email}
+                          onChange={(e) => handleInputChange("email", e.target.value)}
+                          disabled={!isEditing || saving}
+                          className={errors.email ? "border-red-500" : ""}
+                          placeholder="Enter your email"
+                          type="email"
+                        />
+                        {errors.email && (
+                          <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          First Name *
+                        </label>
+                        <Input
+                          value={formData.firstName}
+                          onChange={(e) => handleInputChange("firstName", e.target.value)}
+                          disabled={!isEditing || saving}
+                          className={errors.firstName ? "border-red-500" : ""}
+                          placeholder="Enter your first name"
+                        />
+                        {errors.firstName && (
+                          <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Last Name *
+                        </label>
+                        <Input
+                          value={formData.lastName}
+                          onChange={(e) => handleInputChange("lastName", e.target.value)}
+                          disabled={!isEditing || saving}
+                          className={errors.lastName ? "border-red-500" : ""}
+                          placeholder="Enter your last name"
+                        />
+                        {errors.lastName && (
+                          <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Address *
+                        </label>
+                        <Input
+                          value={formData.address}
+                          onChange={(e) => handleInputChange("address", e.target.value)}
+                          disabled={!isEditing || saving}
+                          className={errors.address ? "border-red-500" : ""}
+                          placeholder="Enter your address"
+                        />
+                        {errors.address && (
+                          <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Institute *
+                        </label>
+                        <Select
+                          onValueChange={(value) => handleInputChange("institute", value)}
+                          value={formData.institute}
+                          disabled={!isEditing || saving || loadingInstitutesYears}
+                        >
+                          <SelectTrigger
+                            className={`w-full h-10 ${errors.institute ? "border-red-500" : ""}`}
+                          >
+                            <SelectValue placeholder="Select an institute" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {loadingInstitutesYears ? (
+                              <SelectItem value="loading" disabled>
+                                Loading...
+                              </SelectItem>
+                            ) : (
+                              institutes.map((inst) => (
+                                <SelectItem key={inst._id} value={inst._id}>
+                                  {inst.name} - {inst.location}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        {errors.institute && (
+                          <p className="text-red-500 text-xs mt-1">{errors.institute}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Year *
+                        </label>
+                        <Select
+                          onValueChange={(value) => handleInputChange("year", value)}
+                          value={formData.year}
+                          disabled={!isEditing || saving || loadingInstitutesYears}
+                        >
+                          <SelectTrigger
+                            className={`w-full h-10 ${errors.year ? "border-red-500" : ""}`}
+                          >
+                            <SelectValue placeholder="Select a year" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {loadingInstitutesYears ? (
+                              <SelectItem value="loading" disabled>
+                                Loading...
+                              </SelectItem>
+                            ) : (
+                              years.map((yr) => (
+                                <SelectItem key={yr._id} value={yr._id}>
+                                  {yr.name}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        {errors.year && (
+                          <p className="text-red-500 text-xs mt-1">{errors.year}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Phone Number *
+                        </label>
+                        <Input
+                          value={formData.phoneNumber}
+                          onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
+                          disabled={!isEditing || saving}
+                          className={errors.phoneNumber ? "border-red-500" : ""}
+                          placeholder="Enter your phone number"
+                        />
+                        {errors.phoneNumber && (
+                          <p className="text-red-500 text-xs mt-1">{errors.phoneNumber}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          WhatsApp Number (Optional)
+                        </label>
+                        <Input
+                          value={formData.whatsappNumber}
+                          onChange={(e) => handleInputChange("whatsappNumber", e.target.value)}
+                          disabled={!isEditing || saving}
+                          placeholder="Enter your WhatsApp number"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Telegram Username (Optional)
+                        </label>
+                        <Input
+                          value={formData.telegram}
+                          onChange={(e) => handleInputChange("telegram", e.target.value)}
+                          disabled={!isEditing || saving}
+                          placeholder="Enter your Telegram username"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'id' && (
+                <div className="space-y-6">
+                                {activeTab === 'id' && (
+                                  <div className="space-y-6">
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        ID Card Front Image
+                                      </label>
+                                      {!frontPreviewUrl && !user?.idCardFrontImage ? (
+                                        <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                                          <input
+                                            type="file"
+                                            id="idCardFront"
+                                            accept="image/*"
+                                            onChange={handleFrontImageChange}
+                                            className="hidden"
+                                            disabled={!isEditing || saving}
+                                          />
+                                          <label htmlFor="idCardFront" className="cursor-pointer block">
+                                            <div className="mx-auto w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
+                                              <User size={20} className="text-blue-500" />
+                                            </div>
+                                            <p className="text-gray-600 text-sm">Upload Front</p>
+                                          </label>
+                                        </div>
+                                      ) : (
+                                                                <div className="relative w-full max-h-32 border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+                                                                  <Image
+                                                                    src={frontPreviewUrl || `${API_URL}${user?.idCardFrontImage}`}
+                                                                    alt="ID Card Front Preview"
+                                                                    width={200} // Example width, adjust as needed
+                                                                    height={120} // Example height, adjust as needed
+                                                                    objectFit="contain"
+                                                                  />                                          {isEditing && (
+                                            <Button
+                                              type="button"
+                                              onClick={() => removeImage("front")}
+                                              className="absolute top-1 right-1 p-1 h-auto w-auto bg-red-500 hover:bg-red-600 text-white rounded-full"
+                                              disabled={saving}
+                                            >
+                                              <X size={14} />
+                                            </Button>
+                                          )}
+                                        </div>
+                                      )}
+                                      {errors.idCardFront && (
+                                        <p className="text-red-500 text-xs mt-1">{errors.idCardFront}</p>
+                                      )}
+                                    </div>
+                  
+                                    <div>
+                                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        ID Card Back Image
+                                      </label>
+                                      {!backPreviewUrl && !user?.idCardBackImage ? (
+                                        <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                                          <input
+                                            type="file"
+                                            id="idCardBack"
+                                            accept="image/*"
+                                            onChange={handleBackImageChange}
+                                            className="hidden"
+                                            disabled={!isEditing || saving}
+                                          />
+                                          <label htmlFor="idCardBack" className="cursor-pointer block">
+                                            <div className="mx-auto w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
+                                              <User size={20} className="text-blue-500" />
+                                            </div>
+                                            <p className="text-gray-600 text-sm">Upload Back</p>
+                                          </label>
+                                        </div>
+                                      ) : (
+                                                              <div className="relative w-full max-h-32 border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+                                                                <Image
+                                                                  src={backPreviewUrl || `${API_URL}${user?.idCardBackImage}`}
+                                                                  alt="ID Card Back Preview"
+                                                                  width={200} // Example width, adjust as needed
+                                                                  height={120} // Example height, adjust as needed
+                                                                  objectFit="contain"
+                                                                />                                          {isEditing && (
+                                            <Button
+                                              type="button"
+                                              onClick={() => removeImage("back")}
+                                              className="absolute top-1 right-1 p-1 h-auto w-auto bg-red-500 hover:bg-red-600 text-white rounded-full"
+                                              disabled={saving}
+                                            >
+                                              <X size={14} />
+                                            </Button>
+                                          )}
+                                        </div>
+                                      )}
+                                      {errors.idCardBack && (
+                                        <p className="text-red-500 text-xs mt-1">{errors.idCardBack}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}                </div>
+              )}
+
+              {activeTab === 'security' && (
+                <div className="space-y-6">
+                                {activeTab === 'security' && (
+                                  <div className="space-y-6">
+                                    <div>
+                                      <h4 className="font-medium text-gray-900 mb-4">
+                                        <Lock size={18} className="inline mr-2" />
+                                        Change Password
+                                      </h4>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            New Password
+                                          </label>
+                                          <div className="relative">
+                                            <Input
+                                              type={showNewPassword ? "text" : "password"}
+                                              value={formData.newPassword}
+                                              onChange={(e) => handleInputChange("newPassword", e.target.value)}
+                                              placeholder="Enter new password"
+                                              disabled={!isEditing || saving}
+                                              className={errors.newPassword ? "border-red-500 pr-10" : "pr-10"}
+                                            />
+                                            <button
+                                              type="button"
+                                              onClick={() => setShowNewPassword(!showNewPassword)}
+                                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
+                                              disabled={!isEditing || saving}
+                                            >
+                                              {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                            </button>
+                                          </div>
+                                          {errors.newPassword && (
+                                            <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>
+                                          )}
+                                        </div>
+                  
+                                        <div>
+                                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Confirm New Password
+                                          </label>
+                                          <div className="relative">
+                                            <Input
+                                              type={showConfirmPassword ? "text" : "password"}
+                                              value={formData.confirmPassword}
+                                              onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                                              placeholder="Confirm new password"
+                                              disabled={!isEditing || saving}
+                                              className={errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"}
+                                            />
+                                            <button
+                                              type="button"
+                                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
+                                              disabled={!isEditing || saving}
+                                            >
+                                              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                            </button>
+                                          </div>
+                                          {errors.confirmPassword && (
+                                            <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+                                          )}
+                                        </div>
+                                      </div>
+                  
+                                      <p className="text-sm text-gray-500 mt-2">
+                                        Leave password fields empty if you do not want to change your password.
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}                </div>
+              )}
+
+              {/* Save Button - Only when editing */}
+              {isEditing && (
+                <div className="flex gap-3 pt-6 border-t">
+                  <Button
+                    onClick={handleCancelEdit}
+                    variant="outline"
+                    className="flex-1"
+                    disabled={saving}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSaveProfile}
+                    disabled={saving}
+                    className="flex-1"
+                  >
+                    {saving ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Saving...
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Save size={16} />
+                        Save Changes
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

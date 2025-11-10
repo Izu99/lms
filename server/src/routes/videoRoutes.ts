@@ -14,4 +14,8 @@ router.delete('/:id', protect, videoController.deleteVideo);
 // NEW: Route to increment view count
 router.post('/:id/view', protect, videoController.incrementViewCount);
 
+// Routes for video analytics
+router.post('/:id/watch', protect, videoController.recordWatch);
+router.get('/:id/analytics', protect, videoController.getVideoAnalytics);
+
 export default router;

@@ -1,14 +1,12 @@
-import { Router } from 'express';
-import studentDashboardRoutes from './studentDashboardRoutes';
-// Import other student routes as they are created
-// import studentVideoRoutes from './studentVideoRoutes';
-// import studentPaperRoutes from './studentPaperRoutes';
+import express from 'express';
+import * as videoStatsController from '../controllers/videoStatsController';
+import { StudentDashboardController } from '../controllers/studentDashboardController';
 
-const router = Router();
+const router = express.Router();
 
-// Mount student routes
-router.use('/dashboard', studentDashboardRoutes);
-// router.use('/videos', studentVideoRoutes);
-// router.use('/papers', studentPaperRoutes);
+router.get('/video-stats', videoStatsController.getVideoStats);
+router.get('/dashboard', StudentDashboardController.getDashboard);
+router.get('/dashboard/stats', StudentDashboardController.getStats);
+router.get('/dashboard/activity', StudentDashboardController.getRecentActivity);
 
 export default router;

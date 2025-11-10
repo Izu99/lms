@@ -18,15 +18,18 @@ const router = express.Router();
 // Paper CRUD operations
 router.post('/', protect, createPaper);
 router.get('/', protect, getAllPapers);
+
+// Paper attempts and results - MUST come before /:id routes
+router.get('/results/my-results', protect, getStudentResults);
+router.get('/student/all', protect, getAllPapersForStudent);
+router.get('/my-results', protect, getStudentResults); // Alternative route
+router.post('/:id/submit', protect, submitPaper);
+router.get('/:id/results', protect, getPaperResults);
+router.get('/:paperId/attempt', protect, getStudentAttemptForPaper);
+
+// These must come last
 router.get('/:id', protect, getPaperById);
 router.put('/:id', protect, updatePaper);
 router.delete('/:id', protect, deletePaper);
-
-// Paper attempts and results
-router.post('/:id/submit', protect, submitPaper);
-router.get('/results/my-results', protect, getStudentResults);
-router.get('/:id/results', protect, getPaperResults);
-router.get('/student/all', protect, getAllPapersForStudent);
-router.get('/:paperId/attempt', protect, getStudentAttemptForPaper);
 
 export default router;

@@ -1,13 +1,13 @@
 import mongoose, { Document } from 'mongoose';
 
 export interface IYear extends Document {
-  year: number;        // e.g., 12, 13 (for A-Level years)
-  name: string;        // e.g., "Year 12", "Year 13"
+  year: string;        // e.g., "2024-2025"
+  name: string;        // e.g., "A/L Batch of 2025"
   isActive: boolean;
 }
 
 const yearSchema = new mongoose.Schema<IYear>({
-  year: { type: Number, required: true, unique: true },
+  year: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });

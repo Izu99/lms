@@ -12,8 +12,6 @@ export interface IUser extends Document {
   firstName?: string;
   lastName?: string;
   address?: string;
-  institute?: Types.ObjectId;
-  year?: Types.ObjectId;
   phoneNumber: string;
   whatsappNumber?: string;
   telegram?: string;
@@ -32,8 +30,6 @@ const userSchema = new mongoose.Schema<IUser>({
   firstName: { type: String },
   lastName: { type: String },
   address: { type: String },
-  institute: { type: mongoose.Schema.Types.ObjectId, ref: 'Institute' },
-  year: { type: mongoose.Schema.Types.ObjectId, ref: 'Year' },
   phoneNumber: { type: String, required: true, unique: true },
   whatsappNumber: { type: String },
   telegram: { type: String },
