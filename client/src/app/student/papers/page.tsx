@@ -169,8 +169,8 @@ export default function StudentPapersPage() {
               </div>
             </div>
 
-            {/* Show My Results link for students */}
-            <Link href="/papers/results/my-results">
+            {/* Show My Results page */}
+            <Link href="/student/papers/results">
               <Button className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                 <Trophy size={20} className="mr-2" />
                 My Results

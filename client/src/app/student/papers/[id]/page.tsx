@@ -144,17 +144,28 @@ export default function PaperAttempt({ params }: { params: Promise<{ id: string 
         { headers }
       );
 
-      const result = response.data.result;
-      const resultMessage = autoSubmit
-        ? `⏰ Time's up! Paper submitted automatically.\n\n✅ Score: ${result.score}/${result.totalQuestions}\n📊 Percentage: ${result.percentage}%\n⏱️ Time Used: ${result.timeSpent} minutes`
-        : `🎉 Paper submitted successfully!\n\n✅ Score: ${result.score}/${result.totalQuestions}\n📊 Percentage: ${result.percentage}%\n⏱️ Time Used: ${result.timeSpent} minutes`;
+      console.log('Submit response:', response.data);
+      
+      // Backend returns 'attempt' not 'result'
+      const attempt = response.data.attempt;
+      
+      if (attempt) {
+        const resultMessage = autoSubmit
+          ? `⏰ Time's up! Paper submitted automatically.\n\n✅ Score: ${attempt.score}/${attempt.totalQuestions}\n📊 Percentage: ${attempt.percentage}%\n⏱️ Time Used: ${attempt.timeSpent} minutes`
+          : `🎉 Paper submitted successfully!\n\n✅ Score: ${attempt.score}/${attempt.totalQuestions}\n📊 Percentage: ${attempt.percentage}%\n⏱️ Time Used: ${attempt.timeSpent} minutes`;
 
-      alert(resultMessage);
-      router.push('/papers/results/my-results');
+        alert(resultMessage);
+      } else {
+        alert(autoSubmit ? '⏰ Time\'s up! Paper submitted automatically.' : '🎉 Paper submitted successfully!');
+      }
+      
+      router.push('/student/papers/results');
     } catch (error) {
       console.error("Error submitting paper:", error);
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        alert(`Failed to submit paper: ${error.response.data.message}`);
+      if (axios.isAxiosError(error)) {
+        console.error("Error response:", error.response?.data);
+        const errorMessage = error.response?.data?.message || "Failed to submit paper";
+        alert(`Failed to submit paper: ${errorMessage}`);
       } else {
         alert("Failed to submit paper. Please try again.");
       }
@@ -201,7 +212,7 @@ export default function PaperAttempt({ params }: { params: Promise<{ id: string 
         // If already attempted, redirect to results
         if (errorMessage && errorMessage.includes('already attempted')) {
           alert('You have already attempted this paper. Redirecting to your results...');
-          router.push('/papers/results/my-results');
+          router.push('/student/papers/results');
           return;
         }
         

@@ -276,12 +276,7 @@ export const submitPaper = async (req: Request, res: Response) => {
 
     res.json({
       message: 'Paper submitted successfully',
-      result: {
-        score,
-        totalQuestions: paper.totalQuestions,
-        percentage,
-        timeSpent
-      }
+      attempt
     });
 
   } catch (error) {
@@ -305,6 +300,8 @@ export const getStudentResults = async (req: Request, res: Response) => {
     })
     .populate('paperId', 'title description deadline')
     .sort({ submittedAt: -1 });
+
+    console.log('DEBUG - Populated student results:', results);
 
     console.log(`Found ${results.length} submitted results for student ${requestingUser.id}`);
     res.json({ results });
@@ -358,8 +355,6 @@ export const getPaperResults = async (req: Request, res: Response) => {
     })
     .populate('studentId', 'username firstName lastName')
     .sort({ percentage: -1, submittedAt: 1 });
-
-    console.log('DEBUG - Populated results for paper:', results);
 
     const stats = {
       totalSubmissions: results.length,
