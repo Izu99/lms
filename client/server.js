@@ -7,8 +7,8 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const server = express();
 
-  // ✅ This is the correct wildcard syntax
-  server.all('/:path*', (req, res) => {
+  // Handle all routes with Next.js
+  server.use((req, res) => {
     return handle(req, res);
   });
 
