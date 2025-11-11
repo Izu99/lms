@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",       // Standalone build for Azure deployment
-  reactStrictMode: true,      // Recommended to catch React issues
+  reactStrictMode: true,
   images: {
     remotePatterns: [
       {
@@ -11,13 +10,16 @@ const nextConfig: NextConfig = {
         port: '5000',
         pathname: '/api/uploads/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.azurewebsites.net',
+        pathname: '/api/uploads/**',
+      },
     ],
   },
   typescript: {
-    ignoreBuildErrors: true, // Ignore TypeScript errors during build
+    ignoreBuildErrors: true,
   },
 };
-
-export default nextConfig;
 
 export default nextConfig;
