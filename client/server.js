@@ -7,8 +7,8 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const server = express();
 
-  // Update wildcard to named parameter to fix pathToRegexp error
-  server.all('/:path*', (req, res) => {
+  // Handle all routes with Next.js
+  server.use((req, res) => {
     return handle(req, res);
   });
 
