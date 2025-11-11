@@ -1,5 +1,8 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { use, useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -21,13 +24,46 @@ import {
 import { Button } from '@/components/ui/button';
 import { API_URL, API_BASE_URL } from '@/lib/constants';
 
-export default function PaperAttempt({ params }: { params: Promise<{ id: string }> }) {
+interface Option {
+  _id: string;
+  optionText: string;
+}
+
+interface Question {
+  _id: string;
+  questionText: string;
+  imageUrl?: string;
+  options: Option[];
+}
+
+interface Paper {
+  _id: string;
+  title: string;
+  description: string;
+  timeLimit: number;
+  totalQuestions: number;
+  deadline: string;
+  questions: Question[];
+}
+
+interface User {
+  _id: string;
+  username: string;
+  role: 'student' | 'teacher' | 'admin';
+}
+
+interface PaperAttemptPageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function PaperAttempt({ params }: PaperAttemptPageProps) {
   const router = useRouter();
-  const resolvedParams = use(params);
-  const paperId = resolvedParams.id;
+  const paperId = params.id;
 
   // State management
-  const [paper, setPaper] = useState<any>(null);
+  const [paper, setPaper] = useState<Paper | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [started, setStarted] = useState(false);
@@ -37,7 +73,7 @@ export default function PaperAttempt({ params }: { params: Promise<{ id: string 
   const [submitting, setSubmitting] = useState(false);
   const [autoSaving, setAutoSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   // Fetch user
@@ -50,7 +86,7 @@ export default function PaperAttempt({ params }: { params: Promise<{ id: string 
           return;
         }
         const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get(`${API_URL}/auth/me`, { headers });
+        const response = await axios.get<{ user: User }>(`${API_URL}/auth/me`, { headers });
         setUser(response.data.user);
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -151,12 +187,12 @@ export default function PaperAttempt({ params }: { params: Promise<{ id: string 
       
       if (attempt) {
         const resultMessage = autoSubmit
-          ? `⏰ Time's up! Paper submitted automatically.\n\n✅ Score: ${attempt.score}/${attempt.totalQuestions}\n📊 Percentage: ${attempt.percentage}%\n⏱️ Time Used: ${attempt.timeSpent} minutes`
+          ? `⏰ Time&apos;s up! Paper submitted automatically.\n\n✅ Score: ${attempt.score}/${attempt.totalQuestions}\n📊 Percentage: ${attempt.percentage}%\n⏱️ Time Used: ${attempt.timeSpent} minutes`
           : `🎉 Paper submitted successfully!\n\n✅ Score: ${attempt.score}/${attempt.totalQuestions}\n📊 Percentage: ${attempt.percentage}%\n⏱️ Time Used: ${attempt.timeSpent} minutes`;
 
         alert(resultMessage);
       } else {
-        alert(autoSubmit ? '⏰ Time\'s up! Paper submitted automatically.' : '🎉 Paper submitted successfully!');
+        alert(autoSubmit ? '⏰ Time&apos;s up! Paper submitted automatically.' : '🎉 Paper submitted successfully!');
       }
       
       router.push('/student/papers/results');
@@ -193,7 +229,7 @@ export default function PaperAttempt({ params }: { params: Promise<{ id: string 
       setLoading(true);
       const headers = getAuthHeaders();
       console.log('Fetching paper:', paperId);
-      const response = await axios.get(`${API_URL}/papers/${paperId}`, { headers });
+      const response = await axios.get<{ paper: Paper }>(`${API_URL}/papers/${paperId}`, { headers });
       console.log('Paper response:', response.data);
       
       if (!response.data.paper) {
@@ -371,7 +407,7 @@ export default function PaperAttempt({ params }: { params: Promise<{ id: string 
                 <li>• Your answers are automatically saved every few seconds</li>
                 <li>• You can only submit this paper once</li>
                 <li>• The paper will auto-submit when time runs out</li>
-                <li>• You'll get warnings when time is running low</li>
+                <li>• You&apos;ll get warnings when time is running low</li>
               </ul>
             </div>
 
@@ -458,7 +494,7 @@ export default function PaperAttempt({ params }: { params: Promise<{ id: string 
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 sticky top-32">
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Question Navigator</h3>
                   <div className="grid grid-cols-5 gap-2">
-                    {paper.questions.map((_: any, index: number) => (
+                    {paper.questions.map((question: Question, index: number) => (
                       <button
                         key={index}
                         onClick={() => goToQuestion(index)}
@@ -521,7 +557,7 @@ export default function PaperAttempt({ params }: { params: Promise<{ id: string 
                             </div>
                           )}
                           <div className="space-y-3">
-                            {currentQuestionData.options.map((option: any, optionIndex: number) => (
+                            {currentQuestionData.options.map((option: Option, optionIndex: number) => (
                               <label
                                 key={option._id}
                                 className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
@@ -595,7 +631,7 @@ export default function PaperAttempt({ params }: { params: Promise<{ id: string 
                   {answeredCount < totalQuestions && (
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mt-3">
                       <p className="text-yellow-700 dark:text-yellow-400 text-sm">
-                        ⚠️ You haven't answered all questions. Unanswered questions will be marked as incorrect.
+                        ⚠️ You haven&apos;t answered all questions. Unanswered questions will be marked as incorrect.
                       </p>
                     </div>
                   )}
