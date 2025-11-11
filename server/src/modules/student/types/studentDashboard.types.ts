@@ -1,4 +1,4 @@
-import { VideoBase, PaperBase } from '../../shared/types/common.types';
+import { PaperBase, BaseEntity } from '../../shared/types/common.types';
 
 export interface StudentDashboardStats {
   availableVideos: number;
@@ -9,18 +9,19 @@ export interface StudentDashboardStats {
   progressPercentage: number;
 }
 
-export interface StudentVideoSummary extends VideoBase {
-  institute: {
+export interface StudentVideoSummary extends BaseEntity {
+  title: string;
+  description: string;
+  videoUrl: string;
+  class: any;
+  year: any;
+  views: number;
+  institute?: {
     _id: string;
     name: string;
     location: string;
   };
-  year: {
-    _id: string;
-    year: number;
-    name: string;
-  };
-  uploadedBy: {
+  uploadedBy?: {
     _id: string;
     username: string;
     firstName?: string;

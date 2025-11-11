@@ -37,11 +37,12 @@ export class StudentDashboardService {
       .limit(limit)
       .lean();
 
-    return videos.map(video => ({
+    return videos.map((video: any) => ({
       ...video,
       _id: video._id.toString(),
-      createdAt: video.createdAt.toISOString(),
-      updatedAt: video.updatedAt.toISOString(),
+      createdAt: video.createdAt,
+      updatedAt: video.updatedAt,
+      class: video.class,
       uploadedBy: {
         ...video.uploadedBy,
         _id: video.uploadedBy._id.toString()
@@ -76,16 +77,16 @@ export class StudentDashboardService {
         _id: paper._id.toString(),
         title: paper.title,
         description: paper.description,
-        deadline: paper.deadline.toISOString(),
+        deadline: paper.deadline,
         timeLimit: paper.timeLimit,
         totalQuestions: paper.totalQuestions,
         teacherId: paper.teacherId.toString(),
-        createdAt: paper.createdAt.toISOString(),
-        updatedAt: paper.updatedAt.toISOString(),
+        createdAt: paper.createdAt,
+        updatedAt: paper.updatedAt,
         isCompleted: attempt?.status === 'submitted' || false,
         score: attempt?.score,
         percentage: attempt?.percentage,
-        submittedAt: attempt?.submittedAt?.toISOString(),
+        submittedAt: attempt?.submittedAt,
         timeRemaining: timeRemaining > 0 ? Math.ceil(timeRemaining / (1000 * 60 * 60 * 24)) : 0
       };
     });

@@ -1,4 +1,4 @@
-import { VideoBase, PaperBase, UserBase } from '../../shared/types/common.types';
+import { PaperBase, UserBase, BaseEntity } from '../../shared/types/common.types';
 
 export interface TeacherDashboardStats {
   totalVideos: number;
@@ -9,7 +9,13 @@ export interface TeacherDashboardStats {
   activeStudents: number;
 }
 
-export interface TeacherVideoSummary extends VideoBase {
+export interface TeacherVideoSummary extends BaseEntity {
+  title: string;
+  description: string;
+  videoUrl: string;
+  uploadedBy: UserBase | string | undefined;
+  class: any;
+  views: number;
   institute: {
     _id: string;
     name: string;

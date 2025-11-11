@@ -49,12 +49,12 @@ export class ApiClient {
     return response.data.data!;
   }
 
-  static async post<T>(url: string, data?: any): Promise<T> {
+  static async post<T>(url: string, data?: unknown): Promise<T> {
     const response = await api.post<ApiResponse<T>>(url, data);
     return response.data.data!;
   }
 
-  static async put<T>(url: string, data?: any): Promise<T> {
+  static async put<T>(url: string, data?: unknown): Promise<T> {
     const response = await api.put<ApiResponse<T>>(url, data);
     return response.data.data!;
   }

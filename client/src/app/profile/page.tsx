@@ -62,6 +62,17 @@ interface ErrorState {
   [key: string]: string;
 }
 
+interface Institute {
+  _id: string;
+  name: string;
+  location: string;
+}
+
+interface Year {
+  _id: string;
+  name: string;
+}
+
 export default function ProfilePage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,8 +83,8 @@ export default function ProfilePage() {
   const [error, setError] = useState<string>("");
   const [frontPreviewUrl, setFrontPreviewUrl] = useState<string | null>(null);
   const [backPreviewUrl, setBackPreviewUrl] = useState<string | null>(null);
-  const [institutes, setInstitutes] = useState<any[]>([]);
-  const [years, setYears] = useState<any[]>([]);
+  const [institutes, setInstitutes] = useState<Institute[]>([]);
+  const [years, setYears] = useState<Year[]>([]);
   const [loadingInstitutesYears, setLoadingInstitutesYears] = useState(true);
   const [activeTab, setActiveTab] = useState<'profile' | 'id' | 'security'>('profile');
 

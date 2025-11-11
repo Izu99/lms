@@ -6,13 +6,15 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useState } from "react";
 
+interface Step3Data {
+  telegram: string;
+  idCardFront: File | null;
+  idCardBack: File | null;
+}
+
 interface Step3Props {
-  data: {
-    telegram: string;
-    idCardFront: File | null;
-    idCardBack: File | null;
-  };
-  setData: (data: any) => void;
+  data: Step3Data;
+  setData: (data: Step3Data) => void;
   prevStep: () => void;
   handleSubmit: (e: React.FormEvent) => void;
   loading?: boolean;

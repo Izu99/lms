@@ -108,14 +108,16 @@ export class TeacherDashboardService {
 
 
 
-      return videos.map(video => ({
+      return videos.map((video: any) => ({
         _id: video._id.toString(),
         title: video.title,
         description: video.description,
         videoUrl: video.videoUrl,
         views: video.views || 0,
-        createdAt: safeISOString((video as any).createdAt),
-        updatedAt: safeISOString((video as any).updatedAt),
+        createdAt: (video as any).createdAt,
+        updatedAt: (video as any).updatedAt,
+        uploadedBy: video.uploadedBy,
+        class: video.class,
         institute: video.institute ? {
           _id: (video.institute as any)._id ? (video.institute as any)._id.toString() : undefined,
           name: (video.institute as any).name,
@@ -150,15 +152,15 @@ export class TeacherDashboardService {
       const averageScore = paperAttempts.length > 0 ? totalScore / paperAttempts.length : 0;
 
       return {
-        _id: paper._id ? paper._id.toString() : undefined,
+        _id: paper._id ? paper._id.toString() : '',
         title: paper.title,
         description: paper.description,
         deadline: paper.deadline,
         timeLimit: paper.timeLimit,
         totalQuestions: paper.totalQuestions,
-        teacherId: paper.teacherId ? paper.teacherId.toString() : undefined,
-        createdAt: safeISOString((paper as any).createdAt),
-        updatedAt: safeISOString((paper as any).updatedAt),
+        teacherId: paper.teacherId ? paper.teacherId.toString() : '',
+        createdAt: (paper as any).createdAt,
+        updatedAt: (paper as any).updatedAt,
         submissionCount: paperAttempts.length,
         averageScore,
         completionRate: 0 // TODO: Calculate based on enrolled students
@@ -200,16 +202,16 @@ export class TeacherDashboardService {
           : undefined;
 
         return {
-          _id: student._id ? student._id.toString() : undefined,
+          _id: student._id ? student._id.toString() : '',
           username: student.username,
           email: student.email,
           firstName: student.firstName,
           lastName: student.lastName,
           role: student.role,
           status: student.status || 'pending',
-          createdAt: safeISOString((student as any).createdAt),
-          updatedAt: safeISOString((student as any).updatedAt),
-          year: student.year || null, // Now year is just a string like "2022", "2023", "2024"
+          createdAt: (student as any).createdAt,
+          updatedAt: (student as any).updatedAt,
+          year: student.year ? student.year.toString() : null, // Now year is just a string like "2022", "2023", "2024"
           completedPapers: studentAttempts.length,
           averageScore,
           lastActivity

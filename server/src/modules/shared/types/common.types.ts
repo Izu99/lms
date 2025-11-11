@@ -45,9 +45,9 @@ export interface VideoBase extends BaseEntity {
   title: string;
   description: string;
   videoUrl: string;
-  uploadedBy: string;
-  class: string;
-  year: string;
+  uploadedBy: UserBase | string | undefined;
+  class: any;
+  year: any;
   views: number;
 }
 

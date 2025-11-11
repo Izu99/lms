@@ -441,7 +441,7 @@ export default function CreatePaperPage() {
                   <ListOrdered size={32} className="text-gray-400 dark:text-gray-500" />
                 </div>
                 <h3 className="text-xl font-semibold theme-text-primary mb-2">No questions added yet</h3>
-                <p className="theme-text-secondary mb-6">Click "Add Question" to start building your paper with detailed explanations</p>
+                <p className="theme-text-secondary mb-6">Click &quot;Add Question&quot; to start building your paper with detailed explanations</p>
                 <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600">
                   <Plus size={18} className="mr-2" />
                   Add Your First Question

@@ -333,6 +333,7 @@ export const getUserProfile = async (req: Request, res: Response) => {
 // Update user profile (minimal fields only)
 // Update user profile - NO current password needed
 export const updateUserProfile = async (req: Request, res: Response) => {
+  let uploadedFiles: Express.Multer.File[] = [];
   try {
     const { id } = req.params;
     const requestingUserId = (req as any).user.id;
@@ -358,7 +359,6 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
     let idCardFrontImage: string | undefined;
     let idCardBackImage: string | undefined;
-    let uploadedFiles: Express.Multer.File[] = [];
 
     // Handle multiple file uploads
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
@@ -494,7 +494,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     const updatedUser = await User.findById(id).select('-password');
     res.json({ message: 'Profile updated successfully', user: updatedUser });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Update user profile error:', error);
     
     // Delete uploaded files if user update fails

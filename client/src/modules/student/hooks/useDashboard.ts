@@ -20,7 +20,7 @@ export const useStudentDashboard = (): UseDashboardReturn => {
       setError(null);
       const dashboardData = await StudentDashboardService.getDashboard();
       setData(dashboardData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.response?.data?.message || 'Failed to fetch dashboard data');
       console.error('Error fetching student dashboard:', err);
     } finally {

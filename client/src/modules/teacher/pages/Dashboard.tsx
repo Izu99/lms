@@ -55,7 +55,7 @@ export function TeacherDashboard() {
               Welcome back, Teacher! 👨‍🏫
             </h1>
             <p className="text-blue-100 text-sm sm:text-base">
-              Here's what's happening with your classes today
+              Here&apos;s what&apos;s happening with your classes today
             </p>
           </div>
           <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl">

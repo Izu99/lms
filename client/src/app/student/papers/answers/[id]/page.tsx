@@ -22,20 +22,65 @@ import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { API_URL, API_BASE_URL } from '@/lib/constants';
 
+interface Option {
+  _id: string;
+  optionText: string;
+  isCorrect: boolean;
+}
+
+interface Question {
+  _id: string;
+  questionText: string;
+  imageUrl?: string;
+  options: Option[];
+  explanation?: {
+    text?: string;
+    imageUrl?: string;
+  };
+}
+
+interface Paper {
+  _id: string;
+  title: string;
+  description: string;
+  deadline: string;
+  questions: Question[];
+}
+
+interface User {
+  _id: string;
+  username: string;
+  role: 'student' | 'teacher' | 'admin';
+}
+
+interface StudentAttempt {
+  _id: string;
+  paperId: string;
+  studentId: string;
+  answers: {
+    questionId: string;
+    selectedOptionId: string;
+  }[];
+  score: number;
+  totalQuestions: number;
+  percentage: number;
+  timeSpent: number;
+}
+
 export default function PaperAnswerPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const resolvedParams = use(params);
   const paperId = resolvedParams.id;
 
   // State management
-  const [paper, setPaper] = useState<any>(null);
+  const [paper, setPaper] = useState<Paper | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [studentAttempt, setStudentAttempt] = useState<any>(null);
+  const [studentAttempt, setStudentAttempt] = useState<StudentAttempt | null>(null);
   const [showExplanation, setShowExplanation] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -87,13 +132,13 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
       const headers = getAuthHeaders();
       
       const [attemptResponse, paperResponse] = await Promise.all([
-        axios.get(`${API_URL}/papers/results/my-results`, { headers }),
-        axios.get(`${API_URL}/papers/${paperId}?showAnswers=true`, { headers })
+        axios.get<{ results: StudentAttempt[] }>(`${API_URL}/papers/results/my-results`, { headers }),
+        axios.get<{ paper: Paper }>(`${API_URL}/papers/${paperId}?showAnswers=true`, { headers })
       ]);
 
       console.log("Data fetched successfully", { attemptResponse: attemptResponse.data, paperResponse: paperResponse.data });
 
-      const attempt = attemptResponse.data.results?.find((a: any) => a.paperId && a.paperId._id === paperId);
+      const attempt = attemptResponse.data.results?.find((a) => a.paperId && a.paperId._id === paperId);
 
       setPaper(paperResponse.data.paper);
 
@@ -104,7 +149,7 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
         setStudentAttempt(attempt);
         if (attempt.answers) {
           const attemptAnswers: Record<string, string> = {};
-          attempt.answers.forEach((ans: any) => {
+          attempt.answers.forEach((ans) => {
             attemptAnswers[ans.questionId] = ans.selectedOptionId;
           });
           setAnswers(attemptAnswers);
@@ -242,7 +287,7 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
                 <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/50 p-4 sticky top-32">
                   <h3 className="font-semibold text-gray-900 mb-3">Question Navigator</h3>
                   <div className="grid grid-cols-5 gap-2">
-                    {paper.questions.map((question: any, index: number) => (
+                    {paper.questions.map((question, index) => (
                       <div key={index} className="relative">
                         <button
                           onClick={() => goToQuestion(index)}
@@ -312,7 +357,7 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
                           )}
                           
                           <div className="space-y-3">
-                            {currentQuestionData.options.map((option: any, optionIndex: number) => (
+                            {currentQuestionData.options.map((option, optionIndex) => (
                               <label
                                 key={option._id}
                                 className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-200 ${
@@ -320,7 +365,7 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
                                   option.isCorrect
                                     ? 'border-green-500 bg-green-50'
                                     // If this is the student's selected answer and it's incorrect
-                                    : studentAttempt?.answers.find((a: any) => 
+                                    : studentAttempt?.answers.find((a) => 
                                         a.questionId === currentQuestionData._id && 
                                         a.selectedOptionId === option._id &&
                                         !option.isCorrect
@@ -333,7 +378,7 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
                                   type="radio"
                                   name={`question-${currentQuestionData._id}`}
                                   value={option._id}
-                                  checked={studentAttempt?.answers.find((a: any) => a.questionId === currentQuestionData._id)?.selectedOptionId === option._id}
+                                  checked={studentAttempt?.answers.find((a) => a.questionId === currentQuestionData._id)?.selectedOptionId === option._id}
                                   className="w-5 h-5 text-blue-600"
                                   disabled={true}
                                 />
@@ -349,7 +394,7 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
                                       <CheckCircle className="text-green-500 shrink-0" size={18} /> Correct Answer
                                     </span>
                                   )}
-                                  {studentAttempt?.answers.find((a: any) => a.questionId === currentQuestionData._id && a.selectedOptionId === option._id && !option.isCorrect) && (
+                                  {studentAttempt?.answers.find((a) => a.questionId === currentQuestionData._id && a.selectedOptionId === option._id && !option.isCorrect) && (
                                     <span className="ml-2 text-red-700 font-semibold text-sm flex items-center gap-1">
                                       <AlertTriangle className="text-red-500 shrink-0" size={18} /> Your Answer
                                     </span>

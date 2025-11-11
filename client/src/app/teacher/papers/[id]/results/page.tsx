@@ -239,7 +239,7 @@ export default function PaperResultsPage() {
               No submissions yet
             </h3>
             <p className="text-gray-500 dark:text-gray-400">
-              Students haven't submitted this paper yet
+              Students haven&apos;t submitted this paper yet
             </p>
           </div>
         )}

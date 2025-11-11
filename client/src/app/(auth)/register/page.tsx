@@ -213,11 +213,10 @@ export default function RegisterPage() {
                 Learning Adventure
               </span>
             </h2>
-            <p className="text-xl text-emerald-100 max-w-lg mx-auto leading-relaxed">
-              Join ezyICT's ICT A-Level community and unlock access to programming
-              tutorials, assignments, and exam preparation resources.
-            </p>
-          </div>
+                          <p className="text-xl text-emerald-100 max-w-lg mx-auto leading-relaxed">
+                            Join ezyICT&apos;s ICT A-Level community and unlock access to programming
+                            tutorials, assignments, and exam preparation resources.
+                          </p>          </div>
 
           {/* Motivational Quote Section */}
           <div

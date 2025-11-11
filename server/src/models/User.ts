@@ -20,6 +20,8 @@ export interface IUser extends Document {
   role: UserRole;
   status?: StudentStatus; // Added status field
   notes?: string; // Added notes for teachers to add comments
+  institute?: Types.ObjectId;
+  year?: Types.ObjectId;
   comparePassword(candidate: string): Promise<boolean>;
 }
 
@@ -41,7 +43,9 @@ const userSchema = new mongoose.Schema<IUser>({
     enum: ['active', 'inactive', 'pending', 'paid', 'unpaid'], 
     default: 'pending' 
   },
-  notes: { type: String }
+  notes: { type: String },
+  institute: { type: mongoose.Schema.Types.ObjectId, ref: 'Institute' },
+  year: { type: mongoose.Schema.Types.ObjectId, ref: 'Year' }
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

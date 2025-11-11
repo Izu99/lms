@@ -3,9 +3,22 @@
 import { useAuth } from "@/modules/shared/hooks/useAuth";
 import { useEffect, useState } from "react";
 
+interface User {
+  _id: string;
+  username: string;
+  role: 'student' | 'teacher' | 'admin';
+}
+
+interface LocalStorageData {
+  hasToken: boolean;
+  token: string | null;
+  rawUser: string | null;
+  parsedUser: User | null;
+}
+
 export default function DebugAuthPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
-  const [localStorageData, setLocalStorageData] = useState<any>(null);
+  const [localStorageData, setLocalStorageData] = useState<LocalStorageData | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");

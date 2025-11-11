@@ -7,13 +7,17 @@ import axios from "axios";
 import { API_URL } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 
+interface Question {
+  _id: string;
+}
+
 interface PaperData {
   _id: string;
   title: string;
   description?: string;
   deadline?: string;
   timeLimit?: number;
-  questions: any[];
+  questions: Question[];
   submissionCount?: number;
   averageScore?: number;
   createdAt: string;

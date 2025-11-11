@@ -49,6 +49,15 @@ interface Question {
   explanation?: Explanation; // විවරණ - detailed explanation
 }
 
+
+interface PaperQuestion {
+  _id: string;
+  questionText: string;
+  options: Option[];
+  imageUrl?: string;
+  explanation?: Explanation;
+}
+
 export default function EditPaperPage() { // Changed function name to EditPaperPage
   const router = useRouter();
   const params = useParams();
@@ -98,7 +107,7 @@ export default function EditPaperPage() { // Changed function name to EditPaperP
       setDescription(paper.description || "");
       setDeadline(paper.deadline ? new Date(paper.deadline).toISOString().slice(0, 16) : ""); // Format for datetime-local input, handle invalid date
       setTimeLimit(paper.timeLimit);
-      setQuestions(paper.questions?.map((q: any) => ({
+      setQuestions(paper.questions?.map((q: PaperQuestion) => ({
         ...q,
         open: true, // Keep questions closed initially
         explanation: q.explanation || { text: "", imageUrl: "" } // Ensure explanation object exists
@@ -475,7 +484,7 @@ export default function EditPaperPage() { // Changed function name to EditPaperP
                   <ListOrdered size={32} className="text-gray-400 dark:text-gray-500" />
                 </div>
                 <h3 className="text-xl font-semibold theme-text-primary mb-2">No questions added yet</h3>
-                <p className="theme-text-secondary mb-6">Click "Add Question" to start building your paper with detailed explanations</p>
+                <p className="theme-text-secondary mb-6">Click &quot;Add Question&quot; to start building your paper with detailed explanations</p>
                 <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600">
                   <Plus size={18} className="mr-2" />
                   Add Your First Question

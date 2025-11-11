@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, School, MapPin, Users } from "lucide-react";
+import { X, School, MapPin, Users, Calendar } from "lucide-react";
 import { InfoDialog } from "@/components/InfoDialog";
 
 interface InstituteData {
