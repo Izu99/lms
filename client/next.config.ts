@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone', // ✅ Required for Azure App Service
+  output: 'export', // ✅ Required for Azure App Service
   reactStrictMode: true,
   images: {
     remotePatterns: [
