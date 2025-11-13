@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
-import { Video, Plus, Search, Eye, Trash2, Edit, School, GraduationCap } from "lucide-react";
+import { Video, Plus, Search, Eye, Trash2, Edit, School, GraduationCap, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CreateVideoModal } from "@/components/modals";
 import axios from "axios";
-import { API_URL } from "@/lib/constants";
+import { API_URL, API_BASE_URL } from "@/lib/constants";
 import Cookies from "js-cookie";
 
 interface VideoData {
@@ -227,10 +227,18 @@ export default function TeacherVideosPage() {
               >
                 <div 
                   onClick={() => router.push(`/teacher/videos/${video._id}`)}
-                  className="relative w-full h-48 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center cursor-pointer group"
+                  className="relative w-full h-48 bg-gray-900 cursor-pointer group overflow-hidden"
                 >
-                  <span className="text-white text-4xl group-hover:scale-110 transition-transform">▶</span>
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors"></div>
+                  <video
+                    src={`${API_BASE_URL}/api/uploads/${video.videoUrl}`}
+                    className="w-full h-full object-cover"
+                    preload="metadata"
+                  />
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg opacity-0 group-hover:opacity-100">
+                      <Play size={32} className="text-white" />
+                    </div>
+                  </div>
                   <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
                     Click to watch
                   </div>
@@ -249,7 +257,7 @@ export default function TeacherVideosPage() {
                     {video.description || "No description"}
                   </p>
                   
-                  <div className="space-y-2 mb-3">
+                  <div className="flex items-center gap-4 mb-3">
                     {video.institute && (
                       <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                         <School className="w-4 h-4 text-purple-500" />
