@@ -1,8 +1,6 @@
 import axios, { AxiosResponse, AxiosError } from 'axios';
 import { ApiResponse, ApiError } from '../types/api.types';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
-const API_URL = `${API_BASE_URL}/api`;
+import { API_URL } from '../../../lib/constants';
 
 // Create axios instance
 const api = axios.create({
