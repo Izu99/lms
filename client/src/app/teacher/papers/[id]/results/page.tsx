@@ -1,247 +1,259 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
-import { FileText, ArrowLeft, Users, Trophy, TrendingUp, Calendar } from "lucide-react";
+import {
+  FileText,
+  ArrowLeft,
+  Users,
+  TrendingUp,
+  Award,
+  ChevronsDown,
+  Calendar,
+  Clock,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { API_URL } from "@/lib/constants";
+import Cookies from "js-cookie";
 
-interface StudentResult {
-  _id: string;
-  studentId: { // Changed from 'student' to 'studentId'
-    _id: string;
-    firstName?: string;
-    lastName?: string;
-    username: string;
-  };
-  score: number;
+interface PaperInfo {
+  title: string;
   totalQuestions: number;
+  deadline: string;
+}
+
+interface Student {
+  _id: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+interface Result {
+  _id: string;
+  studentId: Student;
+  score: number;
+  percentage: number;
   submittedAt: string;
+  timeSpent: number;
+}
+
+interface Stats {
+  totalSubmissions: number;
+  averageScore: number;
+  highestScore: number;
+  lowestScore: number;
 }
 
 export default function PaperResultsPage() {
-  const params = useParams();
   const router = useRouter();
-  const [results, setResults] = useState<StudentResult[]>([]);
-  const [paperTitle, setPaperTitle] = useState("");
+  const params = useParams();
+  const paperId = params.id as string;
+
+  const [paper, setPaper] = useState<PaperInfo | null>(null);
+  const [results, setResults] = useState<Result[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchResults();
-  }, [params.id]);
+    if (!paperId) return;
 
-  const fetchResults = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-      
-      // Fetch paper details
-      const paperResponse = await axios.get(`${API_URL}/papers/${params.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setPaperTitle(paperResponse.data.paper?.title || "Paper Results");
-
-      // Fetch results
-      const resultsResponse = await axios.get(`${API_URL}/papers/${params.id}/results`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setResults(resultsResponse.data.results || []);
-    } catch (error) {
-      console.error("Error fetching results:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculateStats = () => {
-    if (results.length === 0) return { average: 0, highest: 0, lowest: 0 };
-    
-    const scores = results.map((r) => (r.score / r.totalQuestions) * 100);
-    return {
-      average: scores.reduce((a, b) => a + b, 0) / scores.length,
-      highest: Math.max(...scores),
-      lowest: Math.min(...scores),
+    const fetchResults = async () => {
+      try {
+        setLoading(true);
+        const token = Cookies.get("token");
+        const response = await axios.get(`${API_URL}/papers/${paperId}/results`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setPaper(response.data.paper);
+        setResults(response.data.results);
+        setStats(response.data.stats);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching paper results:", err);
+        if (axios.isAxiosError(err) && err.response?.status === 403) {
+          setError("You do not have permission to view these results.");
+        } else {
+          setError("Failed to load paper results. Please try again.");
+        }
+      } finally {
+        setLoading(false);
+      }
     };
+
+    fetchResults();
+  }, [paperId]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
   };
 
-  const stats = calculateStats();
+  const getScoreColor = (percentage: number) => {
+    if (percentage >= 80) return "text-green-500";
+    if (percentage >= 50) return "text-yellow-500";
+    return "text-red-500";
+  };
 
   return (
     <TeacherLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => router.push("/teacher/papers")}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <div className="w-10 h-10 sidebar-icon sidebar-icon-papers">
-                <FileText className="w-6 h-6" />
-              </div>
-              {paperTitle}
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {results.length} student{results.length !== 1 ? "s" : ""} submitted
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <TrendingUp className="text-white" size={32} />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-foreground">
+                {paper?.title || "Paper Results"}
+              </h1>
+              <p className="text-muted-foreground text-lg">
+                Performance analysis and student submissions
+              </p>
+            </div>
           </div>
+          <Button
+            variant="outline"
+            size="lg"
+            className="shadow-md"
+            onClick={() => router.push("/teacher/papers")}
+          >
+            <ArrowLeft size={18} className="mr-2" />
+            Back to Papers
+          </Button>
         </div>
 
-        {/* Statistics Cards */}
-        {!loading && results.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Submissions</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{results.length}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center shadow-md">
-                  <TrendingUp className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Average Score</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.average.toFixed(1)}%</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg flex items-center justify-center shadow-md">
-                  <Trophy className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Highest Score</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.highest.toFixed(1)}%</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-red-600 rounded-lg flex items-center justify-center shadow-md">
-                  <TrendingUp className="w-6 h-6 text-white transform rotate-180" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Lowest Score</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.lowest.toFixed(1)}%</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Loading State */}
+        {/* Loading and Error States */}
         {loading && (
           <div className="flex justify-center items-center h-64">
-            <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
 
-        {/* Results Table */}
-        {!loading && results.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-900">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Rank
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Student
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Score
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Percentage
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Submitted At
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {results
-                    .sort((a, b) => b.score - a.score)
-                    .map((result, index) => {
-                      const percentage = (result.score / result.totalQuestions) * 100;
-                      return (
-                        <tr key={result._id} className="hover:bg-gray-50 dark:hover:bg-gray-900/50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              {index === 0 && (
-                                <Trophy className="w-5 h-5 text-yellow-500 mr-2" />
-                              )}
-                              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                #{index + 1}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {result.studentId
-                                ? (result.studentId.firstName && result.studentId.lastName
-                                  ? `${result.studentId.firstName} ${result.studentId.lastName}`
-                                  : result.studentId.username)
-                                : "Unknown Student"}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900 dark:text-white">
-                              {result.score} / {result.totalQuestions}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                percentage >= 75
-                                  ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400"
-                                  : percentage >= 50
-                                  ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400"
-                                  : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400"
-                              }`}
-                            >
-                              {percentage.toFixed(1)}%
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {new Date(result.submittedAt).toLocaleString()}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                </tbody>
-              </table>
+        {!loading && error && (
+          <div className="bg-destructive/10 border-l-4 border-destructive text-destructive-foreground p-6 rounded-lg">
+            <h3 className="font-bold">Error</h3>
+            <p>{error}</p>
+          </div>
+        )}
+
+        {/* Main Content */}
+        {!loading && !error && stats && paper && (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-card p-6 rounded-2xl shadow-md border border-border">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Users size={24} className="text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Submissions</p>
+                    <p className="text-3xl font-bold text-foreground">{stats.totalSubmissions}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-card p-6 rounded-2xl shadow-md border border-border">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <TrendingUp size={24} className="text-green-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Average Score</p>
+                    <p className="text-3xl font-bold text-foreground">{stats.averageScore}%</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-card p-6 rounded-2xl shadow-md border border-border">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                    <Award size={24} className="text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Highest Score</p>
+                    <p className="text-3xl font-bold text-foreground">{stats.highestScore}%</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-card p-6 rounded-2xl shadow-md border border-border">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
+                    <ChevronsDown size={24} className="text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Lowest Score</p>
+                    <p className="text-3xl font-bold text-foreground">{stats.lowestScore}%</p>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
 
-        {/* Empty State */}
-        {!loading && results.length === 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-12 text-center">
-            <Users className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              No submissions yet
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              Students haven&apos;t submitted this paper yet
-            </p>
-          </div>
+            {/* Results Table */}
+            <div className="bg-card rounded-2xl shadow-md border border-border overflow-hidden">
+              <div className="p-6 border-b border-border">
+                <h2 className="text-xl font-bold text-foreground">All Submissions</h2>
+                <p className="text-muted-foreground mt-1">
+                  Showing {results.length} results sorted by highest score.
+                </p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="p-4 font-semibold text-muted-foreground">Rank</th>
+                      <th className="p-4 font-semibold text-muted-foreground">Student</th>
+                      <th className="p-4 font-semibold text-muted-foreground">Score</th>
+                      <th className="p-4 font-semibold text-muted-foreground">Percentage</th>
+                      <th className="p-4 font-semibold text-muted-foreground">Time Spent</th>
+                      <th className="p-4 font-semibold text-muted-foreground">Submitted On</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map((result, index) => (
+                      <tr key={result._id} className="border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors">
+                        <td className="p-4 font-medium text-foreground">{index + 1}</td>
+                        <td className="p-4 font-medium text-foreground">
+                          {result.studentId.firstName || result.studentId.username}
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          {result.score} / {paper.totalQuestions}
+                        </td>
+                        <td className={`p-4 font-bold ${getScoreColor(result.percentage)}`}>
+                          {result.percentage}%
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <Clock size={14} />
+                            {formatTime(result.timeSpent)}
+                          </div>
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <Calendar size={14} />
+                            {new Date(result.submittedAt).toLocaleDateString()}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {results.length === 0 && (
+                <div className="text-center p-12">
+                  <Users size={48} className="mx-auto text-muted-foreground/50 mb-4" />
+                  <h3 className="text-lg font-semibold text-foreground">No submissions yet</h3>
+                  <p className="text-muted-foreground mt-2">
+                    Check back after students have attempted the paper.
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
     </TeacherLayout>

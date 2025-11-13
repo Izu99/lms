@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Navbar from "@/components/Navbar";
+import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import {
   FileText,
   Plus,
@@ -26,8 +26,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
-import Link from "next/link";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
 import { InfoDialog } from "@/components/InfoDialog";
 
@@ -51,7 +49,6 @@ interface Question {
 
 export default function CreatePaperPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
@@ -67,16 +64,6 @@ export default function CreatePaperPage() {
   // Refs for smooth scrolling
   const questionsRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!authLoading && user) {
-      if (user.role !== 'teacher' && user.role !== 'admin') {
-        router.push('/papers');
-      }
-    } else if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [authLoading, user, router]);
 
   // Handle scroll to show/hide scroll-to-top button
   useEffect(() => {
@@ -299,22 +286,9 @@ export default function CreatePaperPage() {
     }
   };
 
-  if (authLoading || !user) {
-    return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen theme-bg-secondary" ref={topRef}>
-      <Navbar user={user} />
-
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <TeacherLayout>
+      <div ref={topRef}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -327,74 +301,72 @@ export default function CreatePaperPage() {
                 <FileText className="text-white" size={32} />
               </div>
               <div>
-                <h1 className="text-4xl font-bold theme-text-primary">Create New Paper</h1>
-                <p className="theme-text-secondary text-lg">Design and build your examination paper with detailed explanations</p>
+                <h1 className="text-4xl font-bold text-foreground">Create New Paper</h1>
+                <p className="text-muted-foreground text-lg">Design and build your examination paper with detailed explanations</p>
               </div>
             </div>
-            <Link href="/teacher/papers">
-              <Button variant="outline" size="lg" className="shadow-md">
-                <ArrowLeft size={18} className="mr-2" />
-                Back to Papers
-              </Button>
-            </Link>
+            <Button variant="outline" size="lg" className="shadow-md" onClick={() => router.push("/teacher/papers")}>
+              <ArrowLeft size={18} className="mr-2" />
+              Back to Papers
+            </Button>
           </div>
 
           {/* Paper Details Form */}
           <motion.div 
-            className="theme-bg-primary rounded-3xl shadow-xl theme-border p-8 mb-8"
+            className="bg-card rounded-3xl shadow-xl border border-border p-8 mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <h2 className="text-2xl font-bold theme-text-primary mb-6 flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <FileText size={20} className="text-blue-600" />
+            <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+              <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <FileText size={20} className="text-primary" />
               </div>
               Paper Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Title */}
               <div className="md:col-span-2">
-                <label className="font-semibold theme-text-primary mb-3 block text-lg">Paper Title</label>
+                <label className="font-semibold text-foreground mb-3 block text-lg">Paper Title</label>
                 <Input
                   placeholder="e.g., Mid-Term ICT Examination - Database Systems"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-14 text-lg theme-bg-secondary theme-text-primary theme-border focus:border-blue-500 dark:focus:border-blue-400 rounded-xl"
+                  className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
                 />
               </div>
               {/* Description */}
               <div className="md:col-span-2">
-                <label className="font-semibold theme-text-primary mb-3 block text-lg">Description (Optional)</label>
+                <label className="font-semibold text-foreground mb-3 block text-lg">Description (Optional)</label>
                 <Textarea
                   placeholder="A brief summary of the paper's content and topics covered..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="min-h-[100px] text-lg theme-bg-secondary theme-text-primary theme-border focus:border-blue-500 dark:focus:border-blue-400 rounded-xl"
+                  className="min-h-[100px] text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
                 />
               </div>
               {/* Deadline */}
               <div>
-                <label className="font-semibold theme-text-primary mb-3 flex items-center gap-2 text-lg">
-                  <Calendar size={20} className="text-blue-600 dark:text-blue-400" /> Deadline
+                <label className="font-semibold text-foreground mb-3 flex items-center gap-2 text-lg">
+                  <Calendar size={20} className="text-primary" /> Deadline
                 </label>
                 <Input
                   type="datetime-local"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
-                  className="h-14 text-lg theme-bg-secondary theme-text-primary theme-border focus:border-blue-500 dark:focus:border-blue-400 rounded-xl"
+                  className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
                 />
               </div>
               {/* Time Limit */}
               <div>
-                <label className="font-semibold theme-text-primary mb-3 flex items-center gap-2 text-lg">
-                  <Clock size={20} className="text-blue-600 dark:text-blue-400" /> Time Limit (minutes)
+                <label className="font-semibold text-foreground mb-3 flex items-center gap-2 text-lg">
+                  <Clock size={20} className="text-primary" /> Time Limit (minutes)
                 </label>
                 <Input
                   type="number"
                   value={timeLimit}
                   onChange={(e) => setTimeLimit(Number(e.target.value))}
-                  className="h-14 text-lg theme-bg-secondary theme-text-primary theme-border focus:border-blue-500 dark:focus:border-blue-400 rounded-xl"
+                  className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
                   min="1"
                 />
               </div>
@@ -403,23 +375,23 @@ export default function CreatePaperPage() {
 
           {/* Questions Builder */}
           <motion.div 
-            className="theme-bg-primary rounded-3xl shadow-xl theme-border p-8"
+            className="bg-card rounded-3xl shadow-xl border border-border p-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             ref={questionsRef}
           >
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold theme-text-primary flex items-center gap-3">
-                <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
-                  <ListOrdered size={20} className="text-green-600 dark:text-green-400" />
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
+                  <ListOrdered size={20} className="text-green-500" />
                 </div>
                 Questions Builder
-                <span className="text-lg font-normal theme-text-secondary">({questions.length} questions)</span>
+                <span className="text-lg font-normal text-muted-foreground">({questions.length} questions)</span>
               </h2>
               <div className="flex gap-3">
                 {questions.length > 0 && (
-                  <Button onClick={scrollToTop} variant="outline" size="lg" className="theme-border-muted theme-text-secondary">
+                  <Button onClick={scrollToTop} variant="outline" size="lg" className="border-muted text-muted-foreground">
                     <ArrowUp size={18} className="mr-2" />
                     Scroll to Top
                   </Button>
@@ -433,15 +405,15 @@ export default function CreatePaperPage() {
 
             {questions.length === 0 ? (
               <motion.div 
-                className="text-center py-16 border-2 border-dashed theme-border rounded-2xl theme-bg-secondary"
+                className="text-center py-16 border-2 border-dashed border-border rounded-2xl bg-background"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ListOrdered size={32} className="text-gray-400 dark:text-gray-500" />
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ListOrdered size={32} className="text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold theme-text-primary mb-2">No questions added yet</h3>
-                <p className="theme-text-secondary mb-6">Click &quot;Add Question&quot; to start building your paper with detailed explanations</p>
+                <h3 className="text-xl font-semibold text-foreground mb-2">No questions added yet</h3>
+                <p className="text-muted-foreground mb-6">Click &quot;Add Question&quot; to start building your paper with detailed explanations</p>
                 <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600">
                   <Plus size={18} className="mr-2" />
                   Add Your First Question
@@ -454,34 +426,34 @@ export default function CreatePaperPage() {
                     <motion.div 
                       key={qIndex}
                       data-question-index={qIndex}
-                      className="theme-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                      className="border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ delay: qIndex * 0.1 }}
                     >
                       <div 
-                        className="theme-bg-secondary p-6 flex items-center justify-between cursor-pointer hover:theme-bg-tertiary transition-colors"
+                        className="bg-muted/50 p-6 flex items-center justify-between cursor-pointer hover:bg-muted transition-colors"
                         onClick={() => toggleQuestion(qIndex)}
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                          <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold text-lg">
                             {qIndex + 1}
                           </div>
                           <div>
-                            <h3 className="font-bold theme-text-primary text-lg">
+                            <h3 className="font-bold text-foreground text-lg">
                               Question {qIndex + 1}
                             </h3>
-                            <p className="theme-text-secondary text-sm">
+                            <p className="text-muted-foreground text-sm">
                               {q.questionText ? q.questionText.substring(0, 50) + (q.questionText.length > 50 ? '...' : '') : 'Click to add question text'}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-2 text-sm theme-text-secondary">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <span>{q.options.length} options</span>
-                            {q.explanation?.text && <BookOpen size={16} className="text-green-600" />}
-                            {q.explanation?.imageUrl && <ImageIcon size={16} className="text-blue-600" />}
+                            {q.explanation?.text && <BookOpen size={16} className="text-green-500" />}
+                            {q.explanation?.imageUrl && <ImageIcon size={16} className="text-blue-500" />}
                           </div>
                           <Button
                             variant="ghost"
@@ -490,11 +462,11 @@ export default function CreatePaperPage() {
                               e.stopPropagation();
                               removeQuestion(qIndex);
                             }}
-                            className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/20 hover:text-red-700"
+                            className="text-red-500 hover:bg-red-500/10 hover:text-red-600"
                           >
                             <Trash2 size={18} />
                           </Button>
-                          <div className="theme-text-secondary">
+                          <div className="text-muted-foreground">
                             {q.open ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
                           </div>
                         </div>
@@ -503,7 +475,7 @@ export default function CreatePaperPage() {
                       <AnimatePresence>
                         {q.open && (
                           <motion.div 
-                            className="p-8 space-y-8 theme-bg-primary"
+                            className="p-8 space-y-8 bg-card"
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
@@ -511,22 +483,22 @@ export default function CreatePaperPage() {
                           >
                             {/* Question Text */}
                             <div>
-                              <label className="font-semibold theme-text-primary mb-3 block text-lg">Question Text</label>
+                              <label className="font-semibold text-foreground mb-3 block text-lg">Question Text</label>
                               <Textarea
                                 placeholder={`Enter the question text for question ${qIndex + 1}...`}
                                 value={q.questionText}
                                 onChange={(e) => handleQuestionChange(qIndex, e.target.value)}
-                                className="text-lg min-h-[120px] theme-bg-secondary theme-text-primary theme-border focus:border-blue-500 dark:focus:border-blue-400 rounded-xl"
+                                className="text-lg min-h-[120px] bg-background text-foreground border-border focus:border-primary rounded-xl"
                               />
                             </div>
 
                             {/* Question Image Upload */}
                             <div>
-                              <label className="font-semibold theme-text-primary mb-3 block text-lg flex items-center gap-2">
-                                <ImageIcon size={20} className="text-blue-600 dark:text-blue-400" />
+                              <label className="font-semibold text-foreground mb-3 block text-lg flex items-center gap-2">
+                                <ImageIcon size={20} className="text-primary" />
                                 Question Image (Optional)
                               </label>
-                              <div className="theme-border border-dashed rounded-xl p-6 hover:border-blue-400 dark:hover:border-blue-600 transition-colors theme-bg-secondary">
+                              <div className="border-border border-dashed rounded-xl p-6 hover:border-primary transition-colors bg-background">
                                 {q.imageUrl ? (
                                   <div className="relative">
                                     <img 
@@ -545,21 +517,21 @@ export default function CreatePaperPage() {
                                   </div>
                                 ) : (
                                   <div className="text-center">
-                                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
                                       {uploadingImages[`${qIndex}-question`] ? (
-                                        <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                                       ) : (
-                                        <Upload size={24} className="text-blue-600 dark:text-blue-400" />
+                                        <Upload size={24} className="text-primary" />
                                       )}
                                     </div>
                                     <Input
                                       type="file"
                                       accept="image/*"
                                       onChange={(e) => handleImageUpload(qIndex, e.target.files, 'question')}
-                                      className="max-w-xs mx-auto theme-bg-primary theme-text-primary theme-border"
+                                      className="max-w-xs mx-auto bg-card text-foreground border-border"
                                       disabled={uploadingImages[`${qIndex}-question`]}
                                     />
-                                    <p className="text-sm theme-text-secondary mt-2">Upload an image to accompany this question</p>
+                                    <p className="text-sm text-muted-foreground mt-2">Upload an image to accompany this question</p>
                                   </div>
                                 )}
                               </div>
@@ -568,13 +540,13 @@ export default function CreatePaperPage() {
                             {/* Options */}
                             <div>
                               <div className="flex items-center justify-between mb-4">
-                                <label className="font-semibold theme-text-primary text-lg">Answer Options</label>
+                                <label className="font-semibold text-foreground text-lg">Answer Options</label>
                                 <Button
                                   onClick={() => addOption(qIndex)}
                                   variant="outline"
                                   size="sm"
                                   disabled={q.options.length >= 6}
-                                  className="theme-border-muted theme-text-secondary"
+                                  className="border-muted text-muted-foreground"
                                 >
                                   <Plus size={16} className="mr-1" />
                                   Add Option
@@ -584,7 +556,7 @@ export default function CreatePaperPage() {
                                 {q.options.map((opt, oIndex) => (
                                   <motion.div 
                                     key={oIndex}
-                                    className="flex items-center gap-4 p-4 theme-border rounded-xl hover:border-blue-300 dark:hover:border-blue-600 transition-colors theme-bg-secondary"
+                                    className="flex items-center gap-4 p-4 border border-border rounded-xl hover:border-primary transition-colors bg-background"
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: oIndex * 0.1 }}
@@ -596,7 +568,7 @@ export default function CreatePaperPage() {
                                       className={`rounded-full w-12 h-12 flex-shrink-0 transition-all ${
                                         opt.isCorrect
                                           ? "bg-green-500 text-white shadow-lg scale-110"
-                                          : "theme-bg-primary theme-text-secondary hover:bg-green-100 dark:hover:bg-green-900/50"
+                                          : "bg-card text-muted-foreground hover:bg-green-500/10"
                                       }`}
                                       title={opt.isCorrect ? "Correct Answer" : "Click to mark as correct"}
                                     >
@@ -607,7 +579,7 @@ export default function CreatePaperPage() {
                                         placeholder={`Option ${oIndex + 1}`}
                                         value={opt.optionText}
                                         onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
-                                        className="text-lg h-12 theme-bg-primary theme-text-primary theme-border focus:border-blue-500 dark:focus:border-blue-400 rounded-lg"
+                                        className="text-lg h-12 bg-card text-foreground border-border focus:border-primary rounded-lg"
                                       />
                                     </div>
                                     {q.options.length > 2 && (
@@ -615,7 +587,7 @@ export default function CreatePaperPage() {
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => removeOption(qIndex, oIndex)}
-                                        className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900/20 hover:text-red-700"
+                                        className="text-red-500 hover:bg-red-500/10 hover:text-red-600"
                                       >
                                         <Trash2 size={16} />
                                       </Button>
@@ -626,35 +598,35 @@ export default function CreatePaperPage() {
                             </div>
 
                             {/* Detailed Explanation (විවරණ) */}
-                            <div className="border-t theme-border pt-8">
+                            <div className="border-t border-border pt-8">
                               <div className="flex items-center gap-3 mb-4">
-                                <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900/50 rounded-lg flex items-center justify-center">
-                                  <BookOpen size={20} className="text-amber-600 dark:text-amber-400" />
+                                <div className="w-8 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center">
+                                  <BookOpen size={20} className="text-amber-500" />
                                 </div>
                                 <div>
-                                  <h3 className="font-semibold theme-text-primary text-lg">Detailed Explanation (විවරණ)</h3>
-                                  <p className="text-sm theme-text-secondary">Optional: Help students understand how to get the correct answer</p>
+                                  <h3 className="font-semibold text-foreground text-lg">Detailed Explanation (විවරණ)</h3>
+                                  <p className="text-sm text-muted-foreground">Optional: Help students understand how to get the correct answer</p>
                                 </div>
                               </div>
                               
                               {/* Explanation Text */}
                               <div className="mb-6">
-                                <label className="font-medium theme-text-primary mb-2 block">Explanation Text</label>
+                                <label className="font-medium text-foreground mb-2 block">Explanation Text</label>
                                 <Textarea
                                   placeholder="Explain the reasoning behind the correct answer, provide step-by-step solution, or give additional context..."
                                   value={q.explanation?.text || ""}
                                   onChange={(e) => handleExplanationChange(qIndex, e.target.value)}
-                                  className="min-h-[100px] theme-bg-secondary theme-text-primary theme-border focus:border-amber-500 dark:focus:border-amber-400 rounded-xl"
+                                  className="min-h-[100px] bg-background text-foreground border-border focus:border-amber-500 rounded-xl"
                                 />
                               </div>
 
                               {/* Explanation Image */}
                               <div>
-                                <label className="font-medium theme-text-primary mb-2 block flex items-center gap-2">
-                                  <ImageIcon size={16} className="text-amber-600 dark:text-amber-400" />
+                                <label className="font-medium text-foreground mb-2 block flex items-center gap-2">
+                                  <ImageIcon size={16} className="text-amber-500" />
                                   Explanation Image (Optional)
                                 </label>
-                                <div className="theme-border border-dashed rounded-xl p-4 hover:border-amber-400 dark:hover:border-amber-600 transition-colors bg-amber-50/30 dark:bg-amber-900/20">
+                                <div className="border-border border-dashed rounded-xl p-4 hover:border-amber-500 transition-colors bg-amber-500/10">
                                   {q.explanation?.imageUrl ? (
                                     <div className="relative">
                                       <img 
@@ -673,21 +645,21 @@ export default function CreatePaperPage() {
                                     </div>
                                   ) : (
                                     <div className="text-center">
-                                      <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center mx-auto mb-2">
+                                      <div className="w-10 h-10 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
                                         {uploadingImages[`${qIndex}-explanation`] ? (
-                                          <div className="w-5 h-5 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+                                          <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
                                         ) : (
-                                          <Upload size={20} className="text-amber-600 dark:text-amber-400" />
+                                          <Upload size={20} className="text-amber-500" />
                                         )}
                                       </div>
                                       <Input
                                         type="file"
                                         accept="image/*"
                                         onChange={(e) => handleImageUpload(qIndex, e.target.files, 'explanation')}
-                                        className="max-w-xs mx-auto theme-bg-primary theme-text-primary theme-border"
+                                        className="max-w-xs mx-auto bg-card text-foreground border-border"
                                         disabled={uploadingImages[`${qIndex}-explanation`]}
                                       />
-                                      <p className="text-xs theme-text-secondary mt-1">Upload diagrams, charts, or visual aids</p>
+                                      <p className="text-xs text-muted-foreground mt-1">Upload diagrams, charts, or visual aids</p>
                                     </div>
                                   )}
                                 </div>
@@ -729,13 +701,13 @@ export default function CreatePaperPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="mt-6 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-6 rounded-xl shadow-md"
+                className="mt-6 bg-red-100 border-l-4 border-red-500 p-6 rounded-xl shadow-md"
               >
                 <div className="flex items-center gap-3">
-                  <AlertCircle className="text-red-600 dark:text-red-400" size={24} />
+                  <AlertCircle className="text-red-600" size={24} />
                   <div>
-                    <h3 className="font-semibold text-red-800 dark:text-red-300">Validation Error</h3>
-                    <p className="text-red-700 dark:text-red-400">{error}</p>
+                    <h3 className="font-semibold text-red-800">Validation Error</h3>
+                    <p className="text-red-700">{error}</p>
                   </div>
                 </div>
               </motion.div>
@@ -799,7 +771,7 @@ export default function CreatePaperPage() {
           title={infoDialogContent.title}
           description={infoDialogContent.description}
         />
-      </main>
-    </div>
+      </div>
+    </TeacherLayout>
   );
 }
