@@ -76,7 +76,7 @@ export default function Step3({ data, setData, prevStep, handleSubmit, loading }
             placeholder="Enter your Telegram username"
             value={data.telegram}
             onChange={(e) => setData({ ...data, telegram: e.target.value })}
-            className="h-14 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl text-sm font-medium bg-white/80 transition-all duration-200"
+            className="h-14 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200"
           />
         </div>
 

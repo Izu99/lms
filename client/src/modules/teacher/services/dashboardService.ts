@@ -3,12 +3,24 @@ import {
   TeacherDashboardData, 
   TeacherDashboardStats, 
   TeacherAnalytics,
-  StudentSummary 
+  StudentSummary,
+  DailyActivity // New import
 } from '../types/dashboard.types';
 
 export class TeacherDashboardService {
   static async getDashboard(): Promise<TeacherDashboardData> {
-    return ApiClient.get<TeacherDashboardData>('/teacher/dashboard');
+    const [dashboardResponse, activityResponse] = await Promise.all([
+      ApiClient.get<Omit<TeacherDashboardData, 'dailyActivity'>>('/teacher/dashboard'),
+      ApiClient.get<{ success: boolean; activity: DailyActivity[] }>('/activity/daily')
+    ]);
+
+    console.log("Dashboard Response:", dashboardResponse);
+    console.log("Activity Response:", activityResponse);
+
+    return {
+      ...dashboardResponse,
+      dailyActivity: activityResponse?.activity || [], // Safely access activityResponse.activity
+    };
   }
 
   static async getStats(): Promise<TeacherDashboardStats> {

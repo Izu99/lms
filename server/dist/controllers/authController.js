@@ -282,12 +282,22 @@ exports.getCurrentUser = getCurrentUser;
 const getUserProfile = async (req, res) => {
     try {
         const { id } = req.params;
-        const requestingUserId = req.user.id;
-        // Users can only view their own profile
-        if (id !== requestingUserId.toString()) {
-            return res.status(403).json({ message: 'Access denied' });
+        const requestingUser = req.user;
+        const isTeacherOrAdmin = requestingUser.role === 'teacher' || requestingUser.role === 'admin';
+        const isViewingOwnProfile = id === requestingUser.id.toString();
+        if (!isTeacherOrAdmin && !isViewingOwnProfile) {
+            return res.status(403).json({
+                message: 'Access denied. You do not have permission to view this profile.',
+                debug: {
+                    requestingUserRole: requestingUser.role,
+                    isTeacherOrAdmin,
+                    isViewingOwnProfile,
+                    targetUserId: id,
+                    requestingUserId: requestingUser.id
+                }
+            });
         }
-        const user = await User_1.User.findById(id).select('-password');
+        const user = await User_1.User.findById(id).select('-password').populate('institute').populate('year');
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }

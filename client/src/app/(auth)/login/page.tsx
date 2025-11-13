@@ -1,4 +1,4 @@
-"use client";       
+"use client";        
 import { useState, useEffect } from "react";
 import {
   GraduationCap,
@@ -16,8 +16,10 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { API_URL } from "@/lib/constants";
 import Cookies from 'js-cookie';
+import { useTheme } from 'next-themes';
 
 export default function LoginPage() {
+  const { setTheme } = useTheme();
   const [data, setData] = useState({ identifier: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +68,10 @@ export default function LoginPage() {
     }, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    setTheme('light');
+  }, [setTheme]);
 
   // Fixed login function with proper form handling
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -237,7 +243,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right side - Login Form with Blue Theme */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-slate-50 to-blue-50 relative">
+      <div className="flex-1 flex items-center justify-center p-8 bg-white relative">
         {/* Subtle background pattern */}
         <div className="absolute inset-0 opacity-5">
           <div
@@ -257,12 +263,12 @@ export default function LoginPage() {
           >
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="relative">
-                <div className="absolute inset-0 bg-blue-100 rounded-xl blur-sm"></div>
-                <GraduationCap size={40} className="relative text-blue-600" />
+                <div className="absolute inset-0 bg-primary/10 rounded-xl blur-sm"></div>
+                <GraduationCap size={40} className="relative text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">ezyICT</h1>
-                <p className="text-xs text-blue-600 font-medium tracking-wider uppercase">
+                <h1 className="text-3xl font-bold text-foreground">ezyICT</h1>
+                <p className="text-xs text-primary font-medium tracking-wider uppercase">
                   Smart Learning Made Easy
                 </p>
               </div>
@@ -270,12 +276,12 @@ export default function LoginPage() {
           </div>
 
           <div
-            className={`bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50 transform transition-all duration-700 delay-200 ${
+            className={`bg-white backdrop-blur-xl rounded-3xl shadow-2xl p-8 transform transition-all duration-700 delay-200 ${
               mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
             }`}
             style={{
               boxShadow:
-                "0 20px 25px -5px rgba(59, 130, 246, 0.1), 0 10px 10px -5px rgba(59, 130, 246, 0.04)",
+                "0 25px 50px -12px rgba(59, 130, 246, 0.25), 0 10px 20px -5px rgba(59, 130, 246, 0.1)",
             }}
           >
             {/* Header */}
@@ -283,7 +289,7 @@ export default function LoginPage() {
               <h2 className="text-3xl font-bold text-gray-900 mb-3">
                 Welcome Back
               </h2>
-              <p className="text-gray-600 text-lg">
+              <p className="text-muted-foreground text-lg">
                 Sign in to access your learning dashboard
               </p>
               <div className="w-20 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mx-auto mt-4"></div>
@@ -292,13 +298,13 @@ export default function LoginPage() {
             {/* THIS IS THE KEY FIX - Added the form element with onSubmit */}
             <form onSubmit={handleLogin} className="space-y-6" role="form">
               <div className="space-y-2">
-                <label htmlFor="login-identifier" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <User size={16} className="text-blue-500" />
+                <label htmlFor="login-identifier" className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                  <User size={16} className="text-primary" />
                   Username, Email, or Phone Number
                 </label>
                 <div className="relative group">
                   <User
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors duration-200"
                     size={20}
                   />
                   <Input
@@ -309,20 +315,20 @@ export default function LoginPage() {
                     onChange={(e) =>
                       setData({ ...data, identifier: e.target.value })
                     }
-                    className="pl-12 h-14 border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 rounded-xl text-lg font-medium bg-white/80 transition-all duration-200"
+                    className="pl-12 h-14 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-lg font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="login-password" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Lock size={16} className="text-blue-500" />
+                <label htmlFor="login-password" className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
+                  <Lock size={16} className="text-primary" />
                   Password
                 </label>
                 <div className="relative group">
                   <Lock
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-200"
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors duration-200"
                     size={20}
                   />
                   <Input
@@ -334,7 +340,7 @@ export default function LoginPage() {
                     onChange={(e) =>
                       setData({ ...data, password: e.target.value })
                     }
-                    className="pl-12 pr-14 h-14 border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 rounded-xl text-lg font-medium bg-white/80 transition-all duration-200"
+                    className="pl-12 pr-14 h-14 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-lg font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200"
                     required
                   />
                   <button
@@ -364,7 +370,7 @@ export default function LoginPage() {
               </Button>
 
               {error && (
-                <div className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-4 rounded-xl text-sm text-center font-medium">
+                <div className="bg-destructive/10 border-2 border-destructive/20 text-destructive-foreground px-4 py-4 rounded-xl text-sm text-center font-medium">
                   {error}
                 </div>
               )}
@@ -382,10 +388,10 @@ export default function LoginPage() {
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
+                  <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-6 bg-white text-gray-500 font-medium">
+                  <span className="px-8 bg-white text-gray-500 font-medium">
                     New to ezyICT?
                   </span>
                 </div>

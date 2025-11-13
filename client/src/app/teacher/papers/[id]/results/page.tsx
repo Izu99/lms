@@ -17,6 +17,7 @@ import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { API_URL } from "@/lib/constants";
 import Cookies from "js-cookie";
+import { StudentDetailsModal } from "@/components/teacher/modals/StudentDetailsModal";
 
 interface PaperInfo {
   title: string;
@@ -57,6 +58,8 @@ export default function PaperResultsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (!paperId) return;
@@ -218,7 +221,15 @@ export default function PaperResultsPage() {
                       <tr key={result._id} className="border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors">
                         <td className="p-4 font-medium text-foreground">{index + 1}</td>
                         <td className="p-4 font-medium text-foreground">
-                          {result.studentId.firstName || result.studentId.username}
+                          <button
+                            onClick={() => {
+                              setSelectedStudentId(result.studentId._id);
+                              setIsModalOpen(true);
+                            }}
+                            className="hover:underline"
+                          >
+                            {result.studentId.firstName || result.studentId.username}
+                          </button>
                         </td>
                         <td className="p-4 text-muted-foreground">
                           {result.score} / {paper.totalQuestions}
@@ -256,6 +267,14 @@ export default function PaperResultsPage() {
           </>
         )}
       </div>
+      <StudentDetailsModal
+        studentId={selectedStudentId}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedStudentId(null);
+        }}
+      />
     </TeacherLayout>
   );
 }

@@ -78,13 +78,13 @@ const getAllPapers = async (req, res) => {
                 .sort({ createdAt: -1 });
             // Add attempt count for each paper
             const papersWithAttemptCount = await Promise.all(papers.map(async (paper) => {
-                const attemptCount = await StudentAttempt_1.StudentAttempt.countDocuments({
+                const submissionCount = await StudentAttempt_1.StudentAttempt.countDocuments({
                     paperId: paper._id,
                     status: 'submitted'
                 });
                 return {
                     ...paper.toObject(),
-                    attemptCount
+                    submissionCount
                 };
             }));
             papers = papersWithAttemptCount;

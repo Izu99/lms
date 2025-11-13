@@ -149,7 +149,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
               placeholder="Enter your first name"
               value={data.firstName}
               onChange={(e) => setData({ ...data, firstName: e.target.value })}
-              className="h-12 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl text-sm font-medium bg-white/80 transition-all duration-200 placeholder:text-sm"
+              className="h-12 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 placeholder:text-sm"
               required
             />
           </div>
@@ -164,7 +164,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
               placeholder="Enter your last name"
               value={data.lastName}
               onChange={(e) => setData({ ...data, lastName: e.target.value })}
-              className="h-12 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl text-sm font-medium bg-white/80 transition-all duration-200 placeholder:text-sm"
+              className="h-12 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 placeholder:text-sm"
               required
             />
           </div>
@@ -182,7 +182,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
             placeholder="Choose a username"
             value={data.username}
             onChange={(e) => setData({ ...data, username: e.target.value })}
-            className="h-12 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl text-sm font-medium bg-white/80 transition-all duration-200"
+            className="h-12 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200"
             required
           />
           <div className="mt-1 text-sm flex items-center gap-2">
@@ -217,7 +217,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
             placeholder="Enter your email address"
             value={data.email}
             onChange={(e) => setData({ ...data, email: e.target.value })}
-            className="h-12 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl text-sm font-medium bg-white/80 transition-all duration-200"
+            className="h-12 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200"
             required
           />
         </div>
@@ -236,7 +236,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
               placeholder="Create a strong password"
               value={data.password}
               onChange={(e) => setData({ ...data, password: e.target.value })}
-              className="pr-14 h-12 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl text-sm font-medium bg-white/80 transition-all duration-200"
+              className="pr-14 h-12 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200"
               required
             />
             <button
@@ -271,7 +271,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
               placeholder="Confirm your password"
               value={data.confirmPassword}
               onChange={(e) => setData({ ...data, confirmPassword: e.target.value })}
-              className="pr-14 h-12 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl text-sm font-medium bg-white/80 transition-all duration-200"
+              className="pr-14 h-12 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200"
               required
             />
             {data.confirmPassword.length > 0 && (

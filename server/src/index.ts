@@ -23,6 +23,7 @@ import youtubeRoutes from './routes/youtubeRoutes';
 import { protect } from './modules/shared/middleware/auth';
 import studentRoutes from './modules/student/routes';
 import teacherRoutes from './modules/teacher/routes';
+import activityRoutes from './routes/activityRoutes'; // New import
 
 const app = express();
 
@@ -70,6 +71,7 @@ app.use('/api/youtube', youtubeRoutes);
 // Add new modular routes
 app.use('/api/student', protect, studentRoutes);
 app.use('/api/teacher', protect, teacherRoutes);
+app.use('/api/activity', activityRoutes); // New route
 
 app.get('/', (req, res) => {
   res.send('✅ ezyICT Backend is running on Azure');

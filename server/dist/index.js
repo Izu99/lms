@@ -24,6 +24,7 @@ const youtubeRoutes_1 = __importDefault(require("./routes/youtubeRoutes"));
 const auth_1 = require("./modules/shared/middleware/auth");
 const routes_1 = __importDefault(require("./modules/student/routes"));
 const routes_2 = __importDefault(require("./modules/teacher/routes"));
+const activityRoutes_1 = __importDefault(require("./routes/activityRoutes")); // New import
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
@@ -63,6 +64,7 @@ app.use('/api/youtube', youtubeRoutes_1.default);
 // Add new modular routes
 app.use('/api/student', auth_1.protect, routes_1.default);
 app.use('/api/teacher', auth_1.protect, routes_2.default);
+app.use('/api/activity', activityRoutes_1.default); // New route
 app.get('/', (req, res) => {
     res.send('✅ ezyICT Backend is running on Azure');
 });

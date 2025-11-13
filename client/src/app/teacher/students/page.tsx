@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
-import { Users, Search, Mail, Phone, Calendar, Award } from "lucide-react";
+import { Users, Search, Mail, Phone, Award } from "lucide-react";
 import axios from "axios";
 import { API_URL } from "@/lib/constants";
+import { StudentDetailsModal } from "@/components/teacher/modals/StudentDetailsModal";
 
 interface StudentData {
   _id: string;
@@ -23,6 +24,8 @@ export default function TeacherStudentsPage() {
   const [students, setStudents] = useState<StudentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchStudents = async () => {
     try {
@@ -71,15 +74,20 @@ export default function TeacherStudentsPage() {
     switch (status) {
       case "active":
       case "paid":
-        return "bg-green-100 text-green-800";
+        return "bg-green-500/10 text-green-500";
       case "inactive":
       case "unpaid":
-        return "bg-red-100 text-red-800";
+        return "bg-red-500/10 text-red-500";
       case "pending":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-500/10 text-yellow-500";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
     }
+  };
+
+  const handleViewDetails = (studentId: string) => {
+    setSelectedStudentId(studentId);
+    setIsModalOpen(true);
   };
 
   return (
@@ -87,27 +95,27 @@ export default function TeacherStudentsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-3">
             <div className="w-10 h-10 sidebar-icon sidebar-icon-students">
               <Users className="w-6 h-6" />
             </div>
             Students
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-muted-foreground mt-1">
             {students.length} student{students.length !== 1 ? "s" : ""} enrolled
           </p>
         </div>
 
         {/* Search */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-4">
+        <div className="bg-card rounded-xl shadow-md border border-border p-4">
           <div className="flex items-center gap-3">
-            <Search className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+            <Search className="w-5 h-5 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search students by name, username, or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 outline-none text-sm bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+              className="flex-1 outline-none text-sm bg-transparent text-foreground placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -115,18 +123,18 @@ export default function TeacherStudentsPage() {
         {/* Loading State */}
         {loading && (
           <div className="flex justify-center items-center h-64">
-            <div className="w-8 h-8 border-4 border-pink-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
 
         {/* Empty State */}
         {!loading && filteredStudents.length === 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-12 text-center">
-            <Users className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="bg-card rounded-xl shadow-md border border-border p-12 text-center">
+            <Users className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               {searchQuery ? "No students found" : "No students yet"}
             </h3>
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-muted-foreground">
               {searchQuery
                 ? "Try a different search term"
                 : "Students will appear here once they register"}
@@ -136,54 +144,54 @@ export default function TeacherStudentsPage() {
 
         {/* Students List */}
         {!loading && filteredStudents.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden">
+          <div className="bg-card rounded-xl shadow-md border border-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
+                <thead className="bg-muted/50 border-b border-border">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
                       Student
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
                       Contact
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
                       Performance
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-border">
                   {filteredStudents.map((student) => (
-                    <tr key={student._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <tr key={student._id} className="hover:bg-muted/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
                             {getInitials(student)}
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900 dark:text-white">
+                            <p className="font-semibold text-foreground">
                               {getDisplayName(student)}
                             </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">@{student.username}</p>
+                            <p className="text-sm text-muted-foreground">@{student.username}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-1">
                           {student.email && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Mail className="w-4 h-4" />
                               {student.email}
                             </div>
                           )}
                           {student.phoneNumber && (
-                            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Phone className="w-4 h-4" />
                               {student.phoneNumber}
                             </div>
@@ -201,19 +209,22 @@ export default function TeacherStudentsPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                            <Award className="w-4 h-4 text-green-600 dark:text-green-400" />
-                            <span className="font-semibold text-green-600 dark:text-green-400">
+                          <div className="flex items-center gap-2 text-sm text-green-500">
+                            <Award className="w-4 h-4" />
+                            <span className="font-semibold">
                               {student.averageScore?.toFixed(1) || 0}%
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-muted-foreground">
                             {student.completedPapers || 0} papers completed
                           </p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <button className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium hover:underline">
+                        <button 
+                          onClick={() => handleViewDetails(student._id)}
+                          className="text-primary hover:underline text-sm font-medium"
+                        >
                           View Details
                         </button>
                       </td>
@@ -225,6 +236,14 @@ export default function TeacherStudentsPage() {
           </div>
         )}
       </div>
+      <StudentDetailsModal
+        studentId={selectedStudentId}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedStudentId(null);
+        }}
+      />
     </TeacherLayout>
   );
 }

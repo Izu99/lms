@@ -71,9 +71,18 @@ export interface TeacherAnalytics {
   };
 }
 
+export interface DailyActivity {
+  date: string;
+  day: string;
+  videos: number;
+  papers: number;
+  students: number;
+}
+
 export interface TeacherDashboardData {
   stats: TeacherDashboardStats;
   recentVideos: TeacherVideoSummary[];
   recentPapers: TeacherPaperSummary[];
   students: StudentSummary[];
+  dailyActivity: DailyActivity[]; // New field
 }

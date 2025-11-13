@@ -47,7 +47,7 @@ export default function Step2({ data, setData, nextStep, prevStep }: Step2Props)
             placeholder="Enter your address"
             value={data.address}
             onChange={(e) => setData({ ...data, address: e.target.value })}
-            className="h-14 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl text-sm font-medium bg-white/80 transition-all duration-200"
+            className="h-14 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200"
             required
           />
         </div>
@@ -67,7 +67,7 @@ export default function Step2({ data, setData, nextStep, prevStep }: Step2Props)
               placeholder="Enter your phone number"
               value={data.phoneNumber}
               onChange={(e) => setData({ ...data, phoneNumber: e.target.value })}
-              className="h-14 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl text-sm font-medium bg-white/80 transition-all duration-200 placeholder:text-sm"
+              className="h-14 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 placeholder:text-sm"
             />
           </div>
           <div className="space-y-2">
@@ -81,7 +81,7 @@ export default function Step2({ data, setData, nextStep, prevStep }: Step2Props)
               placeholder="Enter your WhatsApp number"
               value={data.whatsappNumber}
               onChange={(e) => setData({ ...data, whatsappNumber: e.target.value })}
-              className="h-14 border-2 border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 rounded-xl text-sm font-medium bg-white/80 transition-all duration-200 placeholder:text-sm"
+              className="h-14 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 placeholder:text-sm"
             />
           </div>
         </div>

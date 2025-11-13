@@ -15,8 +15,10 @@ import Cookies from 'js-cookie';
 import Step1 from "@/components/register/Step1";
 import Step2 from "@/components/register/Step2";
 import Step3 from "@/components/register/Step3";
+import { useTheme } from "next-themes";
 
 export default function RegisterPage() {
+  const { setTheme } = useTheme();
   const [step, setStep] = useState(1);
   const [data, setData] = useState({
     firstName: "",
@@ -260,7 +262,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Right side - Register Form with Emerald Theme */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-slate-50 to-emerald-50 relative min-h-screen">
+      <div className="flex-1 flex items-center justify-center p-8 bg-white relative min-h-screen">
         {/* Subtle background pattern */}
         <div className="absolute inset-0 opacity-5">
           <div
@@ -287,7 +289,7 @@ export default function RegisterPage() {
                 />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">ezyICT</h1>
+                <h1 className="text-3xl font-bold text-foreground">ezyICT</h1>
                 <p className="text-xs text-emerald-600 font-medium tracking-wider uppercase">
                   Smart Learning Made Easy
                 </p>
@@ -296,20 +298,20 @@ export default function RegisterPage() {
           </div>
 
           <div
-            className={`bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50 transform transition-all duration-700 delay-200 ${
+            className={`bg-white backdrop-blur-xl rounded-3xl shadow-2xl p-8 transform transition-all duration-700 delay-200 ${
               mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
             }`}
             style={{
               boxShadow:
-                "0 20px 25px -5px rgba(16, 185, 129, 0.1), 0 10px 10px -5px rgba(16, 185, 129, 0.04)",
+                "0 25px 50px -12px rgba(16, 185, 121, 0.25), 0 10px 20px -5px rgba(16, 185, 129, 0.1)",
             }}
           >
             {/* Header */}
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-3">
+              <h2 className="text-3xl font-bold text-foreground mb-3">
                 Create Account
               </h2>
-              <p className="text-gray-600 text-lg">
+              <p className="text-muted-foreground text-lg">
                 Join our learning community today
               </p>
               <div className="w-20 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full mx-auto mt-4"></div>
@@ -369,7 +371,7 @@ export default function RegisterPage() {
               )}
 
               {error && (
-                <div className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-4 rounded-xl text-sm text-center font-medium">
+                <div className="bg-destructive/10 border-2 border-destructive/20 text-destructive-foreground px-4 py-4 rounded-xl text-sm text-center font-medium">
                   {error}
                 </div>
               )}
@@ -378,10 +380,10 @@ export default function RegisterPage() {
             <div className="mt-8 space-y-4">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
+                  <div className="w-full border-t border-gray-300" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-6 bg-white text-gray-500 font-medium">
+                  <span className="px-8 bg-white text-gray-500 font-medium">
                     Already have an account?
                   </span>
                 </div>
