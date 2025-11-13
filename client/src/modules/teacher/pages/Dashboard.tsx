@@ -209,114 +209,181 @@ export function TeacherDashboard() {
       {/* Content Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Videos */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <Video className="w-5 h-5 text-blue-600" />
-            Recent Videos
-          </h3>
+        <div className="bg-[#1a2332] rounded-2xl shadow-xl border border-[#2d3748] p-6 hover:shadow-2xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Video className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Recent Videos</h3>
+            </div>
+            <button
+              onClick={() => setIsVideoModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-all hover:scale-105 shadow-lg"
+            >
+              <Plus className="w-4 h-4" />
+              Upload
+            </button>
+          </div>
+          
           {data?.recentVideos && data.recentVideos.length > 0 ? (
             <div className="space-y-3">
               {data.recentVideos.slice(0, 3).map((video) => (
                 <div 
                   key={video._id} 
-                  className="p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-[#243447] hover:bg-[#2d3f54] transition-all cursor-pointer group"
                   onClick={() => router.push(`/teacher/videos/${video._id}`)}
                 >
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-1">{video.title}</h4>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <Eye className="w-4 h-4" />
-                      {video.views} views
-                    </span>
-                    <span>{video.class?.name}</span>
+                  <div className="relative w-12 h-12 bg-[#2d3f54] rounded-lg overflow-hidden flex-shrink-0">
+                    <video 
+                      src={video.videoUrl} 
+                      preload="metadata"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                        <div className="w-0 h-0 border-t-4 border-t-transparent border-l-6 border-l-white border-b-4 border-b-transparent ml-0.5"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-white truncate group-hover:text-green-400 transition-colors">{video.title}</h4>
+                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                      <span>{video.class?.name}</span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        {video.views}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-sm">No videos yet</p>
+            <div className="text-center py-8">
+              <Video className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+              <span className="text-gray-400 text-sm">No videos yet</span>
+            </div>
           )}
-          <button
-            onClick={() => setIsVideoModalOpen(true)}
-            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Upload Video
-          </button>
         </div>
 
         {/* Recent Papers */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-green-600" />
-            Recent Papers
-          </h3>
+        <div className="bg-[#1a2332] rounded-2xl shadow-xl border border-[#2d3748] p-6 hover:shadow-2xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Recent Papers</h3>
+            </div>
+            <button
+              onClick={() => router.push('/teacher/papers/create')}
+              className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-all hover:scale-105 shadow-lg"
+            >
+              <Plus className="w-4 h-4" />
+              Create
+            </button>
+          </div>
+          
           {data?.recentPapers && data.recentPapers.length > 0 ? (
             <div className="space-y-3">
               {data.recentPapers.slice(0, 3).map((paper) => (
                 <div 
                   key={paper._id} 
-                  className="p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                  className="p-4 rounded-xl bg-[#243447] hover:bg-[#2d3f54] transition-all cursor-pointer group"
                   onClick={() => router.push(`/teacher/papers/${paper._id}`)}
                 >
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-1">{paper.title}</h4>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <span>{paper.totalQuestions} questions</span>
-                    <span>{paper.submissionCount} submissions</span>
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-medium text-white group-hover:text-orange-400 transition-colors">{paper.title}</h4>
+                    <div className="flex items-center gap-1 text-orange-400 text-sm">
+                      <FileText className="w-4 h-4" />
+                      {paper.totalQuestions}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-400">
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      {paper.submissionCount} submissions
+                    </span>
+                    <span className={`flex items-center gap-1 ${
+                      paper.completionRate >= 50 ? 'text-green-400' : 'text-orange-400'
+                    }`}>
+                      <TrendingUp className="w-3 h-3" />
+                      {paper.completionRate.toFixed(1)}%
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-sm">No papers yet</p>
+            <div className="text-center py-8">
+              <FileText className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-400 text-sm">No papers yet</p>
+            </div>
           )}
-          <button
-            onClick={() => router.push('/teacher/papers/create')}
-            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Create Paper
-          </button>
         </div>
 
-        {/* Active Students */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-purple-600" />
-            Active Students
-          </h3>
+        {/* Top Students */}
+        <div className="bg-[#1a2332] rounded-2xl shadow-xl border border-[#2d3748] p-6 hover:shadow-2xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Top Students</h3>
+            </div>
+          </div>
+          
           {data?.students && data.students.length > 0 ? (
             <div className="space-y-3">
-              {data.students.slice(0, 3).map((student) => (
+              {data.students.slice(0, 3).map((student, index) => (
                 <div 
                   key={student._id} 
-                  className="p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-[#243447] hover:bg-[#2d3f54] transition-all cursor-pointer group"
                 >
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-1">
-                    {student.firstName && student.lastName 
-                      ? `${student.firstName} ${student.lastName}` 
-                      : student.username}
-                  </h4>
-                  <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <Award className="w-4 h-4" />
-                      {student.averageScore.toFixed(0)}% avg
-                    </span>
-                    <span>{student.completedPapers} papers</span>
+                  <div className="relative">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg ${
+                      index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' :
+                      index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
+                      'bg-gradient-to-br from-orange-400 to-orange-600'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    {index === 0 && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <span className="text-xs">🏆</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-white truncate group-hover:text-pink-400 transition-colors">
+                      {student.firstName && student.lastName 
+                        ? `${student.firstName} ${student.lastName}` 
+                        : student.username}
+                    </h4>
+                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <FileText className="w-3 h-3" />
+                        {student.completedPapers} papers
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`text-sm font-medium flex items-center gap-1 ${
+                    student.averageScore >= 80 ? 'text-green-400' : 
+                    student.averageScore >= 50 ? 'text-orange-400' : 'text-red-400'
+                  }`}>
+                    <TrendingUp className="w-4 h-4" />
+                    {student.averageScore.toFixed(1)}%
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-sm">No active students</p>
+            <div className="text-center py-8">
+              <Users className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-400 text-sm">No active students</p>
+            </div>
           )}
-          <button
-            onClick={() => router.push('/teacher/students')}
-            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <Users className="w-4 h-4" />
-            View All Students
-          </button>
         </div>
       </div>
 
