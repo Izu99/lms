@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import Navbar from "@/components/Navbar";
+import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import {
   Play,
   Pause,
@@ -29,6 +29,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import { API_URL, API_BASE_URL } from "@/lib/constants";
+import { CreateVideoModal } from "@/components/modals/CreateVideoModal";
 
 interface VideoData {
   _id: string;
@@ -68,11 +69,11 @@ export default function VideoViewPage() {
   const [video, setVideo] = useState<VideoData | null>(null);
   const [loading, setLoading] = useState(true);
   const [userLoading, setUserLoading] = useState(true);
-  const [relatedVideos, setRelatedVideos] = useState<VideoData[]>([]);
   const [allVideos, setAllVideos] = useState<VideoData[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showDescription, setShowDescription] = useState(true);
   const [hasViewCounted, setHasViewCounted] = useState(false); // NEW: Track if view was counted
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Get user data from localStorage
   useEffect(() => {
@@ -99,7 +100,7 @@ export default function VideoViewPage() {
   useEffect(() => {
     if (user && !userLoading) {
       fetchVideo();
-      fetchRelatedVideos();
+      fetchAllVideos();
     }
   }, [videoId, user, userLoading]);
 
@@ -129,20 +130,15 @@ export default function VideoViewPage() {
     }
   };
 
-  const fetchRelatedVideos = async () => {
+  const fetchAllVideos = async () => {
     try {
       const response = await axios.get(`${API_URL}/videos`, {
         headers: getAuthHeaders(),
       });
       const allVideos = response.data.videos || response.data;
       setAllVideos(allVideos);
-
-      const related = allVideos
-        .filter((v: VideoData) => v._id !== videoId)
-        .slice(0, 5);
-      setRelatedVideos(related);
     } catch (error) {
-      console.error("Error fetching related videos:", error);
+      console.error("Error fetching all videos:", error);
     }
   };
 
@@ -181,17 +177,11 @@ export default function VideoViewPage() {
       });
 
       alert("Video deleted successfully");
-      window.location.href = "/videos";
+      window.location.href = "/teacher/videos";
     } catch (error) {
       console.error("Error deleting video:", error);
       alert("Error deleting video. Please try again.");
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/login";
   };
 
   const formatDate = (dateString: string) => {
@@ -200,10 +190,6 @@ export default function VideoViewPage() {
       month: "long",
       day: "numeric",
     });
-  };
-
-  const formatDateShort = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
   };
 
   // Calculate progress
@@ -241,10 +227,8 @@ export default function VideoViewPage() {
   // Show loading while checking authentication
   if (userLoading) {
     return (
-      <div className="min-h-screen theme-bg-primary">
-        <div className="flex justify-center items-center h-64">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        </div>
+      <div className="min-h-screen bg-background flex justify-center items-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -255,354 +239,195 @@ export default function VideoViewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar user={user} onLogout={handleLogout} />
+      <TeacherLayout>
         <div className="flex justify-center items-center h-64">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
-      </div>
+      </TeacherLayout>
     );
   }
 
   if (!video) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar user={user} onLogout={handleLogout} />
+      <TeacherLayout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-900">Video not found</h2>
-          <Link href="/videos">
+          <h2 className="text-2xl font-bold text-foreground">Video not found</h2>
+          <Link href="/teacher/videos">
             <Button className="mt-4">Back to Videos</Button>
           </Link>
         </div>
-      </div>
+      </TeacherLayout>
     );
   }
 
   return (
-    <div className="min-h-screen theme-bg-secondary">
-      <Navbar user={user} onLogout={handleLogout} />
+    <TeacherLayout>
+      <div className="flex-1 bg-background text-foreground">
+        <div className="sticky top-0">
+          {/* Video Player Container */}
+          <div className="relative bg-background rounded-lg overflow-hidden" style={{ aspectRatio: "16/9" }}>
+            <video
+              className="w-full h-full object-contain"
+              controls
+              controlsList="noremoteplayback"
+              onPlay={handleVideoPlay}
+              onPause={() => setIsPlaying(false)}
+            >
+              <source
+                src={`${API_BASE_URL}/api/uploads/${video.videoUrl}`}
+                type="video/mp4"
+              />
+              Your browser does not support the video tag.
+            </video>
+          </div>
 
-      {/* Main Content */}
-      <div className="flex flex-col lg:flex-row">
-        {/* Left Side - Video Player */}
-        <div className="flex-1 bg-black">
-          <div className="sticky top-16">
-            {/* Video Player Container */}
-            <div className="relative bg-black" style={{ aspectRatio: "16/9" }}>
-              <video
-                className="w-full h-full object-contain"
-                controls
-                controlsList={
-                  user.role === "student"
-                    ? "nodownload noremoteplayback"
-                    : "noremoteplayback"
-                }
-                onPlay={handleVideoPlay}
-                onPause={() => setIsPlaying(false)}
-                onContextMenu={
-                  user.role === "student"
-                    ? (e) => e.preventDefault()
-                    : undefined
-                }
-              >
-                <source
-                  src={`${API_BASE_URL}/api/uploads/${video.videoUrl}`}
-                  type="video/mp4"
-                />
-                Your browser does not support the video tag.
-              </video>
-            </div>
+          {/* Video Info Below Player */}
+          <div className="bg-card p-6 border-t border-border">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-foreground mb-2">
+                  {video.title}
+                </h1>
 
-            {/* Video Info Below Player */}
-            <div className="bg-white p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                    {video.title}
-                  </h1>
-
-                  {/* Class and Year Info */}
-                  {(video.class || video.year) && (
-                    <div className="flex items-center gap-4 mb-3">
-                      {video.class && (
-                        <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 rounded-full">
-                          <School size={14} className="text-blue-600" />
-                          <span className="text-sm font-medium text-blue-700">
-                            {video.class.name} - {video.class.location}
-                          </span>
-                        </div>
-                      )}
-                      {video.year && (
-                        <div className="flex items-center gap-2 px-3 py-1 bg-green-100 rounded-full">
-                          <GraduationCap size={14} className="text-green-600" />
-                          <span className="text-sm font-medium text-green-700">
-                            {video.year.name}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                    {/* NEW: Show view count only to teachers */}
-                    {user.role === "teacher" && (
-                      <div className="flex items-center gap-1">
-                        <Eye size={16} />
-                        <span>{video.views} views</span>
+                {/* Class and Year Info */}
+                {(video.class || video.year) && (
+                  <div className="flex items-center gap-4 mb-3">
+                    {video.class && (
+                      <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full">
+                        <School size={14} className="text-primary" />
+                        <span className="text-sm font-medium text-primary">
+                          {video.class.name} - {video.class.location}
+                        </span>
                       </div>
                     )}
-                    <div className="flex items-center gap-1">
-                      <Calendar size={16} />
-                      <span>{formatDate(video.createdAt)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons - NO DOWNLOAD BUTTON */}
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <ThumbsUp size={16} />
-                    Like
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                  >
-                    <Share size={16} />
-                    Share
-                  </Button>
-
-                  {/* Teacher-only actions */}
-                  {user.role === "teacher" && (
-                    <>
-                      {/* <Link href={`/videos/edit/${video._id}`}>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center gap-2"
-                        >
-                          <Edit size={16} />
-                          Edit
-                        </Button>
-                      </Link> */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleDeleteVideo}
-                        className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 size={16} />
-                        Delete
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Video Creator Info */}
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                    <User size={20} className="text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      {video.uploadedBy?.username || "Unknown"}
-                    </h3>
-                    <p className="text-sm text-gray-600 capitalize">
-                      ICT A-Level {video.uploadedBy?.role || "User"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Progress Info */}
-                <div className="text-right">
-                  <p className="text-sm font-medium text-gray-700">
-                    Video {progress.current} of {progress.total}
-                  </p>
-                  {video.class && video.year && (
-                    <p className="text-xs text-gray-500">
-                      {video.class.name} - {video.year.name}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Description Section */}
-              <div className="border-t pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900">
-                    About this lesson
-                  </h3>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowDescription(!showDescription)}
-                  >
-                    {showDescription ? "Hide" : "Show"}
-                  </Button>
-                </div>
-
-                {showDescription && video.description && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="prose max-w-none">
-                      <div className="whitespace-pre-wrap text-gray-700 text-sm leading-relaxed">
-                        {video.description}
+                    {video.year && (
+                      <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 rounded-full">
+                        <GraduationCap size={14} className="text-green-500" />
+                        <span className="text-sm font-medium text-green-500">
+                          {video.year.name}
+                        </span>
                       </div>
-                    </div>
+                    )}
                   </div>
+                )}
+
+                <div className="flex items-center gap-6 text-sm text-muted-foreground mb-4">
+                  <div className="flex items-center gap-1">
+                    <Eye size={16} />
+                    <span>{video.views} views</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar size={16} />
+                    <span>{formatDate(video.createdAt)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <ThumbsUp size={16} />
+                  Like
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Share size={16} />
+                  Share
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => setIsEditModalOpen(true)}
+                >
+                  <Edit size={16} />
+                  Edit
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDeleteVideo}
+                  className="flex items-center gap-2 text-destructive hover:text-destructive/80"
+                >
+                  <Trash2 size={16} />
+                  Delete
+                </Button>
+              </div>
+            </div>
+
+            {/* Video Creator Info */}
+            <div className="flex items-center justify-between p-4 bg-muted rounded-lg mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+                  <User size={20} className="text-primary-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">
+                    {video.uploadedBy?.username || "Unknown"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground capitalize">
+                    ICT A-Level {video.uploadedBy?.role || "User"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Progress Info */}
+              <div className="text-right">
+                <p className="text-sm font-medium text-foreground">
+                  Video {progress.current} of {progress.total}
+                </p>
+                {video.class && video.year && (
+                  <p className="text-xs text-muted-foreground">
+                    {video.class.name} - {video.year.name}
+                  </p>
                 )}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Right Side - Related Videos & Course Info */}
-        <div className="w-full lg:w-96 bg-white border-l">
-          <div className="sticky top-16 max-h-screen overflow-y-auto">
-            {/* Course Navigation */}
-            <div className="p-4 border-b bg-gray-50">
-              <div className="flex items-center gap-2 mb-2">
-                <Link href="/videos">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-1"
-                  >
-                    <ChevronLeft size={16} />
-                    Back to Videos
-                  </Button>
-                </Link>
-              </div>
-              <h2 className="font-semibold text-gray-900">
-                {video.class
-                  ? `${video.class.name} - ${video.class.location}`
-                  : "ICT A-Level Lessons"}
-              </h2>
-              <p className="text-sm text-gray-600">
-                AL ICT / ezyICT Platform{" "}
-                {video.year ? `${video.year.name} ` : ""}
-              </p>
-            </div>
-
-            {/* Current Video Highlight */}
-            <div className="p-4 bg-blue-50 border-b">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                <span className="text-sm font-medium text-blue-600">
-                  Currently Watching
-                </span>
-              </div>
-              <h4 className="font-medium text-gray-900 text-sm line-clamp-2">
-                {video.title}
-              </h4>
-            </div>
-
-            {/* Related Videos */}
-            <div className="p-4">
-              <h3 className="font-semibold text-gray-900 mb-4">Next Lessons</h3>
-
-              <div className="space-y-3">
-                {relatedVideos.map((relatedVideo, index) => (
-                  <Link
-                    href={`/videos/${relatedVideo._id}`}
-                    key={relatedVideo._id}
-                    className="block hover:bg-gray-50 rounded-lg p-3 transition-colors border"
-                  >
-                    <div className="flex gap-3">
-                      <div className="relative">
-                        <video
-                          className="w-20 h-14 bg-gray-200 rounded object-cover"
-                          preload=""
-                        >
-                          <source
-                            src={`${API_BASE_URL}/api/uploads/${relatedVideo.videoUrl}`}
-                          />
-                        </video>
-                        <div className="absolute top-1 left-1 bg-gray-900 text-white text-xs px-1 rounded">
-                          {index + 2}
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-900 text-sm line-clamp-2 mb-1">
-                          {relatedVideo.title}
-                        </h4>
-                        <p className="text-xs text-gray-500 mb-1">
-                          {relatedVideo.uploadedBy?.username || "Unknown"}
-                        </p>
-                        <div className="flex items-center gap-2 text-xs text-gray-400">
-                          <span>{formatDateShort(relatedVideo.createdAt)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+            {/* Description Section */}
+            <div className="border-t border-border pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-foreground">
+                  About this lesson
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowDescription(!showDescription)}
+                >
+                  {showDescription ? "Hide" : "Show"}
+                </Button>
               </div>
 
-              {/* Course Progress (for students) */}
-              {user.role === "student" && (
-                <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                  <h4 className="font-medium text-green-900 mb-2">
-                    Your Progress
-                  </h4>
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="flex-1 bg-green-200 rounded-full h-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${progress.percentage}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-sm text-green-700">
-                      {progress.percentage}%
-                    </span>
-                  </div>
-                  <p className="text-sm text-green-600">
-                    {progress.current} of {progress.total} lessons completed
-                  </p>
-                </div>
-              )}
-
-              {/* Teacher Stats - NOW SHOWS ACTUAL VIEWS */}
-              {user.role === "teacher" && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-3">
-                    Video Analytics
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-blue-600">Student Views:</span>
-                      <span className="font-medium">{video.views}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-600">Total Videos:</span>
-                      <span className="font-medium">{progress.total}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-600">Current Position:</span>
-                      <span className="font-medium">{progress.current}</span>
+              {showDescription && video.description && (
+                <div className="bg-muted rounded-lg p-4">
+                  <div className="prose max-w-none dark:prose-invert">
+                    <div className="whitespace-pre-wrap text-muted-foreground text-sm leading-relaxed">
+                      {video.description}
                     </div>
                   </div>
-                </div>
-              )}
-
-              {/* Study Notes (for students) */}
-              {user.role === "student" && (
-                <div className="mt-6">
-                  <Button variant="outline" className="w-full justify-start">
-                    <BookOpen size={16} className="mr-2" />
-                    Take Notes
-                  </Button>
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
-    </div>
+      <CreateVideoModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={() => {
+          setIsEditModalOpen(false);
+          fetchVideo();
+        }}
+        video={video}
+      />
+    </TeacherLayout>
   );
 }

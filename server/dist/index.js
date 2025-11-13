@@ -39,7 +39,15 @@ const allowedOrigins = [
     'https://lms-frontend-app.azurewebsites.net'
 ].filter(Boolean);
 app.use((0, cors_1.default)({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+        console.log("Origin:", origin);
+        if (allowedOrigins.includes(origin) || !origin) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
     credentials: true,
 }));
 console.log('Allowed origins:', allowedOrigins);

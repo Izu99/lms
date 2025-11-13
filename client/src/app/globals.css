@@ -54,7 +54,7 @@
   
   /* Theme Colors - Light Mode (Default) */
   --theme-bg-primary: #ffffff; /* Main background */
-  --theme-bg-secondary: #f9fafb; /* Secondary background */
+  --theme-bg-secondary: #f7f8f9; /* Secondary background */
   --theme-bg-tertiary: #f3f4f6; /* Tertiary background */
   --theme-text-primary: #111827; /* Main text */
   --theme-text-secondary: #6b7280; /* Secondary text */
@@ -95,7 +95,7 @@
 .dark {
   /* Theme Colors - Dark Mode */
   --theme-bg-primary: #0f172a; /* Main background - Dark blue-gray */
-  --theme-bg-secondary: #1e293b; /* Secondary background */
+  --theme-bg-secondary: #141d2e; /* Secondary background */
   --theme-bg-tertiary: #334155; /* Tertiary background */
   --theme-text-primary: #f1f5f9; /* Main text */
   --theme-text-secondary: #cbd5e1; /* Secondary text */

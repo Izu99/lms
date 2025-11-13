@@ -70,8 +70,10 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
 
   useEffect(() => {
     fetchInstitutesAndYears();
-    
-    if (video) {
+  }, []);
+
+  useEffect(() => {
+    if (video && !dataLoading) {
       setFormData({
         title: video.title,
         description: video.description || "",
@@ -79,7 +81,7 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
         yearId: video.year ? video.year._id : ""
       });
     }
-  }, [video]);
+  }, [video, dataLoading]);
 
   const getAuthHeaders = () => {
     const token = Cookies.get('token');
