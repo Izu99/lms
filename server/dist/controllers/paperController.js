@@ -14,9 +14,9 @@ const createPaper = async (req, res) => {
         if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
             return res.status(403).json({ message: 'Access denied. Only teachers can create papers.' });
         }
-        const { title, description, questions, deadline, timeLimit } = req.body;
-        if (!title || !questions || !deadline || !timeLimit) {
-            return res.status(400).json({ message: 'Title, questions, deadline, and time limit are required' });
+        const { title, description, questions, deadline, timeLimit, availability } = req.body;
+        if (!title || !questions) {
+            return res.status(400).json({ message: 'Title and questions are required' });
         }
         if (!Array.isArray(questions) || questions.length === 0) {
             return res.status(400).json({ message: 'At least one question is required' });
@@ -44,8 +44,9 @@ const createPaper = async (req, res) => {
                 ...q,
                 order: index + 1
             })),
-            deadline: new Date(deadline),
-            timeLimit
+            ...(deadline && { deadline: new Date(deadline) }),
+            ...(timeLimit && { timeLimit: timeLimit }),
+            availability
         });
         await paper.save();
         res.status(201).json({
@@ -124,7 +125,7 @@ const getPaperById = async (req, res) => {
             return res.status(404).json({ message: 'Paper not found' });
         }
         if (requestingUser.role === 'student') {
-            const isPaperExpired = new Date() > paper.deadline;
+            const isPaperExpired = paper.deadline ? (new Date() > paper.deadline) : false;
             const hasAttempted = await StudentAttempt_1.StudentAttempt.exists({ paperId: id, studentId: requestingUser.id });
             console.log('DEBUG - Paper access conditions:', {
                 paperId: id,
@@ -133,7 +134,7 @@ const getPaperById = async (req, res) => {
                 hasAttempted: !!hasAttempted,
                 showAnswers: !!showAnswers,
                 currentTime: new Date().toISOString(),
-                deadline: paper.deadline.toISOString(),
+                deadline: paper.deadline?.toISOString(),
                 shouldShowExplanations: ((showAnswers && hasAttempted) || (isPaperExpired && hasAttempted))
             });
             // Construct studentPaper
@@ -193,8 +194,8 @@ const submitPaper = async (req, res) => {
         if (!paper) {
             return res.status(404).json({ message: 'Paper not found' });
         }
-        // Check if paper is still available
-        if (new Date() > paper.deadline) {
+        // Check if paper is still available (only if deadline is set)
+        if (paper.deadline && new Date() > paper.deadline) {
             return res.status(400).json({ message: 'Paper deadline has passed' });
         }
         // Check if student has already attempted
@@ -354,7 +355,7 @@ const updatePaper = async (req, res) => {
         if (paper.teacherId.toString() !== requestingUser.id.toString()) {
             return res.status(403).json({ message: 'You can only update your own papers' });
         }
-        const { title, description, questions, deadline, timeLimit } = req.body;
+        const { title, description, questions, deadline, timeLimit, availability } = req.body;
         // Validate questions if provided
         if (questions) {
             for (let i = 0; i < questions.length; i++) {
@@ -378,10 +379,12 @@ const updatePaper = async (req, res) => {
             updateData.title = title;
         if (description !== undefined)
             updateData.description = description;
-        if (deadline)
-            updateData.deadline = new Date(deadline);
-        if (timeLimit)
+        if (deadline !== undefined)
+            updateData.deadline = deadline ? new Date(deadline) : undefined;
+        if (timeLimit !== undefined)
             updateData.timeLimit = timeLimit;
+        if (availability !== undefined)
+            updateData.availability = availability;
         if (questions) {
             updateData.questions = questions.map((q, index) => ({
                 ...q,

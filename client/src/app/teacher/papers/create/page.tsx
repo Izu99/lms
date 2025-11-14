@@ -3,6 +3,13 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   FileText,
   Plus,
   Trash2,
@@ -54,6 +61,7 @@ export default function CreatePaperPage() {
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
   const [timeLimit, setTimeLimit] = useState(60);
+  const [availability, setAvailability] = useState('all');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -225,8 +233,6 @@ export default function CreatePaperPage() {
 
   const validateForm = () => {
     if (!title.trim()) return "Paper title is required.";
-    if (!deadline) return "Deadline is required.";
-    if (timeLimit <= 0) return "Time limit must be greater than 0.";
     if (questions.length === 0) return "At least one question is required.";
 
     for (let i = 0; i < questions.length; i++) {
@@ -257,8 +263,9 @@ export default function CreatePaperPage() {
       const paperData = {
         title,
         description,
-        deadline,
-        timeLimit,
+        deadline: deadline || undefined, // Make deadline optional
+        timeLimit: timeLimit > 0 ? timeLimit : undefined, // Make timeLimit optional
+        availability,
         questions: questions.map(({ questionText, options, imageUrl, explanation }) => ({
           questionText,
           options,
@@ -364,8 +371,26 @@ export default function CreatePaperPage() {
                   value={timeLimit}
                   onChange={(e) => setTimeLimit(Number(e.target.value))}
                   className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
-                  min="1"
+                  min="0" // Changed min to 0 to allow optional time limit
                 />
+              </div>
+              {/* Availability */}
+              <div>
+                <label className="font-semibold text-foreground mb-3 flex items-center gap-2 text-lg">
+                  <FileText size={20} className="text-primary" /> Availability
+                </label>
+                <Select
+                  value={availability}
+                  onValueChange={(value) => setAvailability(value)}
+                >
+                  <SelectTrigger className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl">
+                    <SelectValue placeholder="Select availability" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Free for all</SelectItem>
+                    <SelectItem value="physical">Free for physical only</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </motion.div>

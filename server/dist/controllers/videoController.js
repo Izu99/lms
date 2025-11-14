@@ -27,7 +27,7 @@ exports.getAllVideos = getAllVideos;
 // Upload new video
 const uploadVideo = async (req, res) => {
     try {
-        const { title, description, institute: instituteId, year: yearId } = req.body;
+        const { title, description, institute: instituteId, year: yearId, availability } = req.body;
         const videoFile = req.file;
         if (!videoFile) {
             return res.status(400).json({ message: 'No video file uploaded' });
@@ -47,6 +47,7 @@ const uploadVideo = async (req, res) => {
             institute: instituteId,
             year: yearId,
             views: 0, // NEW: Initialize with 0 views
+            availability,
         });
         await newVideo.save();
         await newVideo.populate('uploadedBy', 'username role');
@@ -81,7 +82,7 @@ exports.incrementViewCount = incrementViewCount;
 const updateVideo = async (req, res) => {
     try {
         const update = {};
-        const { title, description, institute: instituteId, year: yearId } = req.body || {};
+        const { title, description, institute: instituteId, year: yearId, availability } = req.body || {};
         if (title !== undefined)
             update.title = title;
         if (description !== undefined)
@@ -90,6 +91,8 @@ const updateVideo = async (req, res) => {
             update.institute = instituteId;
         if (yearId !== undefined)
             update.year = yearId;
+        if (availability !== undefined)
+            update.availability = availability;
         // Handle new file if uploaded
         if (req.file) {
             const prev = await Video_1.Video.findById(req.params.id);

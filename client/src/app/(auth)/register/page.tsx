@@ -33,7 +33,10 @@ export default function RegisterPage() {
     idCardBack: null,
     phoneNumber: "",
     whatsappNumber: "",
+    studentType: "Physical",
+    institute: "",
   });
+  const [institutes, setInstitutes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -48,6 +51,16 @@ export default function RegisterPage() {
       animationDelay: `${Math.random() * 4}s`,
     }));
     setFloatingElements(elements);
+    
+    async function fetchInstitutes() {
+      try {
+        const response = await axios.get(`${API_URL}/institutes`);
+        setInstitutes(response.data.institutes);
+      } catch (error) {
+        console.error("Failed to fetch institutes:", error);
+      }
+    }
+    fetchInstitutes();
   }, []);
 
   const motivationalQuotes = [
@@ -106,6 +119,8 @@ export default function RegisterPage() {
     formData.append('phoneNumber', data.phoneNumber);
     formData.append('whatsappNumber', data.whatsappNumber || '');
     formData.append('telegram', data.telegram || '');
+    formData.append('studentType', data.studentType);
+    formData.append('institute', data.institute);
 
     // Handle files separately
     if (data.idCardFront instanceof File) {
@@ -358,6 +373,7 @@ export default function RegisterPage() {
                   setData={(newData) => setData({ ...data, ...newData })}
                   nextStep={nextStep}
                   prevStep={prevStep}
+                  institutes={institutes}
                 />
               )}
               {step === 3 && (
@@ -367,6 +383,7 @@ export default function RegisterPage() {
                   prevStep={prevStep}
                   handleSubmit={handleRegister}
                   loading={loading}
+                  studentType={data.studentType}
                 />
               )}
 

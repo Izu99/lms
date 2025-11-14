@@ -23,8 +23,9 @@ export interface IPaper extends Document {
   description?: string;
   teacherId: Types.ObjectId;
   questions: IQuestion[];
-  deadline: Date;
-  timeLimit: number; // in minutes
+  deadline?: Date;
+  timeLimit?: number; // in minutes
+  availability: 'all' | 'physical';
   totalQuestions: number;
   createdAt: Date;
   updatedAt: Date;
@@ -51,8 +52,9 @@ const paperSchema = new mongoose.Schema<IPaper>({
   description: { type: String },
   teacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   questions: [questionSchema],
-  deadline: { type: Date, required: true },
-  timeLimit: { type: Number, required: true }, // minutes
+  deadline: { type: Date },
+  timeLimit: { type: Number }, // minutes
+  availability: { type: String, enum: ['all', 'physical'], default: 'all' },
   totalQuestions: { type: Number, default: 0 }
 }, { timestamps: true });
 

@@ -36,7 +36,7 @@ const getUserIdCardFolder = (userId) => {
 };
 // Registration controller
 const register = async (req, res) => {
-    const { username, password, firstName, lastName, address, phoneNumber, whatsappNumber, telegram, email } = req.body;
+    const { username, password, firstName, lastName, address, phoneNumber, whatsappNumber, telegram, email, institute, year, studentType } = req.body;
     let idCardFrontImage;
     let idCardBackImage;
     let uploadedFiles = [];
@@ -109,6 +109,9 @@ const register = async (req, res) => {
             phoneNumber,
             whatsappNumber,
             telegram,
+            institute,
+            year,
+            studentType,
             role: 'student',
         });
         await user.save();

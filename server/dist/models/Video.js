@@ -13,5 +13,6 @@ const videoSchema = new mongoose_1.default.Schema({
     institute: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Institute', required: true },
     year: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Year', required: true },
     views: { type: Number, default: 0 }, // NEW: Default to 0 views
+    availability: { type: String, enum: ['all', 'physical'], default: 'all' },
 }, { timestamps: true });
 exports.Video = mongoose_1.default.model('Video', videoSchema);

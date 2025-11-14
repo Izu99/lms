@@ -55,7 +55,8 @@ export interface PaperBase extends BaseEntity {
   title: string;
   description?: string;
   teacherId: string;
-  deadline: Date;
-  timeLimit: number;
+  deadline?: Date;
+  timeLimit?: number;
+  availability: 'all' | 'physical';
   totalQuestions: number;
 }

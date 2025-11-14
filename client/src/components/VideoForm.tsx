@@ -59,7 +59,8 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
     title: "",
     description: "",
     instituteId: "",
-    yearId: ""
+    yearId: "",
+    availability: "all",
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -147,6 +148,7 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
       submitData.append('description', formData.description);
       submitData.append('institute', formData.instituteId);
       submitData.append('year', formData.yearId);
+      submitData.append('availability', formData.availability);
       
       // Only append video file if one is selected
       if (videoFile) {
@@ -301,6 +303,30 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
                 </p>
               )}
             </div>
+          </div>
+
+          {/* Availability Selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Availability *
+            </label>
+            <Select
+              value={formData.availability}
+              onValueChange={(value) => setFormData({ ...formData, availability: value })}
+              required
+            >
+              <SelectTrigger className="w-full pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                <SelectValue placeholder="Select availability" />
+              </SelectTrigger>
+              <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                <SelectItem value="all" className="text-gray-900 dark:text-white">
+                  Free for all
+                </SelectItem>
+                <SelectItem value="physical" className="text-gray-900 dark:text-white">
+                  Free for physical only
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Quick Actions for missing data */}

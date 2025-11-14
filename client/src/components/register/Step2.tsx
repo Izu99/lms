@@ -13,16 +13,19 @@ interface Step2Props {
     address: string;
     phoneNumber: string;
     whatsappNumber: string;
+    studentType: string;
+    institute: string;
   };
   setData: (data: Step2Props['data']) => void;
   nextStep: () => void;
   prevStep: () => void;
+  institutes: { _id: string; name: string }[];
 }
 
-export default function Step2({ data, setData, nextStep, prevStep }: Step2Props) {
+export default function Step2({ data, setData, nextStep, prevStep, institutes }: Step2Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (data.address) {
+    if (data.address && data.institute && data.studentType) {
       nextStep();
     }
   };
@@ -35,11 +38,54 @@ export default function Step2({ data, setData, nextStep, prevStep }: Step2Props)
       className="space-y-6"
     >
       <form onSubmit={handleSubmit} className="space-y-6" role="form">
+        {/* Student Type and Institute */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label htmlFor="studentType" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <GraduationCap size={16} className="text-emerald-500" />
+              Student Type <span className="text-red-500">*</span>
+            </label>
+            <Select
+              value={data.studentType}
+              onValueChange={(value) => setData({ ...data, studentType: value })}
+            >
+              <SelectTrigger className="h-14 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200">
+                <SelectValue placeholder="Select student type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Physical">Physical</SelectItem>
+                <SelectItem value="Online">Online</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="institute" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Building2 size={16} className="text-emerald-500" />
+              Institute <span className="text-red-500">*</span>
+            </label>
+            <Select
+              value={data.institute}
+              onValueChange={(value) => setData({ ...data, institute: value })}
+            >
+              <SelectTrigger className="h-14 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200">
+                <SelectValue placeholder="Select an institute" />
+              </SelectTrigger>
+              <SelectContent>
+                {institutes.map((institute) => (
+                  <SelectItem key={institute._id} value={institute._id}>
+                    {institute.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {/* Address */}
         <div className="space-y-2">
           <label htmlFor="address" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <Home size={16} className="text-emerald-500" />
-            Address
+            Address <span className="text-red-500">*</span>
           </label>
           <Input
             id="address"
@@ -52,14 +98,12 @@ export default function Step2({ data, setData, nextStep, prevStep }: Step2Props)
           />
         </div>
 
-
-
         {/* Phone Numbers - Two in a row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label htmlFor="phoneNumber" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Phone size={16} className="text-emerald-500" />
-              Phone Number
+              Phone Number <span className="text-red-500">*</span>
             </label>
             <Input
               id="phoneNumber"
@@ -68,12 +112,13 @@ export default function Step2({ data, setData, nextStep, prevStep }: Step2Props)
               value={data.phoneNumber}
               onChange={(e) => setData({ ...data, phoneNumber: e.target.value })}
               className="h-14 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 placeholder:text-sm"
+              required
             />
           </div>
           <div className="space-y-2">
             <label htmlFor="whatsappNumber" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <MessageCircle size={16} className="text-emerald-500" />
-              WhatsApp Number
+              WhatsApp Number <span className="text-gray-400">(Optional)</span>
             </label>
             <Input
               id="whatsappNumber"

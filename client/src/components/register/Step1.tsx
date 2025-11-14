@@ -141,7 +141,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
           <div className="space-y-2">
             <label htmlFor="firstName" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <User size={16} className="text-emerald-500" />
-              First Name
+              First Name <span className="text-red-500">*</span>
             </label>
             <Input
               id="firstName"
@@ -156,7 +156,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
           <div className="space-y-2">
             <label htmlFor="lastName" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <User size={16} className="text-emerald-500" />
-              Last Name
+              Last Name <span className="text-red-500">*</span>
             </label>
             <Input
               id="lastName"
@@ -174,7 +174,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
         <div className="space-y-2">
           <label htmlFor="username" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <User size={16} className="text-emerald-500" />
-            Username
+            Username <span className="text-red-500">*</span>
           </label>
           <Input
             id="username"
@@ -208,7 +208,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
         <div className="space-y-2">
           <label htmlFor="email" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <User size={16} className="text-emerald-500" />
-            Email
+            Email <span className="text-red-500">*</span>
           </label>
           <Input
             id="email"
@@ -226,7 +226,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
         <div className="space-y-2">
           <label htmlFor="password" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <Lock size={16} className="text-emerald-500" />
-            Password
+            Password <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Input
@@ -261,7 +261,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
         <div className="space-y-2">
           <label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <Lock size={16} className="text-emerald-500" />
-            Confirm Password
+            Confirm Password <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Input

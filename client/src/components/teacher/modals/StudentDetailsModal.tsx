@@ -20,6 +20,7 @@ interface StudentData {
   telegram?: string;
   idCardFrontImage?: string;
   idCardBackImage?: string;
+  studentType?: string;
   status: string;
   notes?: string;
   institute?: { name: string; location: string };
@@ -153,6 +154,7 @@ export function StudentDetailsModal({ studentId, isOpen, onClose }: StudentDetai
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-border pt-6 bg-muted/20 p-4 rounded-lg">
                   <DetailItem icon={<ShieldCheck size={16} />} label="Status" value={student.status} />
+                  <DetailItem icon={<User size={16} />} label="Student Type" value={student.studentType} />
                   <DetailItem icon={<Calendar size={16} />} label="Joined On" value={new Date(student.createdAt).toLocaleDateString()} />
                 </div>
                 {student.notes && (

@@ -159,6 +159,7 @@ export class TeacherDashboardService {
         timeLimit: paper.timeLimit,
         totalQuestions: paper.totalQuestions,
         teacherId: paper.teacherId ? paper.teacherId.toString() : '',
+        availability: paper.availability,
         createdAt: (paper as any).createdAt,
         updatedAt: (paper as any).updatedAt,
         submissionCount: paperAttempts.length,

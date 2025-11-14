@@ -34,7 +34,7 @@ const getUserIdCardFolder = (userId: string): string => {
 
 // Registration controller
 export const register = async (req: Request, res: Response) => {
-  const { username, password, firstName, lastName, address, phoneNumber, whatsappNumber, telegram, email } = req.body;
+  const { username, password, firstName, lastName, address, phoneNumber, whatsappNumber, telegram, email, institute, year, studentType } = req.body;
   let idCardFrontImage: string | undefined;
   let idCardBackImage: string | undefined;
   let uploadedFiles: Express.Multer.File[] = [];
@@ -118,6 +118,9 @@ export const register = async (req: Request, res: Response) => {
       phoneNumber,
       whatsappNumber,
       telegram,
+      institute,
+      year,
+      studentType,
       role: 'student',
     });
 

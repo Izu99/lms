@@ -17,6 +17,7 @@ export interface IUser extends Document {
   telegram?: string;
   idCardFrontImage?: string;
   idCardBackImage?: string;
+  studentType?: string;
   role: UserRole;
   status?: StudentStatus; // Added status field
   notes?: string; // Added notes for teachers to add comments
@@ -37,6 +38,7 @@ const userSchema = new mongoose.Schema<IUser>({
   telegram: { type: String },
   idCardFrontImage: { type: String },
   idCardBackImage: { type: String },
+  studentType: { type: String },
   role: { type: String, enum: ['student', 'teacher', 'admin'], default: 'student' },
   status: { 
     type: String, 

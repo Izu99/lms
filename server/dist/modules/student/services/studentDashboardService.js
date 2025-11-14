@@ -60,7 +60,7 @@ class StudentDashboardService {
         const attemptMap = new Map(attempts.map(attempt => [attempt.paperId.toString(), attempt]));
         return papers.map(paper => {
             const attempt = attemptMap.get(paper._id.toString());
-            const timeRemaining = Math.max(0, new Date(paper.deadline).getTime() - Date.now());
+            const timeRemaining = paper.deadline ? Math.max(0, new Date(paper.deadline).getTime() - Date.now()) : 0;
             return {
                 _id: paper._id.toString(),
                 title: paper.title,
@@ -69,6 +69,7 @@ class StudentDashboardService {
                 timeLimit: paper.timeLimit,
                 totalQuestions: paper.totalQuestions,
                 teacherId: paper.teacherId.toString(),
+                availability: paper.availability,
                 createdAt: paper.createdAt,
                 updatedAt: paper.updatedAt,
                 isCompleted: attempt?.status === 'submitted' || false,

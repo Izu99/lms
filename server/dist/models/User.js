@@ -18,6 +18,7 @@ const userSchema = new mongoose_1.default.Schema({
     telegram: { type: String },
     idCardFrontImage: { type: String },
     idCardBackImage: { type: String },
+    studentType: { type: String },
     role: { type: String, enum: ['student', 'teacher', 'admin'], default: 'student' },
     status: {
         type: String,

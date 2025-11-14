@@ -25,8 +25,9 @@ const paperSchema = new mongoose_1.default.Schema({
     description: { type: String },
     teacherId: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User', required: true },
     questions: [questionSchema],
-    deadline: { type: Date, required: true },
-    timeLimit: { type: Number, required: true }, // minutes
+    deadline: { type: Date },
+    timeLimit: { type: Number }, // minutes
+    availability: { type: String, enum: ['all', 'physical'], default: 'all' },
     totalQuestions: { type: Number, default: 0 }
 }, { timestamps: true });
 // Update totalQuestions before saving

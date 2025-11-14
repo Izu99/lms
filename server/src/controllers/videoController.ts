@@ -22,7 +22,7 @@ export const getAllVideos = async (req: Request, res: Response) => {
 // Upload new video
 export const uploadVideo = async (req: Request, res: Response) => {
   try {
-    const { title, description, institute: instituteId, year: yearId } = req.body;
+    const { title, description, institute: instituteId, year: yearId, availability } = req.body;
     const videoFile = req.file;
     
     if (!videoFile) {
@@ -46,6 +46,7 @@ export const uploadVideo = async (req: Request, res: Response) => {
       institute: instituteId,
       year: yearId,
       views: 0,  // NEW: Initialize with 0 views
+      availability,
     });
 
     await newVideo.save();
@@ -86,12 +87,13 @@ export const incrementViewCount = async (req: Request, res: Response) => {
 export const updateVideo = async (req: Request, res: Response) => {
   try {
     const update: any = {};
-    const { title, description, institute: instituteId, year: yearId } = req.body || {};
+    const { title, description, institute: instituteId, year: yearId, availability } = req.body || {};
     
     if (title !== undefined) update.title = title;
     if (description !== undefined) update.description = description;
     if (instituteId !== undefined) update.institute = instituteId;
     if (yearId !== undefined) update.year = yearId;
+    if (availability !== undefined) update.availability = availability;
 
     // Handle new file if uploaded
     if (req.file) {
