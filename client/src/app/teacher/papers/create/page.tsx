@@ -62,6 +62,7 @@ export default function CreatePaperPage() {
   const [deadline, setDeadline] = useState("");
   const [timeLimit, setTimeLimit] = useState(60);
   const [availability, setAvailability] = useState('all');
+  const [price, setPrice] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -266,6 +267,7 @@ export default function CreatePaperPage() {
         deadline: deadline || undefined, // Make deadline optional
         timeLimit: timeLimit > 0 ? timeLimit : undefined, // Make timeLimit optional
         availability,
+        price,
         questions: questions.map(({ questionText, options, imageUrl, explanation }) => ({
           questionText,
           options,
@@ -391,6 +393,20 @@ export default function CreatePaperPage() {
                     <SelectItem value="physical">Free for physical only</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              {/* Price */}
+              <div>
+                <label className="font-semibold text-foreground mb-3 flex items-center gap-2 text-lg">
+                  <FileText size={20} className="text-primary" /> Price (LKR)
+                </label>
+                <Input
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(Number(e.target.value))}
+                  placeholder="Enter price (e.g., 1500)"
+                  min="0"
+                  className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
+                />
               </div>
             </div>
           </motion.div>

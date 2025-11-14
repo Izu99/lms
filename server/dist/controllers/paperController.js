@@ -14,7 +14,7 @@ const createPaper = async (req, res) => {
         if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
             return res.status(403).json({ message: 'Access denied. Only teachers can create papers.' });
         }
-        const { title, description, questions, deadline, timeLimit, availability } = req.body;
+        const { title, description, questions, deadline, timeLimit, availability, price } = req.body;
         if (!title || !questions) {
             return res.status(400).json({ message: 'Title and questions are required' });
         }
@@ -46,7 +46,8 @@ const createPaper = async (req, res) => {
             })),
             ...(deadline && { deadline: new Date(deadline) }),
             ...(timeLimit && { timeLimit: timeLimit }),
-            availability
+            availability,
+            ...(price && { price: price }),
         });
         await paper.save();
         res.status(201).json({
@@ -124,53 +125,84 @@ const getPaperById = async (req, res) => {
         if (!paper) {
             return res.status(404).json({ message: 'Paper not found' });
         }
-        if (requestingUser.role === 'student') {
-            const isPaperExpired = paper.deadline ? (new Date() > paper.deadline) : false;
-            const hasAttempted = await StudentAttempt_1.StudentAttempt.exists({ paperId: id, studentId: requestingUser.id });
-            console.log('DEBUG - Paper access conditions:', {
-                paperId: id,
-                studentId: requestingUser.id,
-                isPaperExpired,
-                hasAttempted: !!hasAttempted,
-                showAnswers: !!showAnswers,
-                currentTime: new Date().toISOString(),
-                deadline: paper.deadline?.toISOString(),
-                shouldShowExplanations: ((showAnswers && hasAttempted) || (isPaperExpired && hasAttempted))
-            });
-            // Construct studentPaper
-            const studentPaper = {
-                _id: paper._id,
-                title: paper.title,
-                description: paper.description,
-                deadline: paper.deadline,
-                timeLimit: paper.timeLimit,
-                totalQuestions: paper.totalQuestions,
-                questions: paper.questions.map(q => ({
-                    _id: q._id,
-                    questionText: q.questionText,
-                    order: q.order,
-                    imageUrl: q.imageUrl,
-                    options: q.options.map(opt => ({
-                        _id: opt._id,
-                        optionText: opt.optionText,
-                        // Include isCorrect if:
-                        // 1. Viewing answers page AND student has attempted, OR
-                        // 2. Paper is expired AND student has attempted
-                        ...((showAnswers && hasAttempted) || (isPaperExpired && hasAttempted) ? { isCorrect: opt.isCorrect } : {})
-                    })),
-                    // Include explanation (විවරණ) if:
-                    // 1. Viewing answers page AND student has attempted, OR  
-                    // 2. Paper is expired AND student has attempted
-                    ...((showAnswers && hasAttempted) || (isPaperExpired && hasAttempted)) && q.explanation && (q.explanation.text || q.explanation.imageUrl) ? {
-                        explanation: q.explanation
-                    } : {}
-                }))
-            };
-            // Always return the paper, client will handle if it's attempted or expired
-            return res.json({ paper: studentPaper });
+        // If user is not a student, or is a teacher/admin, grant full access
+        if (!requestingUser || requestingUser.role !== 'student') {
+            // Teachers get full paper with correct answers
+            return res.json({ paper });
         }
-        // Teachers get full paper with correct answers
-        res.json({ paper });
+        // Access control logic for students
+        const studentType = requestingUser.studentType;
+        let hasAccess = false;
+        let paymentRequired = false;
+        if (paper.availability === 'all') {
+            hasAccess = true;
+        }
+        else if (paper.availability === 'physical' && studentType === 'Physical') {
+            hasAccess = true;
+        }
+        else if (paper.price && paper.price > 0) {
+            paymentRequired = true;
+        }
+        else {
+            // Default to free if price is 0 and no specific availability restriction
+            hasAccess = true;
+        }
+        if (paymentRequired) {
+            return res.status(402).json({
+                message: 'Payment required to access this paper.',
+                price: paper.price,
+                paperTitle: paper.title,
+                paperId: paper._id
+            });
+        }
+        if (!hasAccess) {
+            // This case should ideally not be reached if logic is exhaustive, but as a fallback
+            return res.status(403).json({ message: 'Access denied to this paper.' });
+        }
+        // If student has access, proceed with existing student logic
+        const isPaperExpired = paper.deadline ? (new Date() > paper.deadline) : false;
+        const hasAttempted = await StudentAttempt_1.StudentAttempt.exists({ paperId: id, studentId: requestingUser.id });
+        console.log('DEBUG - Paper access conditions:', {
+            paperId: id,
+            studentId: requestingUser.id,
+            isPaperExpired,
+            hasAttempted: !!hasAttempted,
+            showAnswers: !!showAnswers,
+            currentTime: new Date().toISOString(),
+            deadline: paper.deadline?.toISOString(),
+            shouldShowExplanations: ((showAnswers && hasAttempted) || (isPaperExpired && hasAttempted))
+        });
+        // Construct studentPaper
+        const studentPaper = {
+            _id: paper._id,
+            title: paper.title,
+            description: paper.description,
+            deadline: paper.deadline,
+            timeLimit: paper.timeLimit,
+            totalQuestions: paper.totalQuestions,
+            questions: paper.questions.map(q => ({
+                _id: q._id,
+                questionText: q.questionText,
+                order: q.order,
+                imageUrl: q.imageUrl,
+                options: q.options.map(opt => ({
+                    _id: opt._id,
+                    optionText: opt.optionText,
+                    // Include isCorrect if:
+                    // 1. Viewing answers page AND student has attempted, OR
+                    // 2. Paper is expired AND student has attempted
+                    ...((showAnswers && hasAttempted) || (isPaperExpired && hasAttempted) ? { isCorrect: opt.isCorrect } : {})
+                })),
+                // Include explanation (විවරණ) if:
+                // 1. Viewing answers page AND student has attempted, OR  
+                // 2. Paper is expired AND student has attempted
+                ...((showAnswers && hasAttempted) || (isPaperExpired && hasAttempted)) && q.explanation && (q.explanation.text || q.explanation.imageUrl) ? {
+                    explanation: q.explanation
+                } : {}
+            }))
+        };
+        // Always return the paper, client will handle if it's attempted or expired
+        return res.json({ paper: studentPaper });
     }
     catch (error) {
         console.error('Get paper by ID error:', error);
@@ -355,7 +387,7 @@ const updatePaper = async (req, res) => {
         if (paper.teacherId.toString() !== requestingUser.id.toString()) {
             return res.status(403).json({ message: 'You can only update your own papers' });
         }
-        const { title, description, questions, deadline, timeLimit, availability } = req.body;
+        const { title, description, questions, deadline, timeLimit, availability, price } = req.body;
         // Validate questions if provided
         if (questions) {
             for (let i = 0; i < questions.length; i++) {
@@ -385,6 +417,8 @@ const updatePaper = async (req, res) => {
             updateData.timeLimit = timeLimit;
         if (availability !== undefined)
             updateData.availability = availability;
+        if (price !== undefined)
+            updateData.price = price;
         if (questions) {
             updateData.questions = questions.map((q, index) => ({
                 ...q,

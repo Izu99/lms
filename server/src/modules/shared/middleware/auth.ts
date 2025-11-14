@@ -10,6 +10,7 @@ interface AuthenticatedRequest extends Request {
     username: string;
     firstName?: string;
     lastName?: string;
+    studentType?: string;
   };
 }
 
@@ -51,7 +52,8 @@ export const protect = async (req: AuthenticatedRequest, res: Response, next: Ne
       role: user.role,
       username: user.username,
       firstName: user.firstName,
-      lastName: user.lastName
+      lastName: user.lastName,
+      studentType: user.studentType
     };
     
     next();

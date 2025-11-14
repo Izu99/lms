@@ -26,6 +26,7 @@ export interface IPaper extends Document {
   deadline?: Date;
   timeLimit?: number; // in minutes
   availability: 'all' | 'physical';
+  price?: number;
   totalQuestions: number;
   createdAt: Date;
   updatedAt: Date;
@@ -55,6 +56,7 @@ const paperSchema = new mongoose.Schema<IPaper>({
   deadline: { type: Date },
   timeLimit: { type: Number }, // minutes
   availability: { type: String, enum: ['all', 'physical'], default: 'all' },
+  price: { type: Number, default: 0 },
   totalQuestions: { type: Number, default: 0 }
 }, { timestamps: true });
 

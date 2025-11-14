@@ -27,7 +27,7 @@ exports.getAllVideos = getAllVideos;
 // Upload new video
 const uploadVideo = async (req, res) => {
     try {
-        const { title, description, institute: instituteId, year: yearId, availability } = req.body;
+        const { title, description, institute: instituteId, year: yearId, availability, price } = req.body;
         const videoFile = req.file;
         if (!videoFile) {
             return res.status(400).json({ message: 'No video file uploaded' });
@@ -48,6 +48,7 @@ const uploadVideo = async (req, res) => {
             year: yearId,
             views: 0, // NEW: Initialize with 0 views
             availability,
+            price,
         });
         await newVideo.save();
         await newVideo.populate('uploadedBy', 'username role');
@@ -82,7 +83,7 @@ exports.incrementViewCount = incrementViewCount;
 const updateVideo = async (req, res) => {
     try {
         const update = {};
-        const { title, description, institute: instituteId, year: yearId, availability } = req.body || {};
+        const { title, description, institute: instituteId, year: yearId, availability, price } = req.body || {};
         if (title !== undefined)
             update.title = title;
         if (description !== undefined)
@@ -93,6 +94,8 @@ const updateVideo = async (req, res) => {
             update.year = yearId;
         if (availability !== undefined)
             update.availability = availability;
+        if (price !== undefined)
+            update.price = price;
         // Handle new file if uploaded
         if (req.file) {
             const prev = await Video_1.Video.findById(req.params.id);
@@ -155,6 +158,40 @@ const getVideoById = async (req, res) => {
             .populate('year', 'year name');
         if (!video) {
             return res.status(404).json({ message: 'Video not found' });
+        }
+        const requestingUser = req.user;
+        // If user is not a student, or is a teacher/admin, grant full access
+        if (!requestingUser || requestingUser.role !== 'student') {
+            return res.json({ video });
+        }
+        // Access control logic for students
+        const studentType = requestingUser.studentType;
+        let hasAccess = false;
+        let paymentRequired = false;
+        if (video.availability === 'all') {
+            hasAccess = true;
+        }
+        else if (video.availability === 'physical' && studentType === 'Physical') {
+            hasAccess = true;
+        }
+        else if (video.price && video.price > 0) {
+            paymentRequired = true;
+        }
+        else {
+            // Default to free if price is 0 and no specific restriction
+            hasAccess = true;
+        }
+        if (paymentRequired) {
+            return res.status(402).json({
+                message: 'Payment required to access this video.',
+                price: video.price,
+                videoTitle: video.title,
+                videoId: video._id
+            });
+        }
+        if (!hasAccess) {
+            // This case should ideally not be reached if logic is exhaustive, but as a fallback
+            return res.status(403).json({ message: 'Access denied to this video.' });
         }
         res.json({ video });
     }

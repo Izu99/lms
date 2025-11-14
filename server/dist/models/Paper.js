@@ -28,6 +28,7 @@ const paperSchema = new mongoose_1.default.Schema({
     deadline: { type: Date },
     timeLimit: { type: Number }, // minutes
     availability: { type: String, enum: ['all', 'physical'], default: 'all' },
+    price: { type: Number, default: 0 },
     totalQuestions: { type: Number, default: 0 }
 }, { timestamps: true });
 // Update totalQuestions before saving

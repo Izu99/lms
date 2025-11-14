@@ -61,6 +61,7 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
     instituteId: "",
     yearId: "",
     availability: "all",
+    price: 0,
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -149,6 +150,7 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
       submitData.append('institute', formData.instituteId);
       submitData.append('year', formData.yearId);
       submitData.append('availability', formData.availability);
+      submitData.append('price', formData.price.toString());
       
       // Only append video file if one is selected
       if (videoFile) {
@@ -327,6 +329,21 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
                 </SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Price */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Price (LKR)
+            </label>
+            <Input
+              type="number"
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+              placeholder="Enter price (e.g., 1500)"
+              min="0"
+              className="bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+            />
           </div>
 
           {/* Quick Actions for missing data */}

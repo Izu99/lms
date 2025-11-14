@@ -14,5 +14,6 @@ const videoSchema = new mongoose_1.default.Schema({
     year: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Year', required: true },
     views: { type: Number, default: 0 }, // NEW: Default to 0 views
     availability: { type: String, enum: ['all', 'physical'], default: 'all' },
+    price: { type: Number, default: 0 },
 }, { timestamps: true });
 exports.Video = mongoose_1.default.model('Video', videoSchema);

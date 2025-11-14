@@ -9,6 +9,7 @@ export interface IVideo extends Document {
   year: Types.ObjectId;   // Reference to Year
   views: number;          // NEW: Simple view counter
   availability: 'all' | 'physical';
+  price?: number;
 }
 
 const videoSchema = new mongoose.Schema<IVideo>({
@@ -20,6 +21,7 @@ const videoSchema = new mongoose.Schema<IVideo>({
   year: { type: mongoose.Schema.Types.ObjectId, ref: 'Year', required: true },
   views: { type: Number, default: 0 },  // NEW: Default to 0 views
   availability: { type: String, enum: ['all', 'physical'], default: 'all' },
+  price: { type: Number, default: 0 },
 }, { timestamps: true });
 
 export const Video = mongoose.model<IVideo>('Video', videoSchema);
