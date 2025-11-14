@@ -28,6 +28,7 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
 import { InfoDialog } from "@/components/InfoDialog";
+import { toast } from "sonner";
 
 interface Option {
   optionText: string;
@@ -268,11 +269,7 @@ export default function CreatePaperPage() {
 
       await axios.post(`${API_URL}/papers`, paperData, { headers });
       
-      setInfoDialogContent({ 
-        title: "Success! 🎉", 
-        description: "Paper created successfully! Students can now access and attempt this paper." 
-      });
-      setIsInfoOpen(true);
+      toast.success("Paper created successfully! Students can now access and attempt this paper.");
 
     } catch (error) {
       console.error("Error creating paper:", error);

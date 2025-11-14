@@ -6,6 +6,7 @@ import { Users, Search, Mail, Phone, Award } from "lucide-react";
 import axios from "axios";
 import { API_URL } from "@/lib/constants";
 import { StudentDetailsModal } from "@/components/teacher/modals/StudentDetailsModal";
+import { Pagination } from "@/components/ui/pagination";
 
 interface StudentData {
   _id: string;
@@ -26,6 +27,8 @@ export default function TeacherStudentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const studentsPerPage = 10;
 
   const fetchStudents = async () => {
     try {
@@ -55,6 +58,17 @@ export default function TeacherStudentsPage() {
       student.email?.toLowerCase().includes(query)
     );
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+  const startIndex = (currentPage - 1) * studentsPerPage;
+  const endIndex = startIndex + studentsPerPage;
+  const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const getInitials = (student: StudentData) => {
     if (student.firstName && student.lastName) {
@@ -167,8 +181,8 @@ export default function TeacherStudentsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {filteredStudents.map((student) => (
-                    <tr key={student._id} className="hover:bg-muted/50 transition-colors">
+                  {paginatedStudents.map((student) => (
+                    <tr key={student._id} className="bg-student-table-row hover:bg-muted/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
@@ -233,6 +247,17 @@ export default function TeacherStudentsPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-6">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -37,7 +37,7 @@ app.use((req, res, next) => {
 const allowedOrigins = [
     process.env.CLIENT_ORIGIN,
     'http://localhost:3000',
-    'https://lms-git-add-dark-theme-izu99s-projects.vercel.app/'
+    'https://lms-git-add-dark-theme-izu99s-projects.vercel.app'
 ].filter(Boolean);
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {

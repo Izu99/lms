@@ -42,15 +42,15 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
   const [infoDialogContent, setInfoDialogContent] = useState({ title: "", description: "" });
 
   useEffect(() => {
-    if (mode === "institute" && instituteData) {
+    if (mode === "institute") {
       setInstituteFormData({
-        name: instituteData.name,
-        location: instituteData.location
+        name: instituteData?.name || "",
+        location: instituteData?.location || ""
       });
-    } else if (mode === "year" && yearData) {
+    } else if (mode === "year") {
       setYearFormData({
-        year: yearData.year,
-        name: yearData.year
+        year: yearData?.year || "",
+        name: yearData?.name || ""
       });
     }
   }, [instituteData, yearData, mode]);
@@ -85,19 +85,19 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-md bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-md">
+    <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-[var(--card-bg)] rounded-lg w-full max-w-md">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between p-6 border-b border-[var(--theme-border)]">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
               {mode === "institute" ? (
-                <School className="text-blue-600" size={20} />
+                <School className="text-blue-600 dark:text-blue-400" size={20} />
               ) : (
-                <Calendar className="text-blue-600" size={20} />
+                <Calendar className="text-blue-600 dark:text-blue-400" size={20} />
               )}
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-[var(--theme-text-primary)]">
               {mode === "institute"
                 ? instituteData
                   ? "Edit Institute"
@@ -118,11 +118,11 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
             <>
               {/* Institute Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-2">
                   Institute Name *
                 </label>
                 <div className="relative">
-                  <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--theme-text-tertiary)]" size={18} />
                   <Input
                     value={instituteFormData.name}
                     onChange={(e) => setInstituteFormData({ ...instituteFormData, name: e.target.value })}
@@ -131,18 +131,18 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
                     required
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-[var(--theme-text-tertiary)] mt-1">
                   Enter the institute identifier (e.g., ezyICT)
                 </p>
               </div>
 
               {/* Location */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-2">
                   Location *
                 </label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--theme-text-tertiary)]" size={18} />
                   <Input
                     value={instituteFormData.location}
                     onChange={(e) => setInstituteFormData({ ...instituteFormData, location: e.target.value })}
@@ -151,23 +151,23 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
                     required
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-[var(--theme-text-tertiary)] mt-1">
                   Enter the branch or location name
                 </p>
               </div>
 
               {/* Preview */}
               {instituteFormData.name && instituteFormData.location && (
-                <div className="border-t pt-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Preview</h3>
-                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div className="border-t border-[var(--theme-border)] pt-6">
+                  <h3 className="text-sm font-medium text-[var(--theme-text-secondary)] mb-3">Preview</h3>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Users className="text-blue-600" size={20} />
+                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                        <Users className="text-blue-600 dark:text-blue-400" size={20} />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-900">{instituteFormData.name}</h4>
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <h4 className="font-semibold text-[var(--theme-text-primary)]">{instituteFormData.name}</h4>
+                        <div className="flex items-center gap-1 text-sm text-[var(--theme-text-secondary)]">
                           <MapPin size={14} />
                           <span>{instituteFormData.location}</span>
                         </div>
@@ -181,11 +181,11 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
             <>
               {/* Year Number */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-2">
                   Academic Year *
                 </label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--theme-text-tertiary)]" size={18} />
                   <Input
                     type="text"
                     value={yearFormData.year}
@@ -195,23 +195,23 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
                     required
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-[var(--theme-text-tertiary)] mt-1">
                   Enter the academic year range (e.g., 2024-2025)
                 </p>
               </div>
 
               {/* Preview */}
               {yearFormData.year && (
-                <div className="border-t pt-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Preview</h3>
-                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <div className="border-t border-[var(--theme-border)] pt-6">
+                  <h3 className="text-sm font-medium text-[var(--theme-text-secondary)] mb-3">Preview</h3>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <Calendar className="text-blue-600" size={20} />
+                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                        <Calendar className="text-blue-600 dark:text-blue-400" size={20} />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-900">{yearFormData.year}</h4>
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <h4 className="font-semibold text-[var(--theme-text-primary)]">{yearFormData.year}</h4>
+                        <div className="flex items-center gap-1 text-sm text-[var(--theme-text-secondary)]">
                           <School size={14} />
                           <span>Academic Year: {yearFormData.year}</span>
                         </div>
@@ -224,14 +224,14 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-6 border-t">
+          <div className="flex gap-3 pt-6 border-t border-[var(--theme-border)]">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
             <Button type="submit" disabled={loading} className="flex-1">
               {loading ? (
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white dark:border-gray-800 border-t-transparent rounded-full animate-spin" />
                   {mode === "institute"
                     ? instituteData
                       ? "Updating Institute..."

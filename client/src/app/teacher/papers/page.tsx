@@ -6,6 +6,18 @@ import { FileText, Plus, Search, Users, TrendingUp, Calendar, Edit, Trash2 } fro
 import axios from "axios";
 import { API_URL } from "@/lib/constants";
 import { useRouter } from "next/navigation";
+import { Pagination } from "@/components/ui/pagination";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Question {
   _id: string;
@@ -28,6 +40,10 @@ export default function TeacherPapersPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const papersPerPage = 12;
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [paperToDelete, setPaperToDelete] = useState<string | null>(null);
   const router = useRouter();
 
   const fetchPapers = async () => {
@@ -53,6 +69,17 @@ export default function TeacherPapersPage() {
     paper.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredPapers.length / papersPerPage);
+  const startIndex = (currentPage - 1) * papersPerPage;
+  const endIndex = startIndex + papersPerPage;
+  const paginatedPapers = filteredPapers.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "No deadline";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -62,23 +89,29 @@ export default function TeacherPapersPage() {
     });
   };
 
-  const handleDelete = async (paperId: string) => {
-    if (!confirm("Are you sure you want to delete this paper? This action cannot be undone.")) {
-      return;
-    }
+  const handleDelete = (paperId: string) => {
+    setPaperToDelete(paperId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!paperToDelete) return;
 
     try {
-      setDeleteLoading(paperId);
+      setDeleteLoading(paperToDelete);
       const token = localStorage.getItem("token");
-      await axios.delete(`${API_URL}/papers/${paperId}`, {
+      await axios.delete(`${API_URL}/papers/${paperToDelete}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setPapers(papers.filter((p) => p._id !== paperId));
+      setPapers(papers.filter((p) => p._id !== paperToDelete));
+      toast.success("Paper deleted successfully");
     } catch (error) {
       console.error("Error deleting paper:", error);
-      alert("Failed to delete paper. Please try again.");
+      toast.error("Failed to delete paper. Please try again.");
     } finally {
       setDeleteLoading(null);
+      setDeleteDialogOpen(false);
+      setPaperToDelete(null);
     }
   };
 
@@ -158,8 +191,9 @@ export default function TeacherPapersPage() {
 
         {/* Papers List */}
         {!loading && filteredPapers.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPapers.map((paper, index) => (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedPapers.map((paper, index) => (
               <div
                 key={paper._id}
                 className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
@@ -259,8 +293,42 @@ export default function TeacherPapersPage() {
               </div>
             ))}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
+        </>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the paper
+              and all associated student submissions.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteLoading ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TeacherLayout>
   );
 }

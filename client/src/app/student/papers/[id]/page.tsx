@@ -23,6 +23,17 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { API_URL, API_BASE_URL } from '@/lib/constants';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Option {
   _id: string;
@@ -75,6 +86,7 @@ export default function PaperAttempt({ params }: PaperAttemptPageProps) {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
 
   // Fetch user
   useEffect(() => {
@@ -157,9 +169,16 @@ export default function PaperAttempt({ params }: PaperAttemptPageProps) {
     }
   }, [started, answers]);
 
+  // Confirm submit
+  const confirmSubmit = async () => {
+    setSubmitDialogOpen(false);
+    await handleSubmit(true);
+  };
+
   // Handle submit
   const handleSubmit = useCallback(async (autoSubmit = false) => {
-    if (!autoSubmit && !confirm("Are you sure you want to submit? You cannot change your answers after submission.")) {
+    if (!autoSubmit) {
+      setSubmitDialogOpen(true);
       return;
     }
 
@@ -190,9 +209,9 @@ export default function PaperAttempt({ params }: PaperAttemptPageProps) {
           ? `⏰ Time&apos;s up! Paper submitted automatically.\n\n✅ Score: ${attempt.score}/${attempt.totalQuestions}\n📊 Percentage: ${attempt.percentage}%\n⏱️ Time Used: ${attempt.timeSpent} minutes`
           : `🎉 Paper submitted successfully!\n\n✅ Score: ${attempt.score}/${attempt.totalQuestions}\n📊 Percentage: ${attempt.percentage}%\n⏱️ Time Used: ${attempt.timeSpent} minutes`;
 
-        alert(resultMessage);
+        toast.info(resultMessage);
       } else {
-        alert(autoSubmit ? '⏰ Time&apos;s up! Paper submitted automatically.' : '🎉 Paper submitted successfully!');
+        toast.success(autoSubmit ? '⏰ Time\'s up! Paper submitted automatically.' : '🎉 Paper submitted successfully!');
       }
       
       router.push('/student/papers/results');
@@ -201,9 +220,9 @@ export default function PaperAttempt({ params }: PaperAttemptPageProps) {
       if (axios.isAxiosError(error)) {
         console.error("Error response:", error.response?.data);
         const errorMessage = error.response?.data?.message || "Failed to submit paper";
-        alert(`Failed to submit paper: ${errorMessage}`);
+        toast.error(`Failed to submit paper: ${errorMessage}`);
       } else {
-        alert("Failed to submit paper. Please try again.");
+        toast.error("Failed to submit paper. Please try again.");
       }
     } finally {
       setSubmitting(false);
@@ -247,7 +266,7 @@ export default function PaperAttempt({ params }: PaperAttemptPageProps) {
         
         // If already attempted, redirect to results
         if (errorMessage && errorMessage.includes('already attempted')) {
-          alert('You have already attempted this paper. Redirecting to your results...');
+          toast.info('You have already attempted this paper. Redirecting to your results...');
           router.push('/student/papers/results');
           return;
         }
@@ -658,3 +677,24 @@ export default function PaperAttempt({ params }: PaperAttemptPageProps) {
     </div>
   );
 }
+
+      {/* Submit Confirmation Dialog */}
+      <AlertDialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Submit Paper?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to submit? You cannot change your answers after submission.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmSubmit}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Submit Paper
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>

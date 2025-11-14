@@ -8,6 +8,7 @@ import axios from "axios";
 import { API_URL } from "@/lib/constants";
 import { InfoDialog } from "@/components/InfoDialog";
 import Cookies from "js-cookie";
+import { toast } from "sonner";
 
 interface VideoData {
   _id: string;
@@ -164,11 +165,11 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
         });
       }
 
+      toast.success(video ? "Video updated successfully" : "Video uploaded successfully");
       onSuccess();
     } catch (error) {
       console.error("Error saving video:", error);
-      setInfoDialogContent({ title: "Error", description: "Error saving video. Please try again." });
-      setIsInfoOpen(true);
+      toast.error("Error saving video. Please try again.");
     } finally {
       setLoading(false);
     }

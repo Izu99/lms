@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { API_URL } from "@/lib/constants";
+import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 
 interface InstituteData {
   _id: string;
@@ -202,24 +203,22 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar user={user} onLogout={handleLogout} />
-
+    <TeacherLayout>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Settings className="text-blue-600" size={28} />
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+              <Settings className="text-blue-600 dark:text-blue-400" size={28} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Institute & Year Management</h1>
-              <p className="text-gray-600">Manage institutes, years, and academic settings for your ICT program</p>
+              <h1 className="text-3xl font-bold text-[var(--theme-text-primary)]">Institute & Year Management</h1>
+              <p className="text-[var(--theme-text-secondary)]">Manage institutes, years, and academic settings for your ICT program</p>
             </div>
           </div>
 
           {/* Search Bar */}
-          <div className="bg-white rounded-lg shadow-sm border p-4">
+          <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--theme-border)] p-4">
             <div className="relative max-w-md">
               <Input
                 placeholder="Search institutes or years..."
@@ -233,52 +232,52 @@ export default function SettingsPage() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--theme-border)] p-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <School className="text-blue-600" size={24} />
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                <School className="text-blue-600 dark:text-blue-400" size={24} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Total Institutes</p>
-                <p className="text-2xl font-bold text-gray-900">{institutes.length}</p>
+                <p className="text-sm text-[var(--theme-text-tertiary)]">Total Institutes</p>
+                <p className="text-2xl font-bold text-[var(--theme-text-primary)]">{institutes.length}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--theme-border)] p-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <Calendar className="text-green-600" size={24} />
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
+                <Calendar className="text-green-600 dark:text-green-400" size={24} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Academic Years</p>
-                <p className="text-2xl font-bold text-gray-900">{years.length}</p>
+                <p className="text-sm text-[var(--theme-text-tertiary)]">Academic Years</p>
+                <p className="text-2xl font-bold text-[var(--theme-text-primary)]">{years.length}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--theme-border)] p-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <MapPin className="text-purple-600" size={24} />
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
+                <MapPin className="text-purple-600 dark:text-purple-400" size={24} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">Locations</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-[var(--theme-text-tertiary)]">Locations</p>
+                <p className="text-2xl font-bold text-[var(--theme-text-primary)]">
                   {[...new Set(institutes.map(c => c.location))].length}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--theme-border)] p-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <GraduationCap className="text-orange-600" size={24} />
+              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
+                <GraduationCap className="text-orange-600 dark:text-orange-400" size={24} />
               </div>
               <div>
-                <p className="text-sm text-gray-500">A-Level Programs</p>
-                <p className="text-2xl font-bold text-gray-900">ICT</p>
+                <p className="text-sm text-[var(--theme-text-tertiary)]">A-Level Programs</p>
+                <p className="text-2xl font-bold text-[var(--theme-text-primary)]">ICT</p>
               </div>
             </div>
           </div>
@@ -286,16 +285,16 @@ export default function SettingsPage() {
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {/* Institutes Section */}
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="p-6 border-b">
+          <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--theme-border)]">
+            <div className="p-6 border-b border-[var(--theme-border)]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <School className="text-blue-600" size={20} />
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                    <School className="text-blue-600 dark:text-blue-400" size={20} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Institutes</h2>
-                    <p className="text-sm text-gray-500">Manage institute groups and locations</p>
+                    <h2 className="text-xl font-semibold text-[var(--theme-text-primary)]">Institutes</h2>
+                    <p className="text-sm text-[var(--theme-text-tertiary)]">Manage institute groups and locations</p>
                   </div>
                 </div>
                 <Button onClick={() => openInstituteForm()} className="flex items-center gap-2">
@@ -313,14 +312,14 @@ export default function SettingsPage() {
               ) : filteredInstitutes.length > 0 ? (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {filteredInstitutes.map((instituteItem) => (
-                    <div key={instituteItem._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all">
+                    <div key={instituteItem._id} className="flex items-center justify-between p-4 border border-[var(--theme-border)] rounded-lg hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Users className="text-blue-600" size={20} />
+                        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                          <Users className="text-blue-600 dark:text-blue-400" size={20} />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-gray-900">{instituteItem.name}</h3>
-                          <div className="flex items-center gap-1 text-sm text-gray-500">
+                          <h3 className="font-semibold text-[var(--theme-text-primary)]">{instituteItem.name}</h3>
+                          <div className="flex items-center gap-1 text-sm text-[var(--theme-text-tertiary)]">
                             <MapPin size={14} />
                             <span>{instituteItem.location}</span>
                           </div>
@@ -331,7 +330,7 @@ export default function SettingsPage() {
                           variant="outline" 
                           size="sm" 
                           onClick={() => openInstituteForm(instituteItem)}
-                          className="hover:bg-blue-50"
+                          className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
                         >
                           <Edit size={16} />
                         </Button>
@@ -339,7 +338,7 @@ export default function SettingsPage() {
                           variant="outline" 
                           size="sm" 
                           onClick={() => handleDeleteInstitute(instituteItem._id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
                           <Trash2 size={16} />
                         </Button>
@@ -349,9 +348,9 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <School className="mx-auto text-gray-400 mb-4" size={48} />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No institutes found</h3>
-                  <p className="text-gray-600 mb-6">Create your first institute to get started</p>
+                  <School className="mx-auto text-[var(--theme-text-tertiary)] mb-4" size={48} />
+                  <h3 className="text-lg font-medium text-[var(--theme-text-primary)] mb-2">No institutes found</h3>
+                  <p className="text-[var(--theme-text-secondary)] mb-6">Create your first institute to get started</p>
                   <Button onClick={() => openInstituteForm()}>
                     <Plus size={20} className="mr-2" />
                     Add Institute
@@ -362,19 +361,19 @@ export default function SettingsPage() {
           </div>
 
           {/* Years Section */}
-          <div className="bg-white rounded-lg shadow-sm border">
-            <div className="p-6 border-b">
+          <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--theme-border)]">
+            <div className="p-6 border-b border-[var(--theme-border)]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Calendar className="text-green-600" size={20} />
+                  <div className="w-8 h-8 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
+                    <Calendar className="text-green-600 dark:text-green-400" size={20} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Academic Years</h2>
-                    <p className="text-sm text-gray-500">Manage A-Level year groups</p>
+                    <h2 className="text-xl font-semibold text-[var(--theme-text-primary)]">Academic Years</h2>
+                    <p className="text-sm text-[var(--theme-text-tertiary)]">Manage A-Level year groups</p>
                   </div>
                 </div>
-                <Button onClick={() => openYearForm()} className="flex items-center gap-2 bg-green-600 hover:bg-green-700">
+                <Button onClick={() => openYearForm()} className="flex items-center gap-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800">
                   <Plus size={16} />
                   Add Year
                 </Button>
@@ -389,14 +388,14 @@ export default function SettingsPage() {
               ) : filteredYears.length > 0 ? (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {filteredYears.map((yearItem) => (
-                    <div key={yearItem._id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-all">
+                    <div key={yearItem._id} className="flex items-center justify-between p-4 border border-[var(--theme-border)] rounded-lg hover:border-green-300 dark:hover:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 transition-all">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                          <Calendar className="text-green-600" size={20} />
+                        <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
+                          <Calendar className="text-green-600 dark:text-green-400" size={20} />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-gray-900">{yearItem.name}</h3>
-                          <p className="text-sm text-gray-500">Academic Year {yearItem.year}</p>
+                          <h3 className="font-semibold text-[var(--theme-text-primary)]">{yearItem.name}</h3>
+                          <p className="text-sm text-[var(--theme-text-tertiary)]">Academic Year {yearItem.year}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -404,7 +403,7 @@ export default function SettingsPage() {
                           variant="outline" 
                           size="sm" 
                           onClick={() => openYearForm(yearItem)}
-                          className="hover:bg-green-50"
+                          className="hover:bg-green-50 dark:hover:bg-green-900/20"
                         >
                           <Edit size={16} />
                         </Button>
@@ -412,7 +411,7 @@ export default function SettingsPage() {
                           variant="outline" 
                           size="sm" 
                           onClick={() => handleDeleteYear(yearItem._id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
                           <Trash2 size={16} />
                         </Button>
@@ -422,10 +421,10 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <Calendar className="mx-auto text-gray-400 mb-4" size={48} />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No years found</h3>
-                  <p className="text-gray-600 mb-6">Add academic years for your program</p>
-                  <Button onClick={() => openYearForm()} className="bg-green-600 hover:bg-green-700">
+                  <Calendar className="mx-auto text-[var(--theme-text-tertiary)] mb-4" size={48} />
+                  <h3 className="text-lg font-medium text-[var(--theme-text-primary)] mb-2">No years found</h3>
+                  <p className="text-[var(--theme-text-secondary)] mb-6">Add academic years for your program</p>
+                  <Button onClick={() => openYearForm()} className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800">
                     <Plus size={20} className="mr-2" />
                     Add Year
                   </Button>
@@ -436,42 +435,42 @@ export default function SettingsPage() {
         </div>
 
         {/* Quick Actions Section */}
-        <div className="mt-8 bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+        <div className="mt-8 bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--theme-border)] p-6">
+          <h3 className="text-lg font-semibold text-[var(--theme-text-primary)] mb-4">Quick Actions</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Button 
               variant="outline" 
               onClick={() => openInstituteForm()}
-              className="flex items-center gap-2 p-4 h-auto border-dashed border-2 hover:border-blue-300 hover:bg-blue-50"
+              className="flex items-center gap-2 p-4 h-auto border-dashed border-2 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
-              <Plus className="text-blue-600" size={20} />
+              <Plus className="text-blue-600 dark:text-blue-400" size={20} />
               <div className="text-left">
-                <p className="font-medium text-gray-900">Add New Institute</p>
-                <p className="text-sm text-gray-500">Create a new institute group</p>
+                <p className="font-medium text-[var(--theme-text-primary)]">Add New Institute</p>
+                <p className="text-sm text-[var(--theme-text-tertiary)]">Create a new institute group</p>
               </div>
             </Button>
             
             <Button 
               variant="outline" 
               onClick={() => openYearForm()}
-              className="flex items-center gap-2 p-4 h-auto border-dashed border-2 hover:border-green-300 hover:bg-green-50"
+              className="flex items-center gap-2 p-4 h-auto border-dashed border-2 hover:border-green-300 dark:hover:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
             >
-              <Plus className="text-green-600" size={20} />
+              <Plus className="text-green-600 dark:text-green-400" size={20} />
               <div className="text-left">
-                <p className="font-medium text-gray-900">Add Academic Year</p>
-                <p className="text-sm text-gray-500">Create a new year group</p>
+                <p className="font-medium text-[var(--theme-text-primary)]">Add Academic Year</p>
+                <p className="text-sm text-[var(--theme-text-tertiary)]">Create a new year group</p>
               </div>
             </Button>
             
             <Button 
               variant="outline" 
               onClick={() => window.location.href = "/videos"}
-              className="flex items-center gap-2 p-4 h-auto border-dashed border-2 hover:border-purple-300 hover:bg-purple-50"
+              className="flex items-center gap-2 p-4 h-auto border-dashed border-2 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20"
             >
-              <School className="text-purple-600" size={20} />
+              <School className="text-purple-600 dark:text-purple-400" size={20} />
               <div className="text-left">
-                <p className="font-medium text-gray-900">Manage Videos</p>
-                <p className="text-sm text-gray-500">Upload and organize content</p>
+                <p className="font-medium text-[var(--theme-text-primary)]">Manage Videos</p>
+                <p className="text-sm text-[var(--theme-text-tertiary)]">Upload and organize content</p>
               </div>
             </Button>
           </div>
@@ -501,6 +500,6 @@ export default function SettingsPage() {
           yearData={editingYear}
         />
       )}
-    </div>
+    </TeacherLayout>
   );
 }

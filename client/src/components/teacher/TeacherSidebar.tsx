@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
+  School,
 } from "lucide-react";
 import {
   Sidebar,
@@ -61,16 +62,10 @@ const menuItems = [
     colorClass: "sidebar-icon-students",
   },
   {
-    title: "Analytics",
-    icon: BarChart3,
-    href: "/teacher/analytics",
-    colorClass: "sidebar-icon-analytics",
-  },
-  {
-    title: "Settings",
-    icon: Settings,
-    href: "/teacher/settings",
-    colorClass: "sidebar-icon-settings",
+    title: "Institute & Year Setup",
+    icon: School,
+    href: "/teacher/institute-year",
+    colorClass: "sidebar-icon-institute-year",
   },
 ];
 

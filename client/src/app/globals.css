@@ -89,6 +89,9 @@
   --card-border: #e5e7eb;
   --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+  /* Student Table Row Background */
+  --student-table-row-bg: rgb(249 250 251); /* bg-gray-50 */
 }
 
 /* Dark Theme */
@@ -128,6 +131,9 @@
   --card-border: #334155;
   --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
   --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+
+  /* Student Table Row Background - Dark Mode */
+  --student-table-row-bg: rgb(27, 39, 50); /* bg-gray-800 */
   
   /* Base Colors */
   --background: oklch(1 0 0);
@@ -239,6 +245,10 @@
 
 .sidebar-icon-students {
   background: var(--sidebar-icon-students);
+}
+
+.sidebar-icon-institute-year {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); /* Blue-green gradient */
 }
 
 .sidebar-icon-analytics {
@@ -464,3 +474,81 @@ button.sidebar-icon-logout:hover {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.bg-student-table-row {
+  background-color: var(--student-table-row-bg);
+}
+
+
+/* ============================================
+   CUSTOM SCROLLBAR STYLES - Modern & Sleek
+   ============================================ */
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-text-tertiary) var(--theme-bg-secondary);
+}
+
+/* Webkit Browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--theme-bg-secondary);
+  border-radius: 10px;
+  margin: 2px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-text-tertiary);
+  border-radius: 10px;
+  border: 3px solid var(--theme-bg-secondary);
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-text-secondary);
+}
+
+/* Scrollbar Corner (where horizontal and vertical scrollbars meet) */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Thin Scrollbar Variant (for smaller containers) */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  border-width: 1px;
+}
+
+/* Hide Scrollbar (but keep functionality) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Colored Scrollbar Variants */
+.scrollbar-blue::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+  border-color: transparent;
+}
+
+.scrollbar-green::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #4ade80 0%, #22c55e 100%);
+  border-color: transparent;
+}
+
+.scrollbar-purple::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #a78bfa 0%, #8b5cf6 100%);
+  border-color: transparent;
+}

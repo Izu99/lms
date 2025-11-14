@@ -28,6 +28,7 @@ import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
 import { InfoDialog } from "@/components/InfoDialog";
+import { toast } from "sonner";
 
 interface Option {
   optionText: string;
@@ -306,11 +307,7 @@ export default function EditPaperPage() {
 
       await axios.put(`${API_URL}/papers/${paperId}`, paperData, { headers });
       
-      setInfoDialogContent({ 
-        title: "Success! 🎉", 
-        description: "Paper updated successfully!" 
-      });
-      setIsInfoOpen(true);
+      toast.success("Paper updated successfully!");
 
     } catch (error) {
       console.error("Error updating paper:", error);
