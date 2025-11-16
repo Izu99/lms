@@ -1,0 +1,75 @@
+"use client";
+
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import { StudentSidebar } from "./StudentSidebar";
+import { useAuth } from "@/modules/shared/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+interface StudentLayoutProps {
+  children: React.ReactNode;
+}
+
+function StudentLayoutContent({ children }: StudentLayoutProps) {
+  const { isCollapsed } = useSidebar();
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    console.log("StudentLayout - Auth State:", { user, isLoading, role: user?.role });
+    
+    if (!isLoading && !user) {
+      console.log("StudentLayout - No user, redirecting to login");
+      router.push("/login");
+      return;
+    }
+    
+    if (!isLoading && user && user.role !== "student") {
+      console.log("StudentLayout - User is not student, role:", user.role);
+      router.push("/unauthorized");
+    }
+  }, [user, isLoading, router]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    router.push("/login");
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  if (user.role !== "student") {
+    return null;
+  }
+
+  return (
+    <div className="flex min-h-screen theme-bg-secondary">
+      <StudentSidebar user={user} onLogout={handleLogout} />
+      <main
+        className={`flex-1 transition-all duration-300 ease-in-out ${
+          isCollapsed ? "ml-20" : "ml-72"
+        }`}
+      >
+        <div className="p-6 lg:p-8 max-w-[1600px]">{children}</div>
+      </main>
+    </div>
+  );
+}
+
+export function StudentLayout({ children }: StudentLayoutProps) {
+  return (
+    <SidebarProvider defaultCollapsed={false}>
+      <StudentLayoutContent>{children}</StudentLayoutContent>
+    </SidebarProvider>
+  );
+}

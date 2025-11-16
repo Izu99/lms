@@ -43,8 +43,11 @@ api.interceptors.response.use(
 
 export class ApiClient {
   static async get<T>(url: string): Promise<T> {
-    const response = await api.get<ApiResponse<T>>(url);
-    return response.data.data!;
+    const response = await api.get<any>(url);
+    if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
+      return response.data.data as T;
+    }
+    return response.data as T;
   }
 
   static async post<T>(url: string, data?: unknown): Promise<T> {

@@ -677,24 +677,3 @@ export default function PaperAttempt({ params }: PaperAttemptPageProps) {
     </div>
   );
 }
-
-      {/* Submit Confirmation Dialog */}
-      <AlertDialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Submit Paper?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to submit? You cannot change your answers after submission.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmSubmit}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Submit Paper
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>

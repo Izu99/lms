@@ -2,6 +2,9 @@
 const nextConfig = {
   output: 'standalone', // ✅ Required for Azure App Service
   reactStrictMode: true,
+  turbopack: {
+    root: process.cwd(), // Use the client directory as the root
+  },
   images: {
     remotePatterns: [
       {

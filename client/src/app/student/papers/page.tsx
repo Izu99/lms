@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Navbar from "@/components/Navbar";
-import { useAuth } from "@/modules/shared/hooks/useAuth";
+import { StudentLayout } from "@/components/student/StudentLayout";
 import {
   FileText,
   Clock,
@@ -44,7 +43,6 @@ export default function StudentPapersPage() {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { user, loading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<'not-answered' | 'answered' | 'expired'>('not-answered');
   const [answeredPapers, setAnsweredPapers] = useState<string[]>([]);
@@ -58,10 +56,8 @@ export default function StudentPapersPage() {
   };
 
   useEffect(() => {
-    if (!authLoading && user) {
-      fetchPapers();
-    }
-  }, [authLoading, user]);
+    fetchPapers();
+  }, []);
 
   const fetchPapers = async () => {
     try {
@@ -132,22 +128,22 @@ export default function StudentPapersPage() {
     return false;
   });
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
-      <div className="min-h-screen theme-bg-secondary flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="theme-text-secondary">Loading papers...</p>
+      <StudentLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="theme-text-secondary">Loading papers...</p>
+          </div>
         </div>
-      </div>
+      </StudentLayout>
     );
   }
 
   return (
-    <div className="min-h-screen theme-bg-secondary">
-      <Navbar user={user} />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <StudentLayout>
+      <div>
         {/* Header */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -423,7 +419,7 @@ export default function StudentPapersPage() {
             ))}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </StudentLayout>
   );
 }

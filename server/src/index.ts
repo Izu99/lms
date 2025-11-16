@@ -18,6 +18,7 @@ import paperRoutes from './routes/paperRoutes';
 import videoRoutes from './routes/videoRoutes';
 import yearRoutes from './routes/yearRoutes';
 import youtubeRoutes from './routes/youtubeRoutes';
+import zoomRoutes from './routes/zoomRoutes';
 
 // Import new modular routes
 import { protect } from './modules/shared/middleware/auth';
@@ -67,6 +68,7 @@ app.use('/api/papers', paperRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/years', yearRoutes);
 app.use('/api/youtube', youtubeRoutes);
+app.use('/api/zoom', zoomRoutes);
 
 // Add new modular routes
 app.use('/api/student', protect, studentRoutes);

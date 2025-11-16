@@ -15,6 +15,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { LoadingComponent } from "@/components/common/LoadingComponent";
+import { ErrorComponent } from "@/components/common/ErrorComponent";
 
 const chartConfig = {
   videos: {
@@ -37,26 +39,11 @@ export function TeacherDashboard() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <LoadingComponent />;
   }
 
   if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-red-800 mb-2">Error Loading Dashboard</h3>
-        <p className="text-red-600 mb-4">{error}</p>
-        <button
-          onClick={refetch}
-          className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-        >
-          Try Again
-        </button>
-      </div>
-    );
+    return <ErrorComponent message={error} onRetry={refetch} />;
   }
 
   if (!data) {

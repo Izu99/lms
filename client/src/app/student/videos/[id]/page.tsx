@@ -26,7 +26,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import { API_URL, API_BASE_URL } from "@/lib/constants";
-import Navbar from "@/components/Navbar"; // Using Navbar for student side
+import { StudentLayout } from "@/components/student/StudentLayout";
 
 interface VideoData {
   _id: string;
@@ -229,49 +229,32 @@ export default function StudentVideoViewPage() {
 
   const progress = calculateProgress();
 
-  if (userLoading) {
+  if (userLoading || loading) {
     return (
-      <div className="min-h-screen theme-bg-primary">
+      <StudentLayout>
         <div className="flex justify-center items-center h-64">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
-      </div>
+      </StudentLayout>
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
-  if (loading) {
+  if (!user || !video) {
     return (
-      <div className="min-h-screen theme-bg-primary">
-        <Navbar user={user} />
-        <div className="flex justify-center items-center h-64">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!video) {
-    return (
-      <div className="min-h-screen theme-bg-primary">
-        <Navbar user={user} />
+      <StudentLayout>
         <div className="text-center py-12">
           <h2 className="text-2xl font-bold theme-text-primary">Video not found</h2>
           <Link href="/student/videos">
             <Button className="mt-4">Back to Videos</Button>
           </Link>
         </div>
-      </div>
+      </StudentLayout>
     );
   }
 
   return (
-    <div className="min-h-screen theme-bg-secondary">
-      <Navbar user={user} />
-      <div className="flex flex-col lg:flex-row">
+    <StudentLayout>
+      <div className="flex flex-col lg:flex-row -m-6 lg:-m-8">
         <div className="flex-1 bg-black">
           <div className="sticky top-16">
             <div className="relative bg-black" style={{ aspectRatio: "16/9" }}>
@@ -520,6 +503,6 @@ export default function StudentVideoViewPage() {
           </div>
         </div>
       </div>
-    </div>
+    </StudentLayout>
   );
 }

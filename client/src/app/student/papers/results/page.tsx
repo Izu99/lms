@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import Navbar from "@/components/Navbar";
-import { useAuth } from "@/hooks/useAuth";
+import { StudentLayout } from "@/components/student/StudentLayout";
 import {
   Trophy,
   Clock,
@@ -42,7 +41,6 @@ export default function MyResultsPage() {
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const { user, loading: authLoading } = useAuth();
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -53,11 +51,7 @@ export default function MyResultsPage() {
   };
 
   useEffect(() => {
-    if (!authLoading && user) {
-      fetchResults();
-    } else if (!authLoading && !user) {
-      // Redirect to login if not authenticated
-      window.location.href = "/login";
+    fetchResults();
     }
   }, [authLoading, user]);
 
@@ -119,24 +113,22 @@ export default function MyResultsPage() {
   const bestScore = results.length > 0 ? Math.max(...results.map(r => r.percentage)) : 0;
   const totalPapers = results.length;
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex justify-center items-center h-screen">
+      <StudentLayout>
+        <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600">Loading results...</p>
           </div>
         </div>
-      </div>
+      </StudentLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navbar user={user} />
-
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <StudentLayout>
+      <div>
         {/* Header */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -346,7 +338,7 @@ export default function MyResultsPage() {
             ))}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </StudentLayout>
   );
 }

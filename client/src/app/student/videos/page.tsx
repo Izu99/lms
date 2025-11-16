@@ -3,9 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_URL } from "@/lib/constants";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
-import { useAuth } from "@/modules/shared/hooks/useAuth";
-import { useRouter } from "next/navigation";
+import { StudentLayout } from "@/components/student/StudentLayout";
 import { Video, Eye, Clock } from "lucide-react"; // Import icons
 
 interface Video {
@@ -29,17 +27,9 @@ interface VideoStats {
 }
 
 export default function VideosPage() {
-  const { user } = useAuth();
-  const router = useRouter();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [videoStats, setVideoStats] = useState<VideoStats | null>(null);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.push("/login");
-  };
 
   useEffect(() => {
     const fetchVideosAndStats = async () => {
@@ -81,19 +71,17 @@ export default function VideosPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen theme-bg-secondary">
-        <Navbar user={user} onLogout={handleLogout} />
+      <StudentLayout>
         <div className="flex justify-center items-center h-64">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
         </div>
-      </div>
+      </StudentLayout>
     );
   }
 
   return (
-    <div className="min-h-screen theme-bg-secondary">
-      <Navbar user={user} onLogout={handleLogout} />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <StudentLayout>
+      <div>
         <h1 className="text-3xl font-bold theme-text-primary mb-8">Video Lessons</h1>
 
         {videoStats && (
@@ -145,7 +133,7 @@ export default function VideosPage() {
             </Link>
           ))}
         </div>
-      </main>
-    </div>
+      </div>
+    </StudentLayout>
   );
 }

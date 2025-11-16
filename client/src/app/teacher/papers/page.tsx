@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import { FileText, Plus, Search, Users, TrendingUp, Calendar, Edit, Trash2 } from "lucide-react";
-import axios from "axios";
-import { API_URL } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { Pagination } from "@/components/ui/pagination";
 import { toast } from "sonner";
@@ -18,26 +16,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-interface Question {
-  _id: string;
-}
-
-interface PaperData {
-  _id: string;
-  title: string;
-  description?: string;
-  deadline?: string;
-  timeLimit?: number;
-  questions: Question[];
-  submissionCount?: number;
-  averageScore?: number;
-  createdAt: string;
-}
+import { useTeacherPapers } from "@/modules/teacher/hooks/useTeacherPapers";
+import { PaperData } from "@/modules/teacher/types/paper.types";
+import { LoadingComponent } from "@/components/common/LoadingComponent";
+import { ErrorComponent } from "@/components/common/ErrorComponent";
+import { EmptyStateComponent } from "@/components/common/EmptyStateComponent";
+import { TeacherPaperService } from "@/modules/teacher/services/PaperService";
 
 export default function TeacherPapersPage() {
-  const [papers, setPapers] = useState<PaperData[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,24 +32,7 @@ export default function TeacherPapersPage() {
   const [paperToDelete, setPaperToDelete] = useState<string | null>(null);
   const router = useRouter();
 
-  const fetchPapers = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-      const response = await axios.get(`${API_URL}/papers`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setPapers(response.data.papers || []);
-    } catch (error) {
-      console.error("Error fetching papers:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPapers();
-  }, []);
+  const { papers, isLoading, error, refetch } = useTeacherPapers();
 
   const filteredPapers = papers.filter((paper) =>
     paper.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -99,15 +68,12 @@ export default function TeacherPapersPage() {
 
     try {
       setDeleteLoading(paperToDelete);
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API_URL}/papers/${paperToDelete}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setPapers(papers.filter((p) => p._id !== paperToDelete));
+      await TeacherPaperService.deletePaper(paperToDelete);
+      refetch();
       toast.success("Paper deleted successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting paper:", error);
-      toast.error("Failed to delete paper. Please try again.");
+      toast.error(error.response?.data?.message || "Failed to delete paper. Please try again.");
     } finally {
       setDeleteLoading(null);
       setDeleteDialogOpen(false);
@@ -117,6 +83,157 @@ export default function TeacherPapersPage() {
 
   const handleEdit = (paper: PaperData) => {
     router.push(`/teacher/papers/${paper._id}/edit`);
+  };
+
+  const renderContent = () => {
+    if (isLoading) {
+      return <LoadingComponent />;
+    }
+
+    if (error) {
+      return <ErrorComponent message={error} onRetry={refetch} />;
+    }
+
+    if (filteredPapers.length === 0) {
+      return (
+        <EmptyStateComponent
+          Icon={FileText}
+          title={searchQuery ? "No papers found" : "No papers yet"}
+          description={
+            searchQuery
+              ? "Try a different search term"
+              : "Create your first exam paper to get started"
+          }
+          action={
+            !searchQuery
+              ? {
+                  label: "Create Paper",
+                  onClick: () => router.push('/teacher/papers/create'),
+                  Icon: Plus,
+                }
+              : undefined
+          }
+        />
+      );
+    }
+
+    return (
+      <>
+        {/* Papers List */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {paginatedPapers.map((paper, index) => (
+          <div
+            key={paper._id}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            style={{
+              animation: `slideInRight 0.5s ease-out ${index * 0.1}s both`,
+            }}
+          >
+            {/* Thumbnail/Icon area */}
+            <div 
+              onClick={() => router.push(`/teacher/papers/${paper._id}/results`)} // Click to view results
+              className="relative w-full h-48 bg-gradient-to-br from-purple-700 to-purple-900 cursor-pointer group overflow-hidden flex items-center justify-center"
+            >
+              <FileText className="w-24 h-24 text-white/50 group-hover:scale-110 transition-transform" />
+              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg opacity-0 group-hover:opacity-100">
+                  <Search className="w-8 h-8 text-white" /> {/* Changed to Search icon for papers */}
+                </div>
+              </div>
+              <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                View Paper
+              </div>
+              {paper.submissionCount !== undefined && paper.submissionCount > 0 && (
+                <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  {paper.submissionCount}
+                </div>
+              )}
+            </div>
+            <div className="p-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2 truncate">
+                {paper.title}
+              </h3>
+              {paper.description && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 min-h-[40px]">
+                  {paper.description}
+                </p>
+              )}
+              
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
+                <span className="flex items-center gap-1">
+                  <FileText className="w-4 h-4" />
+                  {paper.questions?.length || 0} questions
+                </span>
+                <span className="flex items-center gap-1">
+                  <TrendingUp className="w-4 h-4" />
+                  Avg: {paper.averageScore?.toFixed(1) || 0}%
+                </span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  {formatDate(paper.deadline)}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/teacher/papers/${paper._id}/results`);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors text-sm font-medium"
+                  title="View Results"
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  Results
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEdit(paper);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium"
+                  title="Edit"
+                >
+                  <Edit className="w-4 h-4" />
+                  Edit
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(paper._id);
+                  }}
+                  disabled={deleteLoading === paper._id}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                  title="Delete"
+                >
+                  {deleteLoading === paper._id ? (
+                    <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+          ))}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-8">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
+      </>
+    );
   };
 
   return (
@@ -158,154 +275,7 @@ export default function TeacherPapersPage() {
           </div>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex justify-center items-center h-64">
-            <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && filteredPapers.length === 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-12 text-center">
-            <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              {searchQuery ? "No papers found" : "No papers yet"}
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">
-              {searchQuery
-                ? "Try a different search term"
-                : "Create your first exam paper to get started"}
-            </p>
-            {!searchQuery && (
-              <button
-                onClick={() => router.push('/teacher/papers/create')}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-              >
-                <Plus className="w-5 h-5" />
-                Create Paper
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Papers List */}
-        {!loading && filteredPapers.length > 0 && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedPapers.map((paper, index) => (
-              <div
-                key={paper._id}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                style={{
-                  animation: `slideInRight 0.5s ease-out ${index * 0.1}s both`,
-                }}
-              >
-                {/* Thumbnail/Icon area */}
-                <div 
-                  onClick={() => router.push(`/teacher/papers/${paper._id}/results`)} // Click to view results
-                  className="relative w-full h-48 bg-gradient-to-br from-purple-700 to-purple-900 cursor-pointer group overflow-hidden flex items-center justify-center"
-                >
-                  <FileText className="w-24 h-24 text-white/50 group-hover:scale-110 transition-transform" />
-                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg opacity-0 group-hover:opacity-100">
-                      <Search className="w-8 h-8 text-white" /> {/* Changed to Search icon for papers */}
-                    </div>
-                  </div>
-                  <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                    View Paper
-                  </div>
-                  {paper.submissionCount !== undefined && paper.submissionCount > 0 && (
-                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      {paper.submissionCount}
-                    </div>
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2 truncate">
-                    {paper.title}
-                  </h3>
-                  {paper.description && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 min-h-[40px]">
-                      {paper.description}
-                    </p>
-                  )}
-                  
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
-                    <span className="flex items-center gap-1">
-                      <FileText className="w-4 h-4" />
-                      {paper.questions?.length || 0} questions
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <TrendingUp className="w-4 h-4" />
-                      Avg: {paper.averageScore?.toFixed(1) || 0}%
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-4 h-4" />
-                      {formatDate(paper.deadline)}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/teacher/papers/${paper._id}/results`);
-                      }}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors text-sm font-medium"
-                      title="View Results"
-                    >
-                      <TrendingUp className="w-4 h-4" />
-                      Results
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(paper);
-                      }}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4" />
-                      Edit
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(paper._id);
-                      }}
-                      disabled={deleteLoading === paper._id}
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
-                      title="Delete"
-                    >
-                      {deleteLoading === paper._id ? (
-                        <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <>
-                          <Trash2 className="w-4 h-4" />
-                          Delete
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-8">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            </div>
-          )}
-        </>
-        )}
+        {renderContent()}
       </div>
 
       {/* Delete Confirmation Dialog */}

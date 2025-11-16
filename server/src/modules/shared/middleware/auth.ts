@@ -11,6 +11,8 @@ interface AuthenticatedRequest extends Request {
     firstName?: string;
     lastName?: string;
     studentType?: string;
+    institute?: string; // Added for student
+    year?: string;      // Added for student
   };
 }
 
@@ -38,7 +40,12 @@ export const protect = async (req: AuthenticatedRequest, res: Response, next: Ne
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
     
-    const user = await User.findById(decoded.id).select('-password');
+    let userQuery = User.findById(decoded.id).select('-password');
+
+    // Always populate institute and year, they will be null if not present or not a student
+    userQuery = userQuery.populate('institute', '_id name').populate('year', '_id name');
+
+    const user = await userQuery;
     if (!user) {
       return res.status(401).json({ 
         success: false,
@@ -53,7 +60,9 @@ export const protect = async (req: AuthenticatedRequest, res: Response, next: Ne
       username: user.username,
       firstName: user.firstName,
       lastName: user.lastName,
-      studentType: user.studentType
+      studentType: user.studentType,
+      institute: user.institute ? (user.institute as any)._id.toString() : undefined,
+      year: user.year ? (user.year as any)._id.toString() : undefined,
     };
     
     next();

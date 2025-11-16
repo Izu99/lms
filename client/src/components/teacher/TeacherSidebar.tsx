@@ -67,6 +67,12 @@ const menuItems = [
     href: "/teacher/institute-year",
     colorClass: "sidebar-icon-institute-year",
   },
+  {
+    title: "Zoom",
+    icon: Video,
+    href: "/teacher/zoom",
+    colorClass: "sidebar-icon-zoom",
+  },
 ];
 
 export function TeacherSidebar({ user, onLogout }: TeacherSidebarProps) {
