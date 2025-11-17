@@ -1,4 +1,4 @@
-import { ApiClient } from '../../shared/utils/api';
+import { api as ApiClient } from '@/lib/api-client';
 import { 
   TeacherDashboardData, 
   TeacherDashboardStats, 
@@ -14,24 +14,24 @@ export class TeacherDashboardService {
       ApiClient.get<{ success: boolean; activity: DailyActivity[] }>('/activity/daily')
     ]);
 
-    console.log("Dashboard Response:", dashboardResponse);
-    console.log("Activity Response:", activityResponse);
-
     return {
-      ...dashboardResponse,
-      dailyActivity: activityResponse?.activity || [], // Safely access activityResponse.activity
+      ...dashboardResponse.data,
+      dailyActivity: activityResponse.data?.activity || [], // Safely access activityResponse.activity
     };
   }
 
   static async getStats(): Promise<TeacherDashboardStats> {
-    return ApiClient.get<TeacherDashboardStats>('/teacher/dashboard/stats');
+    const response = await ApiClient.get<TeacherDashboardStats>('/teacher/dashboard/stats');
+    return response.data;
   }
 
   static async getAnalytics(days = 30): Promise<TeacherAnalytics> {
-    return ApiClient.get<TeacherAnalytics>(`/teacher/dashboard/analytics?days=${days}`);
+    const response = await ApiClient.get<TeacherAnalytics>(`/teacher/dashboard/analytics?days=${days}`);
+    return response.data;
   }
 
   static async getStudents(limit = 10): Promise<StudentSummary[]> {
-    return ApiClient.get<StudentSummary[]>(`/teacher/dashboard/students?limit=${limit}`);
+    const response = await ApiClient.get<StudentSummary[]>(`/teacher/dashboard/students?limit=${limit}`);
+    return response.data;
   }
 }

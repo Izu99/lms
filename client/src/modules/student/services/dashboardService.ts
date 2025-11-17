@@ -1,16 +1,19 @@
-import { ApiClient } from '../../shared/utils/api';
+import { api as ApiClient } from '@/lib/api-client';
 import { StudentDashboardData, StudentDashboardStats, StudentActivity } from '../types/dashboard.types';
 
 export class StudentDashboardService {
   static async getDashboard(): Promise<StudentDashboardData> {
-    return ApiClient.get<StudentDashboardData>('/student/dashboard');
+    const response = await ApiClient.get<StudentDashboardData>('/student/dashboard');
+    return response.data;
   }
 
   static async getStats(): Promise<StudentDashboardStats> {
-    return ApiClient.get<StudentDashboardStats>('/student/dashboard/stats');
+    const response = await ApiClient.get<StudentDashboardStats>('/student/dashboard/stats');
+    return response.data;
   }
 
   static async getRecentActivity(limit = 10): Promise<StudentActivity[]> {
-    return ApiClient.get<StudentActivity[]>(`/student/dashboard/activity?limit=${limit}`);
+    const response = await ApiClient.get<StudentActivity[]>(`/student/dashboard/activity?limit=${limit}`);
+    return response.data;
   }
 }

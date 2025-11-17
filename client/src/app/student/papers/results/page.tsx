@@ -41,6 +41,17 @@ export default function MyResultsPage() {
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    if (token && user) {
+      setUser(JSON.parse(user));
+    }
+    setAuthLoading(false);
+  }, []);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -51,7 +62,9 @@ export default function MyResultsPage() {
   };
 
   useEffect(() => {
-    fetchResults();
+    if (!authLoading && user) {
+      fetchResults();
+    }
   }, [authLoading, user]);
 
   const fetchResults = async () => {

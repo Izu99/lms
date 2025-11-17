@@ -24,7 +24,7 @@ router.get('/results/my-results', protect, getStudentResults);
 router.get('/student/all', protect, getAllPapersForStudent);
 router.get('/my-results', protect, getStudentResults); // Alternative route
 router.post('/:id/submit', protect, submitPaper);
-router.get('/:id/results', protect, getPaperResults);
+  router.get('/:id/results', protect, getPaperResults);
 router.get('/:paperId/attempt', protect, getStudentAttemptForPaper);
 
 // These must come last

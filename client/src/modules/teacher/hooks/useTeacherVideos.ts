@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { isAxiosError } from '../../../lib/utils/error';
 import { TeacherVideoService } from '../services/VideoService';
-import { VideoData } from '../types/video.types';
+import { VideoData } from '../../shared/types/video.types';
 
 interface UseTeacherVideosReturn {
   videos: VideoData[];

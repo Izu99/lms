@@ -80,6 +80,7 @@ export function ImageViewerModal({ imageUrl, isOpen, onClose }: ImageViewerModal
 
   // Touch/pinch zoom for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
+    if (!imageRef.current) return; // Add null check here
     if (e.touches.length === 2) {
       const touch1 = e.touches[0];
       const touch2 = e.touches[1];
@@ -110,7 +111,7 @@ export function ImageViewerModal({ imageUrl, isOpen, onClose }: ImageViewerModal
       );
       const initialDistance = imageRef.current.initialPinchDistance;
       const initialScale = imageRef.current.initialScale;
-      if (initialDistance) {
+      if (initialDistance !== undefined && initialScale !== undefined) { // Add checks here
         const newScale = Math.min(Math.max((distance / initialDistance) * initialScale, 0.5), 5);
         setScale(newScale);
       }
@@ -201,7 +202,7 @@ export function ImageViewerModal({ imageUrl, isOpen, onClose }: ImageViewerModal
               onTouchEnd={handleTouchEnd}
             >
               <motion.img
-                src={imageUrl}
+                src={imageUrl || ""}
                 alt="Zoomable Image"
                 className="max-w-full max-h-full object-contain select-none"
                 style={{

@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'standalone', // ✅ Required for Azure App Service
+  // output: 'standalone', // ✅ Temporarily disabled due to build issue
   reactStrictMode: true,
   
   turbopack: {
@@ -75,9 +75,6 @@ const nextConfig: NextConfig = {
   
   // ✅ PERFORMANCE: Enable compression
   compress: true,
-  
-  // ✅ PERFORMANCE: Optimize production builds
-  swcMinify: true,
   
   // ✅ PERFORMANCE: Enable experimental features
   experimental: {

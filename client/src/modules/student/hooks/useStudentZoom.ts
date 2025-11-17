@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { isAxiosError } from '../../../lib/utils/error';
 import { ZoomService } from '../../shared/services/ZoomService';
-import { ZoomLinkData } from '../../shared/types/zoom';
+import { ZoomLinkData } from '../../shared/types/zoom.types';
 
 interface UseStudentZoomReturn {
   zoomLinks: ZoomLinkData[];

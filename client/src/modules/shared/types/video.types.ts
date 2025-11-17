@@ -1,14 +1,26 @@
 export interface VideoData {
   _id: string;
   title: string;
-  description?: string;
+  description: string;
   videoUrl: string;
-  thumbnailUrl?: string;
-  duration?: number;
-  views?: number;
-  uploadedBy: string; // User ID
-  institute?: { _id: string; name: string };
-  year?: { _id: string; name: string };
+  uploadedBy: {
+    _id: string;
+    username: string;
+    role: string;
+  };
+  institute?: {
+    _id: string;
+    name: string;
+    location: string;
+  };
+  year?: {
+    _id: string;
+    year: number;
+    name: string;
+  };
   createdAt: string;
   updatedAt: string;
+  availability?: string;
+  price?: number;
+  views?: number;
 }

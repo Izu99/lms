@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { TeacherDashboardService } from '../services/dashboardService';
 import { TeacherDashboardData } from '../types/dashboard.types';
+import { isAxiosError } from '@/lib/utils/error'; // Import isAxiosError
 
 interface UseTeacherDashboardReturn {
   data: TeacherDashboardData | null;
@@ -21,7 +22,11 @@ export const useTeacherDashboard = (): UseTeacherDashboardReturn => {
       const dashboardData = await TeacherDashboardService.getDashboard();
       setData(dashboardData);
     } catch (err: unknown) {
-      setError(err.response?.data?.message || 'Failed to fetch dashboard data');
+      let errorMessage = 'Failed to fetch dashboard data';
+      if (isAxiosError(err) && err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      setError(errorMessage);
       console.error('Error fetching teacher dashboard:', err);
     } finally {
       setIsLoading(false);

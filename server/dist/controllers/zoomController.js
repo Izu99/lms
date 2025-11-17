@@ -7,12 +7,8 @@ const getZoomLinks = async (req, res) => {
     try {
         const user = req.user;
         let query = {};
-        if (user.role === 'student') {
-            query = {
-                institute: user.institute,
-                year: user.year,
-            };
-        }
+        // Removed student-specific filtering as per user request.
+        // All authenticated users will now see all Zoom links.
         const zoomLinks = await ZoomLink_1.ZoomLink.find(query)
             .populate('uploadedBy', 'username role')
             .populate('institute', 'name location')

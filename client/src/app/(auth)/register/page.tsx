@@ -17,10 +17,27 @@ import Step2 from "@/components/register/Step2";
 import Step3 from "@/components/register/Step3";
 import { useTheme } from "next-themes";
 
+interface RegisterData {
+  firstName: string;
+  lastName: string;
+  username: string;
+  password: string;
+  confirmPassword: string;
+  email: string;
+  address: string;
+  telegram: string;
+  idCardFront: File | null;
+  idCardBack: File | null;
+  phoneNumber: string;
+  whatsappNumber: string;
+  studentType: "Physical" | "Online";
+  institute: string;
+}
+
 export default function RegisterPage() {
   const { setTheme } = useTheme();
   const [step, setStep] = useState(1);
-  const [data, setData] = useState({
+  const [data, setData] = useState<RegisterData>({
     firstName: "",
     lastName: "",
     username: "",

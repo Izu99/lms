@@ -1,17 +1,18 @@
-import { ApiClient } from '../../shared/utils/api';
+import { api as ApiClient } from '@/lib/api-client';
 import { ZoomLinkData } from '../types/zoom.types';
 
 export class ZoomService {
   static async getZoomLinks(): Promise<ZoomLinkData[]> {
     const response = await ApiClient.get<{ zoomLinks: ZoomLinkData[] }>('/zoom');
-    return response.zoomLinks || [];
+    return response.data.zoomLinks || [];
   }
 
   static async createZoomLink(title: string, description: string, link: string, institute: string, year: string): Promise<ZoomLinkData> {
-    return ApiClient.post<ZoomLinkData>('/zoom', { title, description, link, institute, year });
+    const response = await ApiClient.post<{ zoomLink: ZoomLinkData }>('/zoom', { title, description, link, institute, year });
+    return response.data.zoomLink;
   }
 
   static async deleteZoomLink(id: string): Promise<void> {
-    return ApiClient.delete<void>(`/zoom/${id}`);
+    await ApiClient.delete(`/zoom/${id}`);
   }
 }

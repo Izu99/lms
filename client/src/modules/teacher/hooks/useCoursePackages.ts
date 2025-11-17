@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CoursePackageData } from '../../shared/types/course-package.types';
 import { CoursePackageService } from '../services/CoursePackageService'; // Will create this service
+import { AxiosError } from 'axios';
 
 interface UseCoursePackagesReturn {
   coursePackages: CoursePackageData[];
@@ -21,11 +22,11 @@ export const useCoursePackages = (): UseCoursePackagesReturn => {
     setError(null);
     try {
       const data = await CoursePackageService.getCoursePackages();
-      console.log('Fetched course packages:', data); // Log fetched data
       setCoursePackages(data || []);
-    } catch (err: any) {
-      console.error('Error fetching course packages:', err); // Log errors
-      setError(err.response?.data?.message || 'Failed to fetch course packages');
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message: string }>;
+      console.error('Error fetching course packages:', error); // Log errors
+      setError(error.response?.data?.message || 'Failed to fetch course packages');
     } finally {
       setIsLoading(false);
     }

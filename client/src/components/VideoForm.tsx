@@ -10,29 +10,7 @@ import { InfoDialog } from "@/components/InfoDialog";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 
-interface VideoData {
-  _id: string;
-  title: string;
-  description: string;
-  videoUrl: string;
-  uploadedBy: {
-    _id: string;
-    username: string;
-    role: string;
-  };
-  institute?: {
-    _id: string;
-    name: string;
-    location: string;
-  };
-  year?: {
-    _id: string;
-    year: number;
-    name: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
+import { VideoData } from '@/modules/shared/types/video.types';
 
 interface InstituteData {
   _id: string;
@@ -81,7 +59,9 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
         title: video.title,
         description: video.description || "",
         instituteId: video.institute ? video.institute._id : "",
-        yearId: video.year ? video.year._id : ""
+        yearId: video.year ? video.year._id : "",
+        availability: video.availability || "all", // Assuming 'all' as default if not present
+        price: video.price || 0, // Assuming 0 as default if not present
       });
     }
   }, [video, dataLoading]);

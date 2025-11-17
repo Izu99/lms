@@ -709,31 +709,33 @@ export default function ProfilePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Summary Card */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm border p-6">
-              <div className="text-center">
-                <div className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User size={40} className="text-white" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900 mb-2">
-                  {getDisplayName()}
-                </h2>
-                <p className="text-gray-600 mb-3">@{user.username}</p>
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  {getRoleIcon(user.role)}
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${getRoleColor(user.role)}`}>
-                    {user.role}
-                  </span>
-                </div>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex items-center justify-center gap-2">
-                    <Calendar size={16} />
-                    <span>Joined {user.createdAt ? formatDate(user.createdAt) : 'Unknown'}</span>
+          {user && (
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                <div className="text-center">
+                  <div className="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <User size={40} className="text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">
+                    {getDisplayName()}
+                  </h2>
+                  <p className="text-gray-600 mb-3">@{user.username}</p>
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    {getRoleIcon(user.role)}
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium capitalize ${getRoleColor(user.role)}`}>
+                      {user.role}
+                    </span>
+                  </div>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div className="flex items-center justify-center gap-2">
+                      <Calendar size={16} />
+                      <span>Joined {user.createdAt ? formatDate(user.createdAt) : 'Unknown'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Profile Edit Form */}
           <div className="lg:col-span-2">

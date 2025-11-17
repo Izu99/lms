@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api as ApiClient } from '@/lib/api-client';
 import { PaperData } from '@/modules/shared/types/paper.types'; // Assuming PaperData type exists
+import { AxiosError } from 'axios';
 
 interface UsePapersReturn {
   papers: PaperData[];
@@ -20,13 +21,12 @@ export const usePapers = (): UsePapersReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      // Assuming an API endpoint for fetching all papers
       const response = await ApiClient.get<{ papers: PaperData[] }>('/papers');
-      console.log('Fetched papers:', response.data.papers); // Log fetched data
       setPapers(response.data.papers || []);
-    } catch (err: any) {
-      console.error('Error fetching papers:', err); // Log errors
-      setError(err.response?.data?.message || 'Failed to fetch papers');
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message: string }>;
+      console.error('Error fetching papers:', error); // Log errors
+      setError(error.response?.data?.message || 'Failed to fetch papers');
     } finally {
       setIsLoading(false);
     }

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { ZoomService } from "@/modules/shared/services/ZoomService";
 import { isAxiosError } from '../../../lib/utils/error';
-import { ZoomLinkData } from "@/modules/shared/types/zoom";
+import { ZoomLinkData } from '@/modules/shared/types/zoom.types';
 
 interface UseTeacherZoomReturn {
   zoomLinks: ZoomLinkData[];

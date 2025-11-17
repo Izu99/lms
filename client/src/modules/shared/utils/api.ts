@@ -27,7 +27,7 @@ api.interceptors.request.use(
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse>) => {
+  (response: AxiosResponse<ApiResponse<unknown>>) => {
     return response;
   },
   (error: AxiosError<ApiError>) => {
@@ -42,36 +42,28 @@ api.interceptors.response.use(
 );
 
 export class ApiClient {
-  static async get<T>(url: string): Promise<T> {
-    const response = await api.get<ApiResponse<T>>(url);
-    if (response.data && typeof response.data === 'object' && 'success' in response.data && 'data' in response.data) {
-      return response.data.data as T;
-    }
-    return response.data as T;
+  static async get<T>(url: string): Promise<AxiosResponse<ApiResponse<T>>> {
+    return api.get<ApiResponse<T>>(url);
   }
 
-  static async post<T>(url: string, data?: unknown): Promise<T> {
-    const response = await api.post<ApiResponse<T>>(url, data);
-    return response.data.data!;
+  static async post<T>(url: string, data?: unknown): Promise<AxiosResponse<ApiResponse<T>>> {
+    return api.post<ApiResponse<T>>(url, data);
   }
 
-  static async put<T>(url: string, data?: unknown): Promise<T> {
-    const response = await api.put<ApiResponse<T>>(url, data);
-    return response.data.data!;
+  static async put<T>(url: string, data?: unknown): Promise<AxiosResponse<ApiResponse<T>>> {
+    return api.put<ApiResponse<T>>(url, data);
   }
 
-  static async delete<T>(url: string): Promise<T> {
-    const response = await api.delete<ApiResponse<T>>(url);
-    return response.data.data!;
+  static async delete<T>(url: string): Promise<AxiosResponse<ApiResponse<T>>> {
+    return api.delete<ApiResponse<T>>(url);
   }
 
-  static async upload<T>(url: string, formData: FormData): Promise<T> {
-    const response = await api.post<ApiResponse<T>>(url, formData, {
+  static async upload<T>(url: string, formData: FormData): Promise<AxiosResponse<ApiResponse<T>>> {
+    return api.post<ApiResponse<T>>(url, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return response.data.data!;
   }
 }
 

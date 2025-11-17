@@ -1,22 +1,6 @@
 import VideoForm from "../VideoForm";
 
-interface VideoData {
-  _id: string;
-  title: string;
-  description?: string;
-  videoUrl: string;
-  institute?: {
-    _id: string;
-    name: string;
-    location: string;
-  };
-  year?: {
-    _id: string;
-    year: number;
-    name: string;
-  };
-  createdAt: string;
-}
+import { VideoData } from '@/modules/shared/types/video.types';
 
 interface CreateVideoModalProps {
   isOpen: boolean;

@@ -9,7 +9,7 @@ export class CoursePackageService {
 
   static async getCoursePackageById(id: string): Promise<CoursePackageData> {
     const response = await ApiClient.get<{ coursePackage: CoursePackageData }>(`/course-packages/${id}`);
-    return response.coursePackage;
+    return response.data.coursePackage;
   }
 
   static async createCoursePackage(
@@ -37,7 +37,7 @@ export class CoursePackageService {
         year,
       }
     );
-    return response.coursePackage;
+    return response.data.coursePackage;
   }
 
   static async updateCoursePackage(
@@ -66,10 +66,10 @@ export class CoursePackageService {
         year,
       }
     );
-    return response.coursePackage;
+    return response.data.coursePackage;
   }
 
   static async deleteCoursePackage(id: string): Promise<void> {
-    await ApiClient.delete(`/course-packages/${id}`);
+    await ApiClient.delete<void>(`/course-packages/${id}`);
   }
 }

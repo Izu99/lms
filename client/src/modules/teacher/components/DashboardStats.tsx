@@ -1,7 +1,7 @@
 "use client";
 
 import { Video, BookOpen, Users, Eye, TrendingUp, Award, FileText } from "lucide-react";
-import { TeacherDashboardStats } from "../types/dashboard.types";
+import type { TeacherDashboardStats } from "../types/dashboard.types";
 
 interface DashboardStatsProps {
   stats: TeacherDashboardStats;

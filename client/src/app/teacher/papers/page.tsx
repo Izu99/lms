@@ -189,7 +189,7 @@ export default function TeacherPapersPage() {
                 </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  {formatDate(paper.deadline)}
+                  {paper.deadline && formatDate(paper.deadline)}
                 </span>
               </div>
 
@@ -287,7 +287,7 @@ export default function TeacherPapersPage() {
               type="text"
               placeholder="Search papers..."
               value={searchQuery}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1 outline-none text-sm bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>

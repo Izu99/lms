@@ -12,13 +12,13 @@ import { toast } from "sonner";
 
 export default function TeacherCoursePackagesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingPackage, setEditingPackage] = useState<CoursePackageData | null>(null);
+  const [editingPackage, setEditingPackage] = useState<CoursePackageData | undefined>(undefined);
   const { coursePackages, isLoading, error, refetch } = useCoursePackages();
 
   const handleFormSuccess = () => {
     toast.success(editingPackage ? "Course package updated successfully!" : "Course package created successfully!");
     setIsFormOpen(false);
-    setEditingPackage(null);
+    setEditingPackage(undefined);
     refetch();
   };
 
@@ -61,7 +61,7 @@ export default function TeacherCoursePackagesPage() {
         <h1 className="text-3xl font-bold theme-text-primary">Course Packages</h1>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { setEditingPackage(null); setIsFormOpen(true); }} className="bg-brand-primary hover:bg-brand-primary-dark text-white">
+            <Button onClick={() => { setEditingPackage(undefined); setIsFormOpen(true); }} className="bg-brand-primary hover:bg-brand-primary-dark text-white">
               <PlusCircle className="mr-2 h-5 w-5" /> Create New Package
             </Button>
           </DialogTrigger>
@@ -72,7 +72,7 @@ export default function TeacherCoursePackagesPage() {
             <CoursePackageForm
               initialData={editingPackage}
               onSuccess={handleFormSuccess}
-              onCancel={() => { setIsFormOpen(false); setEditingPackage(null); }}
+              onCancel={() => { setIsFormOpen(false); setEditingPackage(undefined); }}
             />
           </DialogContent>
         </Dialog>
@@ -83,8 +83,8 @@ export default function TeacherCoursePackagesPage() {
       {coursePackages.length === 0 ? (
         <div className="theme-card p-8 text-center">
           <h2 className="text-xl font-semibold theme-text-primary mb-2">No Course Packages Yet</h2>
-          <p className="theme-text-secondary mb-4">Click "Create New Package" to get started.</p>
-          <Button onClick={() => { setEditingPackage(null); setIsFormOpen(true); }} className="bg-brand-primary hover:bg-brand-primary-dark text-white">
+          <p className="theme-text-secondary mb-4">Click &quot;Create New Package&quot; to get started.</p>
+          <Button onClick={() => { setEditingPackage(undefined); setIsFormOpen(true); }} className="bg-brand-primary hover:bg-brand-primary-dark text-white">
             <PlusCircle className="mr-2 h-5 w-5" /> Create First Package
           </Button>
         </div>

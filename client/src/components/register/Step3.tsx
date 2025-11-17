@@ -18,7 +18,7 @@ interface Step3Data {
   idCardBack: File | null;
   phoneNumber: string;
   whatsappNumber: string;
-  studentType: string;
+  studentType: "Physical" | "Online";
   institute: string;
 }
 
@@ -28,7 +28,7 @@ interface Step3Props {
   prevStep: () => void;
   handleSubmit: (e: React.FormEvent) => void;
   loading?: boolean;
-  studentType: string;
+  studentType: "Physical" | "Online";
 }
 
 export default function Step3({ data, setData, prevStep, handleSubmit, loading, studentType }: Step3Props) {

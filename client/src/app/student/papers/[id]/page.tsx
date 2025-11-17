@@ -1,10 +1,9 @@
 "use client";
 
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { use, useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -63,15 +62,10 @@ interface User {
   role: 'student' | 'teacher' | 'admin';
 }
 
-interface PaperAttemptPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function PaperAttempt({ params }: PaperAttemptPageProps) {
+export default function PaperAttempt() {
   const router = useRouter();
-  const paperId = params.id;
+  const pathname = usePathname();
+  const paperId = pathname.split('/').pop();
 
   // State management
   const [paper, setPaper] = useState<Paper | null>(null);

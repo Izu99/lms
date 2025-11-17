@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CoursePackageData } from '../../shared/types/course-package.types';
 import { api as ApiClient } from '@/lib/api-client';
+import { AxiosError } from 'axios';
 
 interface UseStudentCoursePackagesReturn {
   coursePackages: CoursePackageData[];
@@ -20,13 +21,12 @@ export const useStudentCoursePackages = (): UseStudentCoursePackagesReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      // Assuming the backend /course-packages endpoint handles student-specific filtering
       const response = await ApiClient.get<{ coursePackages: CoursePackageData[] }>('/course-packages');
-      console.log('Fetched student course packages:', response.data.coursePackages); // Log fetched data
       setCoursePackages(response.data.coursePackages || []);
-    } catch (err: any) {
-      console.error('Error fetching student course packages:', err);
-      setError(err.response?.data?.message || 'Failed to fetch course packages');
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message: string }>;
+      console.error('Error fetching student course packages:', error);
+      setError(error.response?.data?.message || 'Failed to fetch course packages');
     } finally {
       setIsLoading(false);
     }

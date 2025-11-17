@@ -21,7 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useTeacherVideos } from "@/modules/teacher/hooks/useTeacherVideos";
-import { VideoData } from "@/modules/teacher/types/video.types";
+import { VideoData } from '@/modules/shared/types/video.types';
 import { LoadingComponent } from "@/components/common/LoadingComponent";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { EmptyStateComponent } from "@/components/common/EmptyStateComponent";

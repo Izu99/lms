@@ -16,7 +16,15 @@ interface ZoomFormProps {
 }
 
 export function ZoomForm({ onSuccess }: ZoomFormProps) {
-  // ... existing code
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [zoomLink, setZoomLink] = useState("");
+  const [institute, setInstitute] = useState("");
+  const [year, setYear] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { institutes } = useTeacherInstitutes();
+  const { years } = useTeacherYears();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

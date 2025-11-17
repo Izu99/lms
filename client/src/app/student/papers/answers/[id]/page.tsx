@@ -1,7 +1,7 @@
 'use client';
 
-import { use, useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -67,10 +67,10 @@ interface StudentAttempt {
   timeSpent: number;
 }
 
-export default function PaperAnswerPage({ params }: { params: { id: string } }) {
+export default function PaperAnswerPage() {
   const router = useRouter();
-  const resolvedParams = use(params);
-  const paperId = resolvedParams.id;
+  const pathname = usePathname();
+  const paperId = pathname.split('/').pop();
 
   // State management
   const [paper, setPaper] = useState<Paper | null>(null);
@@ -138,7 +138,7 @@ export default function PaperAnswerPage({ params }: { params: { id: string } }) 
 
       console.log("Data fetched successfully", { attemptResponse: attemptResponse.data, paperResponse: paperResponse.data });
 
-      const attempt = attemptResponse.data.results?.find((a) => a.paperId && a.paperId._id === paperId);
+      const attempt = attemptResponse.data.results?.find((a) => a.paperId === paperId);
 
       setPaper(paperResponse.data.paper);
 

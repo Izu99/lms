@@ -21,14 +21,9 @@ export const useAuth = (): UseAuthReturn => {
           const token = localStorage.getItem('token');
           const savedUser = localStorage.getItem('user');
 
-          console.log("useAuth - Initializing:", { hasToken: !!token, savedUser });
-
           if (token && savedUser) {
             const userData = JSON.parse(savedUser);
-            console.log("useAuth - Parsed user data:", userData);
             setUser(userData);
-          } else {
-            console.log("useAuth - No token or user data found");
           }
         } catch (error) {
           console.error('Error parsing user data:', error);

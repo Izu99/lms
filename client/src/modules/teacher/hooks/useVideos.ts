@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api as ApiClient } from '@/lib/api-client';
 import { VideoData } from '@/modules/shared/types/video.types'; // Assuming VideoData type exists
+import { AxiosError } from 'axios';
 
 interface UseVideosReturn {
   videos: VideoData[];
@@ -20,13 +21,12 @@ export const useVideos = (): UseVideosReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      // Assuming an API endpoint for fetching all videos
       const response = await ApiClient.get<{ videos: VideoData[] }>('/videos');
-      console.log('Fetched videos:', response.data.videos); // Log fetched data
       setVideos(response.data.videos || []);
-    } catch (err: any) {
-      console.error('Error fetching videos:', err); // Log errors
-      setError(err.response?.data?.message || 'Failed to fetch videos');
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message: string }>;
+      console.error('Error fetching videos:', error); // Log errors
+      setError(error.response?.data?.message || 'Failed to fetch videos');
     } finally {
       setIsLoading(false);
     }

@@ -34,7 +34,7 @@ export function InfoDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction onClick={onClose} variant="dialog">{buttonText}</AlertDialogAction>
+          <AlertDialogAction onClick={onClose}>{buttonText}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

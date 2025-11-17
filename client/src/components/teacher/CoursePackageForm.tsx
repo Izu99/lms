@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,9 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MultiSelect } from "@/components/ui/multi-select"; // Assuming a MultiSelect component exists
-import { VideoMultiSelectDialog } from "@/components/teacher/VideoMultiSelectDialog"; // Import the new component
-import { PaperMultiSelectDialog } from "@/components/teacher/PaperMultiSelectDialog"; // Import the new component
+import { MultiSelectDropdown } from "@/components/MultiSelectDropdown"; // Import the new component
 import { useVideos } from "@/modules/teacher/hooks/useVideos"; // Assuming this hook exists
 import { usePapers } from "@/modules/teacher/hooks/usePapers"; // Assuming this hook exists
 import { useInstitutes } from "@/modules/teacher/hooks/useInstitutes"; // Assuming this hook exists
@@ -32,14 +30,16 @@ const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   price: z.number().min(0, "Price must be positive"),
-  videos: z.array(z.string()).default([]),
-  papers: z.array(z.string()).default([]),
-  freeForAllInstituteYear: z.boolean().default(false),
+  videos: z.array(z.string()),
+  papers: z.array(z.string()),
+  freeForAllInstituteYear: z.boolean(),
   institute: z.string().optional(),
   year: z.string().optional(),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = z.infer<typeof formSchema> & {
+  freeForAllInstituteYear: boolean;
+};
 
 interface CoursePackageFormProps {
   initialData?: CoursePackageData;
@@ -55,18 +55,17 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
     watch,
     formState: { errors, isSubmitting },
     reset,
-  } = useForm<z.infer<typeof formSchema>>({
+  } = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
-      title: "",
-      description: "",
-      price: 0,
-      videos: [],
-      papers: [],
-      freeForPhysicalStudents: false,
-      freeForAllInstituteYear: false,
-      institute: undefined,
-      year: undefined,
+    defaultValues: {
+      title: initialData?.title || "",
+      description: initialData?.description || "",
+      price: initialData?.price || 0,
+      videos: initialData?.videos?.map((v) => typeof v === 'string' ? v : v._id) || [],
+      papers: initialData?.papers?.map((p) => typeof p === 'string' ? p : p._id) || [],
+      freeForAllInstituteYear: initialData?.freeForAllInstituteYear || false,
+      institute: typeof initialData?.institute === 'string' ? initialData?.institute : initialData?.institute?._id,
+      year: typeof initialData?.year === 'string' ? initialData?.year : initialData?.year?._id,
     },
   });
 
@@ -74,17 +73,6 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
   const { papers, isLoading: isLoadingPapers } = usePapers();
   const { institutes, isLoading: isLoadingInstitutes } = useInstitutes();
   const { years, isLoading: isLoadingYears } = useYears();
-
-  // Debug: Log all data
-  React.useEffect(() => {
-    console.log('📊 Form Data:', {
-      videos: videos.length,
-      papers: papers.length,
-      institutes: institutes.length,
-      years: years.length,
-      yearsData: years
-    });
-  }, [videos, papers, institutes, years]);
 
   const freeForAllInstituteYear = watch("freeForAllInstituteYear");
   const selectedInstitute = watch("institute");
@@ -95,8 +83,8 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
         title: initialData.title,
         description: initialData.description,
         price: initialData.price,
-        videos: initialData.videos?.map((v: any) => typeof v === 'string' ? v : v._id) || [],
-        papers: initialData.papers?.map((p: any) => typeof p === 'string' ? p : p._id) || [],
+        videos: initialData.videos?.map((v) => typeof v === 'string' ? v : v._id) || [],
+        papers: initialData.papers?.map((p) => typeof p === 'string' ? p : p._id) || [],
         freeForAllInstituteYear: initialData.freeForAllInstituteYear || false,
         institute: typeof initialData.institute === 'string' ? initialData.institute : initialData.institute?._id,
         year: typeof initialData.year === 'string' ? initialData.year : initialData.year?._id,
@@ -135,8 +123,9 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
         toast.success("Course package created successfully");
       }
       onSuccess();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to save course package");
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || "Failed to save course package");
     }
   };
 
@@ -146,33 +135,18 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
   
   // Filter years based on selected institute
   const yearOptions = React.useMemo(() => {
-    console.log('🔍 Year filtering:', { 
-      selectedInstitute, 
-      totalYears: years.length,
-      years: years.map(y => ({ 
-        name: y.name, 
-        institute: typeof y.institute === 'string' ? y.institute : y.institute?._id 
-      }))
-    });
+    if (!selectedInstitute) return [];
     
-    if (!selectedInstitute) {
-      console.log('⚠️ No institute selected');
-      return [];
-    }
-    
-    const filtered = years.filter(y => {
-      const instituteId = typeof y.institute === 'string' ? y.institute : y.institute?._id;
-      const matches = instituteId === selectedInstitute;
-      console.log(`Year ${y.name}: institute=${instituteId}, matches=${matches}`);
-      return matches;
-    });
-    
-    console.log('✅ Filtered years:', filtered.length);
-    return filtered.map((y) => ({ label: y.name, value: y._id }));
+    return years
+      .filter(y => {
+        const instituteId = typeof y.institute === 'string' ? y.institute : y.institute?._id;
+        return instituteId === selectedInstitute;
+      })
+      .map((y) => ({ label: y.name, value: y._id }));
   }, [years, selectedInstitute]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Title */}
       <div>
         <Label htmlFor="title">Title *</Label>
@@ -214,12 +188,11 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
 
       <div>
         <Label>Videos</Label>
-        <VideoMultiSelectDialog
+        <MultiSelectDropdown
           options={videoOptions}
           selected={watch("videos") || []}
-          onSelectedChange={(selected) => setValue("videos", selected)}
+          onChange={(selected) => setValue("videos", selected)}
           placeholder="Select videos..."
-          isLoading={isLoadingVideos}
         />
         {errors.videos && <p className="text-red-500 text-sm mt-1">{errors.videos.message}</p>}
       </div>
@@ -227,12 +200,11 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
       {/* Papers - Multiple Select with Checkboxes */}
       <div>
         <Label>Papers</Label>
-        <PaperMultiSelectDialog
+        <MultiSelectDropdown
           options={paperOptions}
           selected={watch("papers") || []}
-          onSelectedChange={(selected) => setValue("papers", selected)}
+          onChange={(selected) => setValue("papers", selected)}
           placeholder="Select papers..."
-          isLoading={isLoadingPapers}
         />
         {errors.papers && <p className="text-red-500 text-sm mt-1">{errors.papers.message}</p>}
       </div>
@@ -281,10 +253,7 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
             <Label htmlFor="year">Year *</Label>
             <Select
               value={watch("year") || ""}
-              onValueChange={(value) => {
-                console.log('📅 Year selected:', value);
-                setValue("year", value);
-              }}
+              onValueChange={(value) => setValue("year", value)}
               disabled={!selectedInstitute || isLoadingYears}
             >
               <SelectTrigger className="mt-1">

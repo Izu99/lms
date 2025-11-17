@@ -13,7 +13,7 @@ interface Step2Props {
     address: string;
     phoneNumber: string;
     whatsappNumber: string;
-    studentType: string;
+    studentType: "Physical" | "Online";
     institute: string;
   };
   setData: (data: Step2Props['data']) => void;
@@ -47,7 +47,7 @@ export default function Step2({ data, setData, nextStep, prevStep, institutes }:
             </label>
             <Select
               value={data.studentType}
-              onValueChange={(value) => setData({ ...data, studentType: value })}
+              onValueChange={(value) => setData({ ...data, studentType: value as "Physical" | "Online" })}
             >
               <SelectTrigger className="h-14 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200">
                 <SelectValue placeholder="Select student type" />

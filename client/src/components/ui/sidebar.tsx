@@ -117,7 +117,7 @@ export function SidebarMenu({ children, className, ...props }: SidebarMenuProps)
   );
 }
 
-interface SidebarMenuItemProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+interface SidebarMenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: React.ReactNode;
   children: React.ReactNode;
   isActive?: boolean;

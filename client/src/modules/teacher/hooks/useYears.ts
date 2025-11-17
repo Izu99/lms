@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api as ApiClient } from '@/lib/api-client';
 import { YearData } from '@/modules/shared/types/year.types'; // Assuming YearData type exists
+import { AxiosError } from 'axios';
 
 interface UseYearsReturn {
   years: YearData[];
@@ -20,13 +21,12 @@ export const useYears = (): UseYearsReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      // Assuming an API endpoint for fetching all years
       const response = await ApiClient.get<{ years: YearData[] }>('/years');
-      console.log('Fetched years:', response.data.years); // Log fetched data
       setYears(response.data.years || []);
-    } catch (err: any) {
-      console.error('Error fetching years:', err); // Log errors
-      setError(err.response?.data?.message || 'Failed to fetch years');
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ message: string }>;
+      console.error('Error fetching years:', error); // Log errors
+      setError(error.response?.data?.message || 'Failed to fetch years');
     } finally {
       setIsLoading(false);
     }
