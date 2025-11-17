@@ -1,15 +1,17 @@
 "use client";
 
+import { useState } from "react";
+import { toast } from "sonner";
+import { Video, Trash2 } from "lucide-react";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import { ZoomForm } from "@/components/teacher/ZoomForm";
-import { Video, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useTeacherZoom } from "@/modules/teacher/hooks/useTeacherZoom";
 import { LoadingComponent } from "@/components/common/LoadingComponent";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { EmptyStateComponent } from "@/components/common/EmptyStateComponent";
-import { TeacherZoomService } from "@/modules/shared/services/ZoomService";
-import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { useTeacherZoom } from "@/modules/teacher/hooks/useTeacherZoom";
+import { ZoomService } from "@/modules/shared/services/ZoomService";
+import { isAxiosError } from '@/lib/utils/error';
 
 export default function TeacherZoomPage() {
   const { zoomLinks, isLoading, error, refetch } = useTeacherZoom();
@@ -18,11 +20,15 @@ export default function TeacherZoomPage() {
     if (!confirm("Are you sure you want to delete this Zoom link?")) return;
 
     try {
-      await TeacherZoomService.deleteZoomLink(id);
+      await ZoomService.deleteZoomLink(id);
       refetch();
       toast.success("Zoom link deleted successfully");
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to delete Zoom link");
+    } catch (error: unknown) {
+      let errorMessage = "Failed to delete Zoom link";
+      if (isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      toast.error(errorMessage);
     }
   };
 

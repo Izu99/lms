@@ -12,46 +12,53 @@ interface UseAuthReturn {
 
 export const useAuth = (): UseAuthReturn => {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Default to true for initial server render
 
   useEffect(() => {
-    const initAuth = () => {
-      try {
-        const token = localStorage.getItem('token');
-        const savedUser = localStorage.getItem('user');
+    if (typeof window !== 'undefined') {
+      const initAuth = () => {
+        try {
+          const token = localStorage.getItem('token');
+          const savedUser = localStorage.getItem('user');
 
-        console.log("useAuth - Initializing:", { hasToken: !!token, savedUser });
+          console.log("useAuth - Initializing:", { hasToken: !!token, savedUser });
 
-        if (token && savedUser) {
-          const userData = JSON.parse(savedUser);
-          console.log("useAuth - Parsed user data:", userData);
-          setUser(userData);
-        } else {
-          console.log("useAuth - No token or user data found");
+          if (token && savedUser) {
+            const userData = JSON.parse(savedUser);
+            console.log("useAuth - Parsed user data:", userData);
+            setUser(userData);
+          } else {
+            console.log("useAuth - No token or user data found");
+          }
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initAuth();
+      };
+      initAuth();
+    } else {
+      setIsLoading(false); // On server, assume not loading after initial render
+    }
   }, []);
 
   const login = (token: string, userData: AuthUser) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+    }
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
     setUser(null);
-    window.location.href = '/login';
   };
 
   const hasRole = (roles: UserRole | UserRole[]): boolean => {

@@ -242,7 +242,6 @@ export default function TeacherStudentsPage() {
           setIsModalOpen(false);
           setSelectedStudentId(null);
           refetch(); // Refetch students after modal closes, in case of changes
-          refetch(); // Refetch students after modal closes, in case of changes
         }}
       />
     </TeacherLayout>

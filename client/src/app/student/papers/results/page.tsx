@@ -52,7 +52,6 @@ export default function MyResultsPage() {
 
   useEffect(() => {
     fetchResults();
-    }
   }, [authLoading, user]);
 
   const fetchResults = async () => {

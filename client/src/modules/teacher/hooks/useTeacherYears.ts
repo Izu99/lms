@@ -1,4 +1,7 @@
+"use client";
+
 import { useState, useEffect } from 'react';
+import { isAxiosError } from '../../../lib/utils/error';
 import { TeacherYearService } from '../services/YearService';
 import { YearData } from '../types/year.types';
 
@@ -6,7 +9,7 @@ interface UseTeacherYearsReturn {
   years: YearData[];
   isLoading: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
+  refetch: () => void;
 }
 
 export const useTeacherYears = (): UseTeacherYearsReturn => {
@@ -20,8 +23,12 @@ export const useTeacherYears = (): UseTeacherYearsReturn => {
       setError(null);
       const yearData = await TeacherYearService.getYears();
       setYears(yearData);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch academic years');
+    } catch (err: unknown) {
+      let errorMessage = 'Failed to fetch academic years';
+      if (isAxiosError(err) && err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      setError(errorMessage);
       console.error('Error fetching teacher years:', err);
     } finally {
       setIsLoading(false);

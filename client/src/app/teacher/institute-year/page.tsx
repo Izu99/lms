@@ -36,6 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { isAxiosError } from '@/lib/utils/error';
 
 export default function SettingsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,9 +69,13 @@ export default function SettingsPage() {
       setShowInstituteForm(false);
       setEditingInstitute(null);
       toast.success("Institute saved successfully");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error saving institute:", error);
-      toast.error(error.response?.data?.message || "Error saving institute. Please try again.");
+      let errorMessage = "Error saving institute. Please try again.";
+      if (isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      toast.error(errorMessage);
     }
   };
 
@@ -85,9 +90,13 @@ export default function SettingsPage() {
       await TeacherInstituteService.deleteInstitute(instituteToDelete);
       refetchInstitutes();
       toast.success("Institute deleted successfully");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting institute:", error);
-      toast.error(error.response?.data?.message || "Error deleting institute. Please try again.");
+      let errorMessage = "Error deleting institute. Please try again.";
+      if (isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setDeleteInstituteDialogOpen(false);
       setInstituteToDelete(null);
@@ -107,9 +116,13 @@ export default function SettingsPage() {
       setShowYearForm(false);
       setEditingYear(null);
       toast.success("Academic year saved successfully");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error saving year:", error);
-      toast.error(error.response?.data?.message || "Error saving year. Please try again.");
+      let errorMessage = "Error saving year. Please try again.";
+      if (isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      toast.error(errorMessage);
     }
   };
 
@@ -124,9 +137,13 @@ export default function SettingsPage() {
       await TeacherYearService.deleteYear(yearToDelete);
       refetchYears();
       toast.success("Academic year deleted successfully");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting year:", error);
-      toast.error(error.response?.data?.message || "Error deleting year. Please try again.");
+      let errorMessage = "Error deleting year. Please try again.";
+      if (isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setDeleteYearDialogOpen(false);
       setYearToDelete(null);

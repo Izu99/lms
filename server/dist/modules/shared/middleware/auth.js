@@ -25,7 +25,10 @@ const protect = async (req, res, next) => {
             });
         }
         const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
-        const user = await User_1.User.findById(decoded.id).select('-password');
+        let userQuery = User_1.User.findById(decoded.id).select('-password');
+        // Always populate institute and year, they will be null if not present or not a student
+        userQuery = userQuery.populate('institute', '_id name').populate('year', '_id name');
+        const user = await userQuery;
         if (!user) {
             return res.status(401).json({
                 success: false,
@@ -39,7 +42,9 @@ const protect = async (req, res, next) => {
             username: user.username,
             firstName: user.firstName,
             lastName: user.lastName,
-            studentType: user.studentType
+            studentType: user.studentType,
+            institute: user.institute ? user.institute._id.toString() : undefined,
+            year: user.year ? user.year._id.toString() : undefined,
         };
         next();
     }

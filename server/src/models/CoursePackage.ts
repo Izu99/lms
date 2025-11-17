@@ -1,0 +1,34 @@
+import mongoose, { Document, Schema, Types } from 'mongoose';
+
+export interface ICoursePackage extends Document {
+  title: string;
+  description?: string;
+  price: number;
+  videos: Types.ObjectId[];
+  papers: Types.ObjectId[];
+  freeForPhysicalStudents: boolean;
+  freeForAllInstituteYear: boolean;
+  institute?: Types.ObjectId; // Optional, if not free for all
+  year?: Types.ObjectId;      // Optional, if not free for all
+  createdBy: Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const CoursePackageSchema: Schema = new Schema(
+  {
+    title: { type: String, required: true, trim: true },
+    description: { type: String, trim: true },
+    price: { type: Number, required: true, min: 0 },
+    videos: [{ type: Schema.Types.ObjectId, ref: 'Video' }],
+    papers: [{ type: Schema.Types.ObjectId, ref: 'Paper' }],
+    freeForPhysicalStudents: { type: Boolean, default: false },
+    freeForAllInstituteYear: { type: Boolean, default: false },
+    institute: { type: Schema.Types.ObjectId, ref: 'Institute' },
+    year: { type: Schema.Types.ObjectId, ref: 'Year' },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  },
+  { timestamps: true }
+);
+
+export const CoursePackage = mongoose.model<ICoursePackage>('CoursePackage', CoursePackageSchema);

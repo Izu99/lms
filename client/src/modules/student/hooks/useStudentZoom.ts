@@ -1,12 +1,15 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { TeacherZoomService } from '../../shared/services/ZoomService';
-import { ZoomLinkData } from '../../shared/types/zoom.types';
+import { isAxiosError } from '../../../lib/utils/error';
+import { ZoomService } from '../../shared/services/ZoomService';
+import { ZoomLinkData } from '../../shared/types/zoom';
 
 interface UseStudentZoomReturn {
   zoomLinks: ZoomLinkData[];
   isLoading: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
+  refetch: () => void;
 }
 
 export const useStudentZoom = (): UseStudentZoomReturn => {
@@ -18,10 +21,14 @@ export const useStudentZoom = (): UseStudentZoomReturn => {
     try {
       setIsLoading(true);
       setError(null);
-      const zoomLinkData = await TeacherZoomService.getZoomLinks();
+      const zoomLinkData = await ZoomService.getZoomLinks();
       setZoomLinks(zoomLinkData);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch zoom links');
+    } catch (err: unknown) {
+      let errorMessage = 'Failed to fetch zoom links';
+      if (isAxiosError(err) && err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      setError(errorMessage);
       console.error('Error fetching student zoom links:', err);
     } finally {
       setIsLoading(false);

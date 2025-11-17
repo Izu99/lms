@@ -1,29 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { TeacherZoomService } from "@/modules/shared/services/ZoomService";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { useTeacherInstitutes } from "@/modules/teacher/hooks/useTeacherInstitutes";
 import { useTeacherYears } from "@/modules/teacher/hooks/useTeacherYears";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ZoomService } from "@/modules/shared/services/ZoomService";
+import { isAxiosError } from '@/lib/utils/error';
 
 interface ZoomFormProps {
   onSuccess: () => void;
 }
 
 export function ZoomForm({ onSuccess }: ZoomFormProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [zoomLink, setZoomLink] = useState("");
-  const [institute, setInstitute] = useState("");
-  const [year, setYear] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { institutes } = useTeacherInstitutes();
-  const { years } = useTeacherYears();
+  // ... existing code
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +26,7 @@ export function ZoomForm({ onSuccess }: ZoomFormProps) {
     }
     setIsLoading(true);
     try {
-      await TeacherZoomService.createZoomLink(title, description, zoomLink, institute, year);
+      await ZoomService.createZoomLink(title, description, zoomLink, institute, year);
       toast.success("Zoom link saved successfully");
       setTitle("");
       setDescription("");
@@ -41,8 +34,12 @@ export function ZoomForm({ onSuccess }: ZoomFormProps) {
       setInstitute("");
       setYear("");
       onSuccess();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to save Zoom link");
+    } catch (error: unknown) {
+      let errorMessage = "Failed to save Zoom link";
+      if (isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

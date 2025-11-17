@@ -8,9 +8,10 @@ import { useEffect } from "react";
 
 interface StudentLayoutProps {
   children: React.ReactNode;
+  hideSidebar?: boolean;
 }
 
-function StudentLayoutContent({ children }: StudentLayoutProps) {
+function StudentLayoutContent({ children, hideSidebar }: StudentLayoutProps) {
   const { isCollapsed } = useSidebar();
   const { user, isLoading } = useAuth();
   const router = useRouter();
@@ -54,10 +55,10 @@ function StudentLayoutContent({ children }: StudentLayoutProps) {
 
   return (
     <div className="flex min-h-screen theme-bg-secondary">
-      <StudentSidebar user={user} onLogout={handleLogout} />
+      {!hideSidebar && <StudentSidebar user={user} onLogout={handleLogout} />}
       <main
         className={`flex-1 transition-all duration-300 ease-in-out ${
-          isCollapsed ? "ml-20" : "ml-72"
+          hideSidebar ? "ml-0" : (isCollapsed ? "ml-20" : "ml-72")
         }`}
       >
         <div className="p-6 lg:p-8 max-w-[1600px]">{children}</div>
@@ -66,10 +67,10 @@ function StudentLayoutContent({ children }: StudentLayoutProps) {
   );
 }
 
-export function StudentLayout({ children }: StudentLayoutProps) {
+export function StudentLayout({ children, hideSidebar }: StudentLayoutProps) {
   return (
     <SidebarProvider defaultCollapsed={false}>
-      <StudentLayoutContent>{children}</StudentLayoutContent>
+      <StudentLayoutContent hideSidebar={hideSidebar}>{children}</StudentLayoutContent>
     </SidebarProvider>
   );
 }

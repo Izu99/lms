@@ -1,4 +1,7 @@
+"use client";
+
 import { useState, useEffect } from 'react';
+import { isAxiosError } from '../../../lib/utils/error';
 import { TeacherInstituteService } from '../services/InstituteService';
 import { InstituteData } from '../types/institute.types';
 
@@ -6,7 +9,7 @@ interface UseTeacherInstitutesReturn {
   institutes: InstituteData[];
   isLoading: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
+  refetch: () => void;
 }
 
 export const useTeacherInstitutes = (): UseTeacherInstitutesReturn => {
@@ -20,8 +23,12 @@ export const useTeacherInstitutes = (): UseTeacherInstitutesReturn => {
       setError(null);
       const instituteData = await TeacherInstituteService.getInstitutes();
       setInstitutes(instituteData);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch institutes');
+    } catch (err: unknown) {
+      let errorMessage = 'Failed to fetch institutes';
+      if (isAxiosError(err) && err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      setError(errorMessage);
       console.error('Error fetching teacher institutes:', err);
     } finally {
       setIsLoading(false);
@@ -29,7 +36,11 @@ export const useTeacherInstitutes = (): UseTeacherInstitutesReturn => {
   };
 
   useEffect(() => {
-    fetchInstitutes();
+    if (typeof window !== 'undefined') {
+      fetchInstitutes();
+    } else {
+      setIsLoading(false); // Assume not loading on server
+    }
   }, []);
 
   return {

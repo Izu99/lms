@@ -1,11 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TeacherLayout } from "@/components/teacher/TeacherLayout";
-import { FileText, Plus, Search, Users, TrendingUp, Calendar, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Pagination } from "@/components/ui/pagination";
 import { toast } from "sonner";
+import {
+  FileText,
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Users,
+  TrendingUp,
+  Calendar,
+} from "lucide-react";
+import { TeacherLayout } from "@/components/teacher/TeacherLayout";
+import { LoadingComponent } from "@/components/common/LoadingComponent";
+import { ErrorComponent } from "@/components/common/ErrorComponent";
+import { EmptyStateComponent } from "@/components/common/EmptyStateComponent";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,26 +27,29 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useTeacherPapers } from "@/modules/teacher/hooks/useTeacherPapers";
-import { PaperData } from "@/modules/teacher/types/paper.types";
-import { LoadingComponent } from "@/components/common/LoadingComponent";
-import { ErrorComponent } from "@/components/common/ErrorComponent";
-import { EmptyStateComponent } from "@/components/common/EmptyStateComponent";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import { TeacherPaperService } from "@/modules/teacher/services/PaperService";
+import { PaperData } from "@/modules/teacher/types/paper.types";
+import { isAxiosError } from '@/lib/utils/error';
+import { useTeacherPapers } from "@/modules/teacher/hooks/useTeacherPapers"; // Import the hook
 
 export default function TeacherPapersPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const papersPerPage = 12;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [paperToDelete, setPaperToDelete] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const papersPerPage = 10;
+
   const router = useRouter();
 
-  const { papers, isLoading, error, refetch } = useTeacherPapers();
+  const { papers, isLoading, error, refetch } = useTeacherPapers(); // Destructure from the hook
 
   const filteredPapers = papers.filter((paper) =>
-    paper.title.toLowerCase().includes(searchQuery.toLowerCase())
+    paper.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    paper.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Pagination calculations
@@ -49,17 +63,17 @@ export default function TeacherPapersPage() {
     setCurrentPage(1);
   }, [searchQuery]);
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "No deadline";
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (dateString: string | Date) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
       month: "short",
       day: "numeric",
-      year: "numeric",
     });
   };
 
-  const handleDelete = (paperId: string) => {
-    setPaperToDelete(paperId);
+  const handleDelete = (id: string) => {
+    setPaperToDelete(id);
     setDeleteDialogOpen(true);
   };
 
@@ -71,9 +85,13 @@ export default function TeacherPapersPage() {
       await TeacherPaperService.deletePaper(paperToDelete);
       refetch();
       toast.success("Paper deleted successfully");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error deleting paper:", error);
-      toast.error(error.response?.data?.message || "Failed to delete paper. Please try again.");
+      let errorMessage = "Failed to delete paper. Please try again.";
+      if (isAxiosError(error) && error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      toast.error(errorMessage);
     } finally {
       setDeleteLoading(null);
       setDeleteDialogOpen(false);
@@ -269,7 +287,7 @@ export default function TeacherPapersPage() {
               type="text"
               placeholder="Search papers..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-1 outline-none text-sm bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>

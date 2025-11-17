@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
+  Package, // Add this
 } from "lucide-react";
 import {
   Sidebar,
@@ -56,6 +57,12 @@ const menuItems = [
     icon: Video,
     href: "/student/zoom",
     colorClass: "sidebar-icon-zoom",
+  },
+  {
+    title: "Course Packages",
+    icon: Package,
+    href: "/student/course-packages",
+    colorClass: "sidebar-icon-course-packages",
   },
 ];
 

@@ -1,7 +1,7 @@
 import { ApiClient } from '../../shared/utils/api';
 import { ZoomLinkData } from '../types/zoom.types';
 
-export class TeacherZoomService {
+export class ZoomService {
   static async getZoomLinks(): Promise<ZoomLinkData[]> {
     const response = await ApiClient.get<{ zoomLinks: ZoomLinkData[] }>('/zoom');
     return response.zoomLinks || [];

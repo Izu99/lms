@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
-import { TeacherStudentService } from '../services/StudentService';
-import { StudentData } from '../types/student.types';
+"use client";
+
+import { useState, useEffect } from "react";
+import { StudentService } from "../services/StudentService"; // Corrected import
+import { StudentData } from "../types/student.types";
+import { isAxiosError } from '../../../lib/utils/error';
 
 interface UseTeacherStudentsReturn {
   students: StudentData[];
   isLoading: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
+  refetch: () => void;
 }
 
 export const useTeacherStudents = (): UseTeacherStudentsReturn => {
@@ -18,10 +21,14 @@ export const useTeacherStudents = (): UseTeacherStudentsReturn => {
     try {
       setIsLoading(true);
       setError(null);
-      const studentData = await TeacherStudentService.getStudents();
+      const studentData = await StudentService.getStudents(); // Corrected service call
       setStudents(studentData);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch students');
+    } catch (err: unknown) {
+      let errorMessage = 'Failed to fetch students';
+      if (isAxiosError(err) && err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      setError(errorMessage);
       console.error('Error fetching teacher students:', err);
     } finally {
       setIsLoading(false);

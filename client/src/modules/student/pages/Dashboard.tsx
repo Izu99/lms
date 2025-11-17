@@ -3,7 +3,6 @@
 import { useStudentDashboard } from "../hooks/useDashboard";
 import { DashboardStats } from "../components/DashboardStats";
 import { useAuth } from "../../shared/hooks/useAuth";
-import Navbar from "@/components/Navbar";
 import { useRouter } from "next/navigation";
 
 export function StudentDashboard() {
@@ -19,11 +18,8 @@ export function StudentDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen theme-bg-secondary">
-        <Navbar user={user} onLogout={handleLogout} />
-        <div className="flex justify-center items-center h-64">
-          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        </div>
+      <div className="min-h-screen theme-bg-secondary flex justify-center items-center">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -31,7 +27,6 @@ export function StudentDashboard() {
   if (error) {
     return (
       <div className="min-h-screen theme-bg-secondary">
-        <Navbar user={user} onLogout={handleLogout} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
             <h3 className="text-lg font-medium text-red-800 mb-2">Error Loading Dashboard</h3>
@@ -51,7 +46,6 @@ export function StudentDashboard() {
   if (!data) {
     return (
       <div className="min-h-screen theme-bg-secondary">
-        <Navbar user={user} onLogout={handleLogout} />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <p>No data available</p>
         </div>
@@ -68,7 +62,6 @@ export function StudentDashboard() {
 
   return (
     <div className="min-h-screen theme-bg-secondary">
-      <Navbar user={user} onLogout={handleLogout} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Header */}
         <div className="mb-8">

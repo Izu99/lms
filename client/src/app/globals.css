@@ -247,6 +247,14 @@
   background: var(--sidebar-icon-students);
 }
 
+.sidebar-icon-zoom {
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); /* Distinct blue gradient for Zoom */
+}
+
+.sidebar-icon-course-packages {
+  background: linear-gradient(135deg, #fbc02d 0%, #f57c00 100%); /* Yellow/Orange gradient for Course Packages */
+}
+
 .sidebar-icon-institute-year {
   background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); /* Blue-green gradient */
 }
@@ -551,4 +559,35 @@ button.sidebar-icon-logout:hover {
 .scrollbar-purple::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #a78bfa 0%, #8b5cf6 100%);
   border-color: transparent;
+}
+
+
+/* ✅ Popover & Dropdown Z-Index Fix */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+[data-slot="popover-content"] {
+  z-index: 9999 !important;
+}
+
+/* Ensure Command items are clickable */
+[cmdk-item] {
+  cursor: pointer !important;
+  user-select: none;
+}
+
+[cmdk-item]:hover {
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
+}
+
+/* Fix for modal popovers */
+.radix-popover-content {
+  z-index: 9999 !important;
+}
+
+/* Ensure popover portal is on top */
+[data-radix-portal] {
+  z-index: 9999 !important;
 }
