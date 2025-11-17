@@ -64,6 +64,7 @@ const allowedOrigins = [
     process.env.CLIENT_ORIGIN,
     process.env.PRODUCTION_CLIENT_URL,
     process.env.VERCEL_CLIENT_URL,
+    'https://www.ezyict.lk', // Added to resolve CORS blocked origin issue
     ...(NODE_ENV === 'development' ? ['http://localhost:3000'] : [])
 ].filter(Boolean);
 app.use((0, cors_1.default)({

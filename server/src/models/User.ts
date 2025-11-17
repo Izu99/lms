@@ -51,9 +51,6 @@ const userSchema = new mongoose.Schema<IUser>({
 }, { timestamps: true });
 
 // ✅ PERFORMANCE: Add indexes for faster queries
-userSchema.index({ username: 1 });
-userSchema.index({ email: 1 });
-userSchema.index({ phoneNumber: 1 });
 userSchema.index({ role: 1, status: 1 });
 userSchema.index({ institute: 1, year: 1 });
 
