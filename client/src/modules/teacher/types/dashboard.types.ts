@@ -79,10 +79,17 @@ export interface DailyActivity {
   students: number;
 }
 
+export interface PerformanceDistributionData {
+  label: string;
+  count: number;
+  percentage: number;
+}
+
 export interface TeacherDashboardData {
   stats: TeacherDashboardStats;
   recentVideos: TeacherVideoSummary[];
   recentPapers: TeacherPaperSummary[];
   students: StudentSummary[];
   dailyActivity: DailyActivity[]; // New field
+  performanceDistribution: PerformanceDistributionData[];
 }

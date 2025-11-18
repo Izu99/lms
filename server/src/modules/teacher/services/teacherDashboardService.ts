@@ -236,6 +236,47 @@ export class TeacherDashboardService {
     }
   }
 
+  static async getPerformanceDistribution(teacherId: string) {
+    const teacherPapers = await Paper.find({ teacherId }).select('_id').lean();
+    const teacherPaperIds = teacherPapers.map(p => p._id);
+
+    const attempts = await StudentAttempt.find({
+      paperId: { $in: teacherPaperIds },
+      status: 'submitted'
+    }).select('percentage').lean();
+
+    const distribution = {
+      excellent: { count: 0, label: "Excellent (90-100%)" },
+      good: { count: 0, label: "Good (75-89%)" },
+      average: { count: 0, label: "Average (60-74%)" },
+      belowAverage: { count: 0, label: "Below Average (<60%)" },
+    };
+
+    for (const attempt of attempts) {
+      if (attempt.percentage >= 90) {
+        distribution.excellent.count++;
+      } else if (attempt.percentage >= 75) {
+        distribution.good.count++;
+      } else if (attempt.percentage >= 60) {
+        distribution.average.count++;
+      } else {
+        distribution.belowAverage.count++;
+      }
+    }
+
+    const totalAttempts = attempts.length;
+    if (totalAttempts === 0) {
+      return Object.values(distribution).map(d => ({ ...d, percentage: 0 }));
+    }
+
+    return [
+      { ...distribution.excellent, percentage: (distribution.excellent.count / totalAttempts) * 100 },
+      { ...distribution.good, percentage: (distribution.good.count / totalAttempts) * 100 },
+      { ...distribution.average, percentage: (distribution.average.count / totalAttempts) * 100 },
+      { ...distribution.belowAverage, percentage: (distribution.belowAverage.count / totalAttempts) * 100 },
+    ];
+  }
+
   static async getAnalytics(teacherId: string, days = 30): Promise<TeacherAnalytics> {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);

@@ -8,10 +8,9 @@ export interface CoursePackageData {
   price: number;
   videos: (string | VideoData)[]; // Array of Video IDs or populated videos
   papers: (string | PaperData)[]; // Array of Paper IDs or populated papers
-  freeForPhysicalStudents: boolean;
-  freeForAllInstituteYear: boolean;
-  institute?: { _id: string; name: string }; // Populated Institute
-  year?: { _id: string; name: string };      // Populated Year
+  availability: "all" | "physical";
+  institute?: string; // Institute ID
+  year?: string;      // Year ID
   createdBy: { _id: string; username: string };
   createdAt: string;
   updatedAt: string;

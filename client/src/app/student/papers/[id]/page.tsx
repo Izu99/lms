@@ -668,6 +668,23 @@ export default function PaperAttempt() {
           </div>
         )}
       </main>
+
+      <AlertDialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to submit?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have answered {answeredCount} out of {totalQuestions} questions.
+              Unanswered questions will be marked as incorrect. You cannot change your
+              answers after submitting.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSubmit}>Submit</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

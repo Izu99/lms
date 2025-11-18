@@ -16,6 +16,8 @@ export function StudentDashboard() {
   };
   const { data, isLoading, error, refetch } = useStudentDashboard();
 
+  console.log('Dashboard data:', data);
+
   if (isLoading) {
     return (
       <div className="min-h-screen theme-bg-secondary flex justify-center items-center">
@@ -100,7 +102,7 @@ export function StudentDashboard() {
           <div className="theme-bg-primary rounded-lg shadow-sm theme-border p-4 sm:p-6">
             <h2 className="text-lg font-semibold theme-text-primary mb-4">Recent Videos</h2>
             <div className="space-y-3">
-              {data.recentVideos.length > 0 ? data.recentVideos.map((video) => (
+              {data.recentVideos && data.recentVideos.length > 0 ? data.recentVideos.map((video) => (
                 <div key={video._id} className="flex items-center gap-3 sm:gap-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                   <div className="w-12 h-9 sm:w-16 sm:h-12 bg-gray-900 rounded flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-xs">▶</span>
@@ -122,7 +124,7 @@ export function StudentDashboard() {
           <div className="theme-bg-primary rounded-lg shadow-sm theme-border p-4 sm:p-6">
             <h2 className="text-lg font-semibold theme-text-primary mb-4">Available Papers</h2>
             <div className="space-y-3">
-              {data.availablePapers.length > 0 ? data.availablePapers.map((paper) => (
+              {data.availablePapers && data.availablePapers.length > 0 ? data.availablePapers.map((paper) => (
                 <div key={paper._id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                   <div className="min-w-0 flex-1">
                     <h3 className="font-medium theme-text-primary truncate">{paper.title}</h3>

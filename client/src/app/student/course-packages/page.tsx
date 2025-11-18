@@ -5,18 +5,11 @@ import { useStudentCoursePackages } from "@/modules/student/hooks/useStudentCour
 import { CoursePackageData } from "@/modules/shared/types/course-package.types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function StudentCoursePackagesPage() {
   const { coursePackages, isLoading, error, refetch } = useStudentCoursePackages();
-
-  const handlePurchase = async (pkg: CoursePackageData) => {
-    // Implement purchase logic here
-    // This would typically involve an API call to a payment gateway or enrollment service
-    toast.info(`Attempting to purchase "${pkg.title}" for LKR ${pkg.price.toFixed(2)}`);
-    // Example: await CoursePackageService.purchaseCoursePackage(pkg._id);
-    // On success: toast.success("Purchase successful!");
-    // On failure: toast.error("Purchase failed.");
-  };
+  const router = useRouter();
 
   if (isLoading) {
     return (
@@ -53,17 +46,23 @@ export default function StudentCoursePackagesPage() {
               <div>
                 <h3 className="text-xl font-bold theme-text-primary mb-2">{pkg.title}</h3>
                 <p className="theme-text-secondary text-sm mb-4">{pkg.description || "No description provided."}</p>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-lg font-semibold theme-text-primary">LKR {pkg.price.toFixed(2)}</span>
-                  {pkg.freeForAllInstituteYear && (
+                <div className="flex items-center gap-2 mb-3">
+                  {/* DollarSign icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-gray-500 dark:text-gray-400"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                  <span className="text-xl font-bold text-green-600 dark:text-green-400">LKR {pkg.price.toFixed(2)}</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4 text-sm theme-text-secondary">
+                  {pkg.availability === "all" && (
                     <span className="px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 rounded-full">Free for All</span>
                   )}
-                  {!pkg.freeForAllInstituteYear && pkg.freeForPhysicalStudents && (
+                  {pkg.availability === "physical" && (
                     <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded-full">Free for Physical</span>
                   )}
                 </div>
                 <div className="text-sm theme-text-secondary mb-2">
-                  {pkg.institute && pkg.year ? (
+                  {/* The shared CoursePackageData type has institute/year as populated objects or IDs.
+                      For student display, we expect them to be populated if applicable. */}
+                  {pkg.institute?.name && pkg.year?.name ? (
                     <span>For {pkg.institute.name} - {pkg.year.name}</span>
                   ) : (
                     <span>General Package</span>
@@ -78,8 +77,8 @@ export default function StudentCoursePackagesPage() {
                 </div>
               </div>
               <div className="mt-4">
-                <Button className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white" onClick={() => handlePurchase(pkg)}>
-                  Purchase Package
+                <Button className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white" onClick={() => router.push(`/student/course-packages/${pkg._id}`)}>
+                  View Details
                 </Button>
               </div>
             </div>

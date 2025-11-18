@@ -38,6 +38,14 @@ export function TeacherDashboard() {
   const { data, isLoading, error, refetch } = useTeacherDashboard();
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
 
+  // Hardcoded performance data
+  const performanceData = [
+    { label: "Excellent (90-100%)", percentage: 25, color: "bg-green-500", count: 25 },
+    { label: "Good (75-89%)", percentage: 35, color: "bg-blue-500", count: 35 },
+    { label: "Average (60-74%)", percentage: 30, color: "bg-orange-500", count: 30 },
+    { label: "Below Average (<60%)", percentage: 10, color: "bg-red-500", count: 10 },
+  ];
+
   if (isLoading) {
     return <LoadingComponent />;
   }
@@ -49,6 +57,15 @@ export function TeacherDashboard() {
   if (!data) {
     return <p className="text-gray-500">No data available</p>;
   }
+
+  const totalContent = data.stats.totalVideos + data.stats.totalPapers;
+  const videosPercentage = totalContent > 0 ? (data.stats.totalVideos / totalContent) * 100 : 0;
+  const papersPercentage = totalContent > 0 ? (data.stats.totalPapers / totalContent) * 100 : 0;
+  
+  // Calculate donut chart segments
+  const circumference = 2 * Math.PI * 40; // radius = 40
+  const videosLength = (videosPercentage / 100) * circumference;
+  const papersLength = (papersPercentage / 100) * circumference;
 
   return (
     <div className="space-y-6">
@@ -80,6 +97,134 @@ export function TeacherDashboard() {
 
       {/* Dashboard Stats */}
       <TeacherDashboardStats stats={data.stats} />
+
+      {/* Performance Overview and Content Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Student Performance Overview - Takes 2 columns */}
+        <div className="lg:col-span-2 bg-[#1a2332] rounded-2xl shadow-xl border border-[#2d3748] p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
+              Student Performance Overview
+            </h2>
+            <select className="px-3 py-1.5 border border-gray-600 rounded-lg text-sm font-medium text-gray-300 bg-[#243447] hover:border-gray-500 transition-colors">
+              <option>Last 7 days</option>
+              <option>Last 30 days</option>
+              <option>Last 90 days</option>
+            </select>
+          </div>
+
+          {/* Performance Bars */}
+          <div className="space-y-4 mb-6">
+            {performanceData.map((item, index) => (
+              <div key={index}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-300">{item.label}</span>
+                  <span className="text-sm font-bold text-white">{item.percentage}%</span>
+                </div>
+                <div className="h-4 bg-[#243447] rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full ${item.color} rounded-full transition-all duration-1000 flex items-center justify-end pr-2`}
+                    style={{ width: `${item.percentage}%` }}
+                  >
+                    <span className="text-xs font-bold text-white">{item.count}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Stats */}
+          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-700">
+            <div className="text-center">
+              <p className="text-3xl font-bold text-green-400">{data.stats.activeStudents}</p>
+              <p className="text-sm text-gray-400 mt-1">Active Students</p>
+            </div>
+            <div className="text-center">
+              <p className="text-3xl font-bold text-blue-400">{data.stats.averageEngagement?.toFixed(0)}%</p>
+              <p className="text-sm text-gray-400 mt-1">Avg Engagement</p>
+            </div>
+            <div className="text-center">
+              <p className="text-3xl font-bold text-orange-400">{data.stats.activePapers}</p>
+              <p className="text-sm text-gray-400 mt-1">Active Papers</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Distribution - Takes 1 column */}
+        <div className="bg-[#1a2332] rounded-2xl shadow-xl border border-[#2d3748] p-6">
+          <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center">
+              <Award className="w-5 h-5 text-white" />
+            </div>
+            Content Distribution
+          </h2>
+
+          {/* Donut Chart */}
+          <div className="relative w-48 h-48 mx-auto mb-6">
+            <svg viewBox="0 0 100 100" className="transform -rotate-90">
+              {/* Background circle */}
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#243447"
+                strokeWidth="20"
+              />
+              {/* Green segment - Videos */}
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#10b981"
+                strokeWidth="20"
+                strokeDasharray={`${videosLength} ${circumference}`}
+                strokeDashoffset="0"
+                className="transition-all duration-1000"
+              />
+              {/* Orange segment - Papers */}
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#f97316"
+                strokeWidth="20"
+                strokeDasharray={`${papersLength} ${circumference}`}
+                strokeDashoffset={`-${videosLength}`}
+                className="transition-all duration-1000"
+              />
+            </svg>
+            {/* Center text */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <p className="text-4xl font-bold text-white">{totalContent}</p>
+              <p className="text-sm text-gray-400">Total</p>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-[#243447]">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span className="text-sm font-medium text-gray-300">Videos</span>
+              </div>
+              <span className="text-lg font-bold text-white">{data.stats.totalVideos}</span>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-[#243447]">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                <span className="text-sm font-medium text-gray-300">Papers</span>
+              </div>
+              <span className="text-lg font-bold text-white">{data.stats.totalPapers}</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Activity Timeline Chart */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300">

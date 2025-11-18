@@ -32,6 +32,11 @@ export class TeacherDashboardService {
     return response.data.data;
   }
 
+  static async getPerformanceDistribution() {
+    const response = await ApiClient.get<{ success: boolean; data: any[] }>('/teacher/dashboard/performance-distribution');
+    return response.data.data;
+  }
+
   static async getStudents(limit = 10): Promise<StudentSummary[]> {
     const response = await ApiClient.get<{ success: boolean; data: StudentSummary[] }>(`/teacher/dashboard/students?limit=${limit}`);
     return response.data.data;

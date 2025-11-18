@@ -1,0 +1,200 @@
+"use client";
+
+import { StudentLayout } from "@/components/student/StudentLayout";
+import { useRouter } from "next/navigation";
+import { use, useEffect, useState } from "react";
+import { CoursePackageData, VideoData, PaperData } from "@/modules/shared/types/course-package.types";
+import { api } from "@/lib/api-client";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Video, FileText, School, GraduationCap, Play } from "lucide-react";
+import { LoadingComponent } from "@/components/common/LoadingComponent";
+import { ErrorComponent } from "@/components/common/ErrorComponent";
+import { API_BASE_URL } from "@/lib/constants";
+
+interface CoursePackageDetailsPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default function CoursePackageDetailsPage({ params }: CoursePackageDetailsPageProps) {
+  const { id } = use(params);
+  const router = useRouter();
+  const [coursePackage, setCoursePackage] = useState<CoursePackageData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCoursePackage = async () => {
+      try {
+        setIsLoading(true);
+        console.log('Fetching course package details for ID:', id);
+        const response = await api.get<{ coursePackage: CoursePackageData }>(`/course-packages/${id}`);
+        console.log('API Response for course package details:', response.data);
+        setCoursePackage(response.data.coursePackage);
+      } catch (err: any) {
+        console.error("Error fetching course package details:", err);
+        setError(err.response?.data?.message || "Failed to load course package details.");
+        toast.error(err.response?.data?.message || "Failed to load course package details.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchCoursePackage();
+    }
+  }, [id]);
+
+  const handlePurchase = async () => {
+    if (!coursePackage) return;
+    // Implement purchase logic here
+    toast.info(`Attempting to purchase "${coursePackage.title}" for LKR ${coursePackage.price?.toFixed(2) ?? '0.00'}`);
+    // Example: await CoursePackageService.purchaseCoursePackage(coursePackage._id);
+    // On success: toast.success("Purchase successful!");
+    // On failure: toast.error("Purchase failed.");
+  };
+
+  if (isLoading) {
+    return (
+      <StudentLayout>
+        <LoadingComponent />
+      </StudentLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <StudentLayout>
+        <ErrorComponent message={error} onRetry={() => router.back()} />
+      </StudentLayout>
+    );
+  }
+
+  if (!coursePackage) {
+    return (
+      <StudentLayout>
+        <div className="text-center py-8">
+          <h2 className="text-xl font-semibold theme-text-primary mb-2">Course Package Not Found</h2>
+          <p className="theme-text-secondary mb-4">The requested course package could not be loaded.</p>
+          <Button onClick={() => router.back()}>Go Back</Button>
+        </div>
+      </StudentLayout>
+    );
+  }
+
+  return (
+    <StudentLayout>
+      <div className="space-y-8">
+        {/* Header Section */}
+        <div className="theme-card p-6 sm:p-8">
+          <h1 className="text-3xl sm:text-4xl font-bold theme-text-primary mb-4">{coursePackage.title}</h1>
+          <p className="theme-text-secondary text-lg mb-6">{coursePackage.description || "No description provided."}</p>
+
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 mb-6">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold text-green-600 dark:text-green-400">LKR {coursePackage.price?.toFixed(2) ?? '0.00'}</span>
+            </div>
+
+            {coursePackage.institute?.name && coursePackage.year?.name && (
+              <div className="flex items-center gap-2 text-base theme-text-secondary">
+                <School className="w-5 h-5 text-purple-500" />
+                <span>For {coursePackage.institute.name} - {coursePackage.year.name}</span>
+              </div>
+            )}
+
+            {coursePackage.availability === "all" && (
+              <span className="px-3 py-1 text-sm font-medium bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 rounded-full">Free for All</span>
+            )}
+            {coursePackage.availability === "physical" && (
+              <span className="px-3 py-1 text-sm font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded-full">Free for Physical</span>
+            )}
+          </div>
+
+          <Button className="w-full sm:w-auto bg-brand-primary hover:bg-brand-primary-dark text-white text-lg py-3 px-6" onClick={handlePurchase}>
+            Purchase Package
+          </Button>
+        </div>
+
+        {/* Videos Section */}
+        <div className="theme-card p-6">
+          <h2 className="text-2xl font-bold theme-text-primary mb-4 flex items-center gap-2">
+            <Video className="w-6 h-6 text-blue-500" /> Included Videos ({(coursePackage.videos?.length ?? 0)})
+          </h2>
+          {(coursePackage.videos?.length ?? 0) > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {coursePackage.videos?.map((video) => {
+                const videoData = typeof video === 'string' ? null : video;
+                if (!videoData) return null;
+
+                return (
+                  <div key={videoData._id} className="relative w-full h-48 bg-gray-900 cursor-pointer group overflow-hidden rounded-lg shadow-md">
+                    <video
+                      src={`${API_BASE_URL}/api/uploads/${videoData.videoUrl}`}
+                      className="w-full h-full object-cover"
+                      preload="metadata"
+                    />
+                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg opacity-0 group-hover:opacity-100">
+                        <Play size={32} className="text-white" />
+                      </div>
+                    </div>
+                    <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                      Preview
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+                      <h3 className="font-medium text-white truncate">{videoData.title}</h3>
+                      <p className="text-xs text-gray-300 line-clamp-1">{videoData.description || "No description"}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="theme-text-secondary">No videos included in this package.</p>
+          )}
+        </div>
+
+        {/* Papers Section */}
+        <div className="theme-card p-6">
+          <h2 className="text-2xl font-bold theme-text-primary mb-4 flex items-center gap-2">
+            <FileText className="w-6 h-6 text-orange-500" /> Included Papers ({(coursePackage.papers?.length ?? 0)})
+          </h2>
+          {(coursePackage.papers?.length ?? 0) > 0 ? (
+            <ul className="space-y-3">
+              {coursePackage.papers?.map((paper) => {
+                const paperData = typeof paper === 'string' ? null : paper; // Ensure it's PaperData
+                if (!paperData) return null; // Skip if not populated
+
+                return (
+                  <li key={paperData._id} className="flex items-center gap-4 p-3 theme-bg-secondary rounded-lg hover:theme-bg-hover transition-colors">
+                    <FileText className="w-5 h-5 text-orange-400 flex-shrink-0" />
+                    <div className="flex-1">
+                      <h3 className="font-medium theme-text-primary">{paperData.title}</h3>
+                      <p className="text-sm theme-text-secondary">
+                        {paperData.description || "No description"}
+                      </p>
+                      <p className="text-sm theme-text-secondary">
+                        {paperData.totalQuestions} Questions • {paperData.timeLimit} Minutes
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="theme-text-secondary">No papers included in this package.</p>
+          )}
+        </div>
+
+        {/* Purchase Button at the bottom */}
+        <div className="theme-card p-6 flex justify-center">
+          <Button className="w-full sm:w-auto bg-brand-primary hover:bg-brand-primary-dark text-white text-lg py-3 px-6" onClick={handlePurchase}>
+            Purchase Package
+          </Button>
+        </div>
+      </div>
+    </StudentLayout>
+  );
+}

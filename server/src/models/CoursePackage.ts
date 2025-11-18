@@ -6,8 +6,7 @@ export interface ICoursePackage extends Document {
   price: number;
   videos: Types.ObjectId[];
   papers: Types.ObjectId[];
-  freeForPhysicalStudents: boolean;
-  freeForAllInstituteYear: boolean;
+  availability: "all" | "physical";
   institute?: Types.ObjectId; // Optional, if not free for all
   year?: Types.ObjectId;      // Optional, if not free for all
   createdBy: Types.ObjectId;
@@ -22,8 +21,7 @@ const CoursePackageSchema: Schema = new Schema(
     price: { type: Number, required: true, min: 0 },
     videos: [{ type: Schema.Types.ObjectId, ref: 'Video' }],
     papers: [{ type: Schema.Types.ObjectId, ref: 'Paper' }],
-    freeForPhysicalStudents: { type: Boolean, default: false },
-    freeForAllInstituteYear: { type: Boolean, default: false },
+    availability: { type: String, enum: ['all', 'physical'], default: 'all' },
     institute: { type: Schema.Types.ObjectId, ref: 'Institute' },
     year: { type: Schema.Types.ObjectId, ref: 'Year' },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },

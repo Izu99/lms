@@ -94,19 +94,34 @@ export class StudentDashboardService {
   }
 
   static async getRecentActivity(studentId: string, limit = 10): Promise<StudentActivity[]> {
-    const attempts = await StudentAttempt.find({ studentId })
-      .populate('paperId', 'title')
-      .sort({ updatedAt: -1 })
-      .limit(limit)
-      .lean();
+    try {
+      const attempts = await StudentAttempt.find({ studentId })
+        .populate('paperId', 'title')
+        .sort({ updatedAt: -1 })
+        .limit(limit)
+        .lean();
 
-    return attempts
-      .filter(attempt => !!attempt.paperId)
-      .map(attempt => ({
-      type: attempt.status === 'submitted' ? 'paper_completed' : 'paper_started' as const,
-      title: (attempt.paperId as any).title,
-      timestamp: attempt.status === 'submitted' ? attempt.submittedAt! : attempt.startedAt,
-      score: attempt.status === 'submitted' ? attempt.score : undefined
-    }));
+      console.log('Attempts:', JSON.stringify(attempts, null, 2));
+
+      return attempts
+        .filter(attempt => !!attempt.paperId)
+        .map(attempt => {
+          try {
+            return {
+              type: attempt.status === 'submitted' ? 'paper_completed' : 'paper_started' as const,
+              title: (attempt.paperId as any).title,
+              timestamp: attempt.status === 'submitted' ? attempt.submittedAt! : attempt.startedAt,
+              score: attempt.status === 'submitted' ? attempt.score : undefined
+            };
+          } catch (error) {
+            console.error('Error processing attempt:', attempt, error);
+            return null;
+          }
+        })
+        .filter((activity): activity is StudentActivity => activity !== null);
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+      return [];
+    }
   }
 }

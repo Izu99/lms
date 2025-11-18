@@ -8,7 +8,9 @@ import { CoursePackageForm } from "@/components/teacher/CoursePackageForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useCoursePackages } from "@/modules/teacher/hooks/useCoursePackages";
 import { CoursePackageData } from "@/modules/shared/types/course-package.types";
+import { CoursePackageService } from "@/modules/teacher/services/coursePackageService";
 import { toast } from "sonner";
+import { CoursePackageCard } from "@/components/teacher/CoursePackageCard";
 
 export default function TeacherCoursePackagesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -31,10 +33,16 @@ export default function TeacherCoursePackagesPage() {
     if (!confirm("Are you sure you want to delete this course package? This action cannot be undone.")) {
       return;
     }
-    // Implement delete logic using a service
-    // await CoursePackageService.deleteCoursePackage(id);
-    toast.success("Course package deleted successfully (mock)"); // Replace with actual delete
-    refetch();
+    
+    try {
+      await CoursePackageService.deleteCoursePackage(id);
+      toast.success("Course package deleted successfully!");
+      refetch();
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || "Failed to delete course package";
+      toast.error(errorMessage);
+      console.error(error);
+    }
   };
 
   if (isLoading) {
@@ -65,7 +73,7 @@ export default function TeacherCoursePackagesPage() {
               <PlusCircle className="mr-2 h-5 w-5" /> Create New Package
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-4xl">
+          <DialogContent className="theme-card w-full sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingPackage ? "Edit Course Package" : "Create New Course Package"}</DialogTitle>
             </DialogHeader>
@@ -91,39 +99,12 @@ export default function TeacherCoursePackagesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {coursePackages.map((pkg) => (
-            <div key={pkg._id} className="theme-card p-6 flex flex-col justify-between">
-              <div>
-                <h3 className="text-xl font-bold theme-text-primary mb-2">{pkg.title}</h3>
-                <p className="theme-text-secondary text-sm mb-4">{pkg.description || "No description provided."}</p>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-lg font-semibold theme-text-primary">LKR {pkg.price.toFixed(2)}</span>
-                  {pkg.freeForAllInstituteYear && (
-                    <span className="px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 rounded-full">Free for All</span>
-                  )}
-                  {!pkg.freeForAllInstituteYear && pkg.freeForPhysicalStudents && (
-                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded-full">Free for Physical</span>
-                  )}
-                </div>
-                <div className="text-sm theme-text-secondary mb-2">
-                  {pkg.institute && pkg.year ? (
-                    <span>For {pkg.institute.name} - {pkg.year.name}</span>
-                  ) : (
-                    <span>General Package</span>
-                  )}
-                </div>
-                <div className="mb-4">
-                  <p className="text-sm font-medium theme-text-primary">Includes:</p>
-                  <ul className="list-disc list-inside text-sm theme-text-secondary ml-2">
-                    <li>{pkg.videos.length} Videos</li>
-                    <li>{pkg.papers.length} Papers</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <Button variant="outline" size="sm" onClick={() => handleEdit(pkg)}>Edit</Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDelete(pkg._id)}>Delete</Button>
-              </div>
-            </div>
+            <CoursePackageCard
+              key={pkg._id}
+              pkg={pkg}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}

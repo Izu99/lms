@@ -30,7 +30,7 @@ export function MultiSelectDropdown({
 
   return (
     <Popover>
-      <PopoverTrigger className={`border px-3 py-2 rounded ${className}`}>
+      <PopoverTrigger className={`w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${className}`}>
         {selectedLabels.length > 0 ? selectedLabels.join(", ") : placeholder}
       </PopoverTrigger>
       <PopoverContent className="w-64 p-2">

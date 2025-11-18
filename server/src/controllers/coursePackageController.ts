@@ -22,16 +22,16 @@ export const getCoursePackages = async (req: Request, res: Response) => {
     const user = (req as any).user;
     let query: any = {};
 
-    // Students should only see packages relevant to them or general ones
-    if (user.role === 'student') {
-      query = {
-        $or: [
-          { freeForAllInstituteYear: true },
-          { freeForPhysicalStudents: true, 'studentType': user.studentType }, // Assuming studentType is available on user
-          { institute: user.institute, year: user.year },
-        ],
-      };
-    }
+    // No specific filtering for students for now, show all packages
+    // if (user.role === 'student') {
+    //   query = {
+    //     $or: [
+    //       { availability: 'all' },
+    //       { availability: 'physical', 'studentType': user.studentType },
+    //       { institute: user.institute, year: user.year },
+    //     ],
+    //   };
+    // }
 
     const coursePackages = await populateCoursePackage(CoursePackage.find(query)).sort({ createdAt: -1 });
     res.json({ coursePackages });
@@ -53,17 +53,17 @@ export const getCoursePackageById = async (req: Request, res: Response) => {
     }
 
     // Basic authorization for students (can be expanded)
-    const user = (req as any).user;
-    if (user.role === 'student') {
-      const isAuthorized =
-        coursePackage.freeForAllInstituteYear ||
-        (coursePackage.freeForPhysicalStudents && user.studentType === 'Physical') ||
-        (coursePackage.institute?.equals(user.institute) && coursePackage.year?.equals(user.year));
+    // const user = (req as any).user;
+    // if (user.role === 'student') {
+    //   const isAuthorized =
+    //     coursePackage.freeForAllInstituteYear ||
+    //     (coursePackage.freeForPhysicalStudents && user.studentType === 'Physical') ||
+    //     (coursePackage.institute?.equals(user.institute) && coursePackage.year?.equals(user.year));
       
-      if (!isAuthorized) {
-        return res.status(403).json({ message: 'Not authorized to view this course package' });
-      }
-    }
+    //   if (!isAuthorized) {
+    //     return res.status(403).json({ message: 'Not authorized to view this course package' });
+    //   }
+    // }
 
     res.json({ coursePackage });
   } catch (error) {
@@ -83,14 +83,13 @@ export const createCoursePackage = async (req: Request, res: Response) => {
       price,
       videos,
       papers,
-      freeForPhysicalStudents,
-      freeForAllInstituteYear,
+      availability,
       institute,
       year,
     } = req.body;
 
-    if (!title || price === undefined || !Array.isArray(videos) || !Array.isArray(papers)) {
-      return res.status(400).json({ message: 'Title, price, videos (array), and papers (array) are required' });
+    if (!title || price === undefined || !Array.isArray(videos) || !Array.isArray(papers) || !availability) {
+      return res.status(400).json({ message: 'Title, price, videos (array), papers (array), and availability are required' });
     }
 
     // Validate video and paper IDs
@@ -111,8 +110,7 @@ export const createCoursePackage = async (req: Request, res: Response) => {
       price,
       videos,
       papers,
-      freeForPhysicalStudents: freeForPhysicalStudents || false,
-      freeForAllInstituteYear: freeForAllInstituteYear || false,
+      availability,
       institute: institute || undefined,
       year: year || undefined,
       createdBy,
@@ -139,8 +137,7 @@ export const updateCoursePackage = async (req: Request, res: Response) => {
       price,
       videos,
       papers,
-      freeForPhysicalStudents,
-      freeForAllInstituteYear,
+      availability,
       institute,
       year,
     } = req.body;
@@ -176,8 +173,7 @@ export const updateCoursePackage = async (req: Request, res: Response) => {
     coursePackage.price = price !== undefined ? price : coursePackage.price;
     coursePackage.videos = videos || coursePackage.videos;
     coursePackage.papers = papers || coursePackage.papers;
-    coursePackage.freeForPhysicalStudents = freeForPhysicalStudents !== undefined ? freeForPhysicalStudents : coursePackage.freeForPhysicalStudents;
-    coursePackage.freeForAllInstituteYear = freeForAllInstituteYear !== undefined ? freeForAllInstituteYear : coursePackage.freeForAllInstituteYear;
+    coursePackage.availability = availability || coursePackage.availability;
     coursePackage.institute = institute || undefined;
     coursePackage.year = year || undefined;
 

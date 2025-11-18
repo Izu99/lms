@@ -18,7 +18,7 @@ import {
   ChevronUp,
   Image as ImageIcon
 } from 'lucide-react';
-import Navbar from '@/components/Navbar';
+import { StudentLayout } from '@/components/student/StudentLayout';
 import { Button } from '@/components/ui/button';
 import { API_URL, API_BASE_URL } from '@/lib/constants';
 
@@ -237,7 +237,7 @@ export default function PaperAnswerPage() {
             <AlertTriangle className="text-red-500 text-5xl mb-4 mx-auto" />
             <h2 className="text-xl font-bold text-gray-900 mb-2">Error Loading Answers</h2>
             <p className="text-red-600 mb-4">{error}</p>
-            <Link href="/papers/results/my-results">
+            <Link href="/student/papers/results">
               <Button>Back to My Results</Button>
             </Link>
           </div>
@@ -247,9 +247,7 @@ export default function PaperAnswerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navbar user={user} />
-
+    <StudentLayout>
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
             {/* Review Mode Header */}
@@ -274,7 +272,7 @@ export default function PaperAnswerPage() {
                     <div className="text-gray-700 text-sm">
                       Time Used: {studentAttempt.timeSpent} min
                     </div>
-                    <Link href="/papers/results/my-results">
+                    <Link href="/student/papers/results">
                       <Button variant="outline">Back to Results</Button>
                     </Link>
                   </div>
@@ -513,6 +511,6 @@ export default function PaperAnswerPage() {
             </div>
         </div>
       </main>
-    </div>
+    </StudentLayout>
   );
 }

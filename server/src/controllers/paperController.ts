@@ -180,16 +180,7 @@ export const getPaperById = async (req: Request, res: Response) => {
     const isPaperExpired = paper.deadline ? (new Date() > paper.deadline) : false;
     const hasAttempted = await StudentAttempt.exists({ paperId: id, studentId: requestingUser.id });
     
-    console.log('DEBUG - Paper access conditions:', {
-      paperId: id,
-      studentId: requestingUser.id,
-      isPaperExpired,
-      hasAttempted: !!hasAttempted,
-      showAnswers: !!showAnswers,
-      currentTime: new Date().toISOString(),
-      deadline: paper.deadline?.toISOString(),
-      shouldShowExplanations: ((showAnswers && hasAttempted) || (isPaperExpired && hasAttempted))
-    });
+
 
     // Construct studentPaper
     const studentPaper = {
@@ -336,8 +327,6 @@ export const getStudentResults = async (req: Request, res: Response) => {
     .populate('paperId', 'title description deadline')
     .sort({ submittedAt: -1 });
 
-    console.log('DEBUG - Populated student results:', results);
-
     console.log(`Found ${results.length} submitted results for student ${requestingUser.id}`);
     res.json({ results });
 
@@ -367,20 +356,9 @@ export const getPaperResults = async (req: Request, res: Response) => {
     }
 
     // Check if teacher owns this paper
-    console.log('DEBUG - Paper ownership check:', {
-      paperTeacherId: paper.teacherId.toString(),
-      requestingUserId: requestingUser.id.toString(),
-      paperTitle: paper.title,
-      requestingUserRole: requestingUser.role
-    });
-    
     if (paper.teacherId.toString() !== requestingUser.id.toString()) {
       return res.status(403).json({ 
-        message: 'You can only view results for your own papers',
-        debug: {
-          paperTeacherId: paper.teacherId.toString(),
-          yourId: requestingUser.id.toString()
-        }
+        message: 'You can only view results for your own papers'
       });
     }
 

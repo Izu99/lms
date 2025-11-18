@@ -17,7 +17,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
           </div>
           <div>
             <p className="text-sm theme-text-secondary">Available Videos</p>
-            <p className="text-2xl font-bold theme-text-primary">{stats.availableVideos}</p>
+            <p className="text-2xl font-bold theme-text-primary">{stats.availableVideos ?? 0}</p>
           </div>
         </div>
       </div>
@@ -29,7 +29,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
           </div>
           <div>
             <p className="text-sm theme-text-secondary">Available Papers</p>
-            <p className="text-2xl font-bold theme-text-primary">{stats.availablePapers}</p>
+            <p className="text-2xl font-bold theme-text-primary">{stats.availablePapers ?? 0}</p>
           </div>
         </div>
       </div>
@@ -41,7 +41,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
           </div>
           <div>
             <p className="text-sm theme-text-secondary">Completed Papers</p>
-            <p className="text-2xl font-bold theme-text-primary">{stats.completedPapers}</p>
+            <p className="text-2xl font-bold theme-text-primary">{stats.completedPapers ?? 0}</p>
           </div>
         </div>
       </div>
@@ -53,7 +53,7 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
           </div>
           <div>
             <p className="text-sm theme-text-secondary">Average Score</p>
-            <p className="text-2xl font-bold theme-text-primary">{stats.averageScore.toFixed(1)}%</p>
+            <p className="text-2xl font-bold theme-text-primary">{(stats.averageScore ?? 0).toFixed(1)}%</p>
           </div>
         </div>
       </div>
