@@ -163,7 +163,7 @@ export default function LoginPage() {
                 ezyICT
               </h1>
               <p className="text-blue-200 text-sm font-medium tracking-widest uppercase">
-                Smart Learning Made Easy
+                Smart Learning Made Easy this is a a paltoform that give yuo a wa yto goto future tech industrcy as a pro
               </p>
             </div>
           </div>
