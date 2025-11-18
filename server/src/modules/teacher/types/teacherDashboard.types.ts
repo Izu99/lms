@@ -13,15 +13,17 @@ export interface TeacherVideoSummary extends BaseEntity {
   title: string;
   description: string;
   videoUrl: string;
-  uploadedBy: UserBase | string | undefined;
-  class: any;
   views: number;
-  institute: {
+  class: {
     _id: string;
     name: string;
     location: string;
+  };
+  year: {
+    _id: string;
+    year: number;
+    name: string;
   } | null;
-  year: string | null; // Changed to match current implementation
 }
 
 export interface TeacherPaperSummary extends PaperBase {

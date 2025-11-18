@@ -40,23 +40,27 @@ interface PopulatedPaper {
 export class TeacherDashboardService {
   static async getDashboardStats(teacherId: string): Promise<TeacherDashboardStats> {
     try {
+      const teacherPapers = await Paper.find({ teacherId }).select('_id');
+      const teacherPaperIds = teacherPapers.map(p => p._id);
+
       const [
         totalVideos,
         totalPapers,
-        totalStudents,
         teacherVideos,
         allAttempts
       ] = await Promise.all([
         Video.countDocuments({ uploadedBy: teacherId }),
         Paper.countDocuments({ teacherId }),
-        User.countDocuments({ role: 'student' }),
         Video.find({ uploadedBy: teacherId }).select('views'),
-        StudentAttempt.find().populate({
+        StudentAttempt.find({ paperId: { $in: teacherPaperIds } }).populate({
           path: 'paperId',
           select: 'teacherId',
           model: 'Paper'
         })
       ]);
+
+      const distinctStudents = new Set(allAttempts.map(attempt => attempt.studentId.toString()));
+      const totalStudents = distinctStudents.size;
 
 
 
@@ -102,11 +106,10 @@ export class TeacherDashboardService {
     try {
       const videos = await Video.find({ uploadedBy: teacherId })
         .populate('institute', 'name location')
+        .populate('year', 'year name')
         .sort({ createdAt: -1 })
         .limit(limit)
         .lean();
-
-
 
       return videos.map((video: any) => ({
         _id: video._id.toString(),
@@ -115,15 +118,20 @@ export class TeacherDashboardService {
         videoUrl: video.videoUrl,
         views: video.views || 0,
         createdAt: (video as any).createdAt,
-        updatedAt: (video as any).updatedAt,
-        uploadedBy: video.uploadedBy,
-        class: video.class,
-        institute: video.institute ? {
-          _id: (video.institute as any)._id ? (video.institute as any)._id.toString() : undefined,
-          name: (video.institute as any).name,
-          location: (video.institute as any).location
-        } : null,
-        year: null // Temporarily disable year population to avoid ObjectId errors
+        class: video.institute ? {
+          _id: (video.institute as any)._id ? (video.institute as any)._id.toString() : '',
+          name: (video.institute as any).name || 'Unknown',
+          location: (video.institute as any).location || ''
+        } : {
+          _id: '',
+          name: 'Unknown',
+          location: ''
+        },
+        year: video.year ? {
+          _id: (video.year as any)._id ? (video.year as any)._id.toString() : '',
+          year: (video.year as any).year || 0,
+          name: (video.year as any).name || ''
+        } : null
       })) as TeacherVideoSummary[];
     } catch (error) {
       console.error('ERROR in getRecentVideos:', error);
@@ -171,21 +179,25 @@ export class TeacherDashboardService {
 
   static async getStudentsSummary(teacherId: string, limit = 10): Promise<StudentSummary[]> {
     try {
-      const students = await User.find({ role: 'student' })
+      const teacherPapers = await Paper.find({ teacherId }).select('_id').lean();
+      const teacherPaperIds = teacherPapers.map(p => p._id);
+
+      const attempts = await StudentAttempt.find({
+        paperId: { $in: teacherPaperIds },
+        status: 'submitted'
+      }).lean();
+
+      const studentIds = [...new Set(attempts.map(a => a.studentId))];
+
+      const students = await User.find({ _id: { $in: studentIds } })
         .sort({ createdAt: -1 })
         .limit(limit)
         .lean();
-
-
       
-      const studentIds = students.map(student => student._id).filter(id => id !== undefined && id !== null);
-      const attempts = await StudentAttempt.find({
-        studentId: { $in: studentIds },
+      const studentAttempts = await StudentAttempt.find({
+        studentId: { $in: students.map(s => s._id) },
+        paperId: { $in: teacherPaperIds },
         status: 'submitted'
-      }).populate({
-        path: 'paperId',
-        select: 'teacherId',
-        model: 'Paper'
       }).lean();
 
       return students.map(student => {

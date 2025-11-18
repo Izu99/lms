@@ -72,7 +72,7 @@ export function TeacherDashboard() {
             <TrendingUp className="w-6 h-6 animate-bounce" />
             <div className="text-left">
               <p className="text-xs text-blue-100">Engagement</p>
-              <p className="text-lg font-bold">{data.stats.averageEngagement.toFixed(0)}%</p>
+              <p className="text-lg font-bold">{(data.stats.averageEngagement || 0).toFixed(0)}%</p>
             </div>
           </div>
         </div>

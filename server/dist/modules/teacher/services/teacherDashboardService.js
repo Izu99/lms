@@ -24,17 +24,20 @@ function safeISOString(date) {
 class TeacherDashboardService {
     static async getDashboardStats(teacherId) {
         try {
-            const [totalVideos, totalPapers, totalStudents, teacherVideos, allAttempts] = await Promise.all([
+            const teacherPapers = await Paper_1.Paper.find({ teacherId }).select('_id');
+            const teacherPaperIds = teacherPapers.map(p => p._id);
+            const [totalVideos, totalPapers, teacherVideos, allAttempts] = await Promise.all([
                 Video_1.Video.countDocuments({ uploadedBy: teacherId }),
                 Paper_1.Paper.countDocuments({ teacherId }),
-                User_1.User.countDocuments({ role: 'student' }),
                 Video_1.Video.find({ uploadedBy: teacherId }).select('views'),
-                StudentAttempt_1.StudentAttempt.find().populate({
+                StudentAttempt_1.StudentAttempt.find({ paperId: { $in: teacherPaperIds } }).populate({
                     path: 'paperId',
                     select: 'teacherId',
                     model: 'Paper'
                 })
             ]);
+            const distinctStudents = new Set(allAttempts.map(attempt => attempt.studentId.toString()));
+            const totalStudents = distinctStudents.size;
             const totalViews = teacherVideos.reduce((sum, video) => sum + (video.views || 0), 0);
             // Filter attempts for teacher's papers
             const teacherAttempts = allAttempts.filter(attempt => {
@@ -73,6 +76,7 @@ class TeacherDashboardService {
         try {
             const videos = await Video_1.Video.find({ uploadedBy: teacherId })
                 .populate('institute', 'name location')
+                .populate('year', 'year name')
                 .sort({ createdAt: -1 })
                 .limit(limit)
                 .lean();
@@ -83,15 +87,20 @@ class TeacherDashboardService {
                 videoUrl: video.videoUrl,
                 views: video.views || 0,
                 createdAt: video.createdAt,
-                updatedAt: video.updatedAt,
-                uploadedBy: video.uploadedBy,
-                class: video.class,
-                institute: video.institute ? {
-                    _id: video.institute._id ? video.institute._id.toString() : undefined,
-                    name: video.institute.name,
-                    location: video.institute.location
-                } : null,
-                year: null // Temporarily disable year population to avoid ObjectId errors
+                class: video.institute ? {
+                    _id: video.institute._id ? video.institute._id.toString() : '',
+                    name: video.institute.name || 'Unknown',
+                    location: video.institute.location || ''
+                } : {
+                    _id: '',
+                    name: 'Unknown',
+                    location: ''
+                },
+                year: video.year ? {
+                    _id: video.year._id ? video.year._id.toString() : '',
+                    year: video.year.year || 0,
+                    name: video.year.name || ''
+                } : null
             }));
         }
         catch (error) {
@@ -132,18 +141,21 @@ class TeacherDashboardService {
     }
     static async getStudentsSummary(teacherId, limit = 10) {
         try {
-            const students = await User_1.User.find({ role: 'student' })
+            const teacherPapers = await Paper_1.Paper.find({ teacherId }).select('_id').lean();
+            const teacherPaperIds = teacherPapers.map(p => p._id);
+            const attempts = await StudentAttempt_1.StudentAttempt.find({
+                paperId: { $in: teacherPaperIds },
+                status: 'submitted'
+            }).lean();
+            const studentIds = [...new Set(attempts.map(a => a.studentId))];
+            const students = await User_1.User.find({ _id: { $in: studentIds } })
                 .sort({ createdAt: -1 })
                 .limit(limit)
                 .lean();
-            const studentIds = students.map(student => student._id).filter(id => id !== undefined && id !== null);
-            const attempts = await StudentAttempt_1.StudentAttempt.find({
-                studentId: { $in: studentIds },
+            const studentAttempts = await StudentAttempt_1.StudentAttempt.find({
+                studentId: { $in: students.map(s => s._id) },
+                paperId: { $in: teacherPaperIds },
                 status: 'submitted'
-            }).populate({
-                path: 'paperId',
-                select: 'teacherId',
-                model: 'Paper'
             }).lean();
             return students.map(student => {
                 const studentAttempts = attempts.filter(attempt => attempt.studentId && student._id && attempt.studentId.toString() === student._id.toString() &&

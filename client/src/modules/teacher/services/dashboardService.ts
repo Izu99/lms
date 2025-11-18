@@ -9,29 +9,31 @@ import {
 
 export class TeacherDashboardService {
   static async getDashboard(): Promise<TeacherDashboardData> {
-    const [dashboardResponse, activityResponse] = await Promise.all([
-      ApiClient.get<Omit<TeacherDashboardData, 'dailyActivity'>>('/teacher/dashboard'),
-      ApiClient.get<{ success: boolean; activity: DailyActivity[] }>('/activity/daily')
+    const [dashboardResponse, activityResponse, statsResponse] = await Promise.all([
+      ApiClient.get<{ success: boolean; data: Omit<TeacherDashboardData, 'dailyActivity' | 'stats'> }>('/teacher/dashboard'),
+      ApiClient.get<{ success: boolean; data: { activity: DailyActivity[] } }>('/activity/daily'),
+      ApiClient.get<{ success: boolean; data: TeacherDashboardStats }>('/teacher/dashboard/stats')
     ]);
 
     return {
-      ...dashboardResponse.data,
-      dailyActivity: activityResponse.data?.activity || [], // Safely access activityResponse.activity
+      ...dashboardResponse.data.data,
+      stats: statsResponse.data.data,
+      dailyActivity: activityResponse.data?.data?.activity || [],
     };
   }
 
   static async getStats(): Promise<TeacherDashboardStats> {
-    const response = await ApiClient.get<TeacherDashboardStats>('/teacher/dashboard/stats');
-    return response.data;
+    const response = await ApiClient.get<{ success: boolean; data: TeacherDashboardStats }>('/teacher/dashboard/stats');
+    return response.data.data;
   }
 
   static async getAnalytics(days = 30): Promise<TeacherAnalytics> {
-    const response = await ApiClient.get<TeacherAnalytics>(`/teacher/dashboard/analytics?days=${days}`);
-    return response.data;
+    const response = await ApiClient.get<{ success: boolean; data: TeacherAnalytics }>(`/teacher/dashboard/analytics?days=${days}`);
+    return response.data.data;
   }
 
   static async getStudents(limit = 10): Promise<StudentSummary[]> {
-    const response = await ApiClient.get<StudentSummary[]>(`/teacher/dashboard/students?limit=${limit}`);
-    return response.data;
+    const response = await ApiClient.get<{ success: boolean; data: StudentSummary[] }>(`/teacher/dashboard/students?limit=${limit}`);
+    return response.data.data;
   }
 }
