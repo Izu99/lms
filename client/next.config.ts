@@ -80,6 +80,15 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts'],
   },
+
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:5000/api/:path*', // Proxy to your backend
+      },
+    ];
+  },
 };
 
 export default nextConfig;

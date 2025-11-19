@@ -282,7 +282,7 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
       }
       
       onSuccess();
-    } catch (error: any) {
+    } catch (error: AxiosError) {
       const errorMessage = error?.response?.data?.message || "Failed to save course package";
       toast.error(errorMessage);
       console.error(error);

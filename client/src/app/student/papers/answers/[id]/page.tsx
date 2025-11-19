@@ -16,7 +16,8 @@ import {
   BookOpen,
   ChevronDown,
   ChevronUp,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Info
 } from 'lucide-react';
 import { StudentLayout } from '@/components/student/StudentLayout';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ interface Paper {
   description: string;
   deadline: string;
   questions: Question[];
+  paperType: 'MCQ' | 'Structure';
 }
 
 interface User {
@@ -237,6 +239,25 @@ export default function PaperAnswerPage() {
             <AlertTriangle className="text-red-500 text-5xl mb-4 mx-auto" />
             <h2 className="text-xl font-bold text-gray-900 mb-2">Error Loading Answers</h2>
             <p className="text-red-600 mb-4">{error}</p>
+            <Link href="/student/papers/results">
+              <Button>Back to My Results</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (paper.paperType === 'Structure') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="flex justify-center items-center h-screen">
+          <div className="text-center max-w-md p-6 bg-white rounded-lg shadow-sm border">
+            <Info className="text-blue-500 text-5xl mb-4 mx-auto" />
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Structure Paper</h2>
+            <p className="text-gray-600 mb-4">
+              This is a structure paper. Answers are not provided directly on the site. Please consult your teacher for grading and feedback.
+            </p>
             <Link href="/student/papers/results">
               <Button>Back to My Results</Button>
             </Link>

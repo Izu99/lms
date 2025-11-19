@@ -3,10 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getStudentAttemptForPaper = exports.getAllPapersForStudent = exports.deletePaper = exports.updatePaper = exports.getPaperResults = exports.getStudentResults = exports.submitPaper = exports.getPaperById = exports.getAllPapers = exports.createPaper = void 0;
+exports.updateStudentAttemptMarks = exports.downloadStudentAttemptFile = exports.uploadPaperPdf = exports.getStudentAttemptForPaper = exports.getAllPapersForStudent = exports.deletePaper = exports.updatePaper = exports.getPaperResults = exports.getStudentResults = exports.submitPaper = exports.getPaperById = exports.getAllPapers = exports.createPaper = void 0;
 const Paper_1 = require("../models/Paper");
 const StudentAttempt_1 = require("../models/StudentAttempt");
 const mongoose_1 = __importDefault(require("mongoose"));
+const path_1 = __importDefault(require("path")); // Import path module
+const UPLOADS_DIR = path_1.default.join(__dirname, '../../uploads'); // Define uploads directory
 // Create Paper (Teachers only)
 const createPaper = async (req, res) => {
     try {
@@ -14,40 +16,52 @@ const createPaper = async (req, res) => {
         if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
             return res.status(403).json({ message: 'Access denied. Only teachers can create papers.' });
         }
-        const { title, description, questions, deadline, timeLimit, availability, price } = req.body;
-        if (!title || !questions) {
-            return res.status(400).json({ message: 'Title and questions are required' });
+        const { title, description, questions, deadline, timeLimit, availability, price, paperType, fileUrl } = req.body;
+        if (!title) {
+            return res.status(400).json({ message: 'Title is required' });
         }
-        if (!Array.isArray(questions) || questions.length === 0) {
-            return res.status(400).json({ message: 'At least one question is required' });
+        if (paperType === 'MCQ') {
+            if (!Array.isArray(questions) || questions.length === 0) {
+                return res.status(400).json({ message: 'At least one question is required for an MCQ paper' });
+            }
+            // Validate questions structure
+            for (let i = 0; i < questions.length; i++) {
+                const question = questions[i];
+                if (!question.questionText || !question.options || question.options.length < 2) {
+                    return res.status(400).json({
+                        message: `Question ${i + 1} must have question text and at least 2 options`
+                    });
+                }
+                const correctAnswers = question.options.filter((opt) => opt.isCorrect);
+                if (correctAnswers.length !== 1) {
+                    return res.status(400).json({
+                        message: `Question ${i + 1} must have exactly one correct answer`
+                    });
+                }
+            }
         }
-        // Validate questions structure
-        for (let i = 0; i < questions.length; i++) {
-            const question = questions[i];
-            if (!question.questionText || !question.options || question.options.length < 2) {
-                return res.status(400).json({
-                    message: `Question ${i + 1} must have question text and at least 2 options`
-                });
+        else if (paperType === 'Structure') {
+            if (!fileUrl) {
+                return res.status(400).json({ message: 'A PDF file is required for a structure paper' });
             }
-            const correctAnswers = question.options.filter((opt) => opt.isCorrect);
-            if (correctAnswers.length !== 1) {
-                return res.status(400).json({
-                    message: `Question ${i + 1} must have exactly one correct answer`
-                });
-            }
+        }
+        else {
+            return res.status(400).json({ message: 'Invalid paper type' });
         }
         const paper = new Paper_1.Paper({
             title,
             description,
             teacherId: requestingUser.id,
-            questions: questions.map((q, index) => ({
+            questions: paperType === 'MCQ' ? questions.map((q, index) => ({
                 ...q,
                 order: index + 1
-            })),
+            })) : [],
             ...(deadline && { deadline: new Date(deadline) }),
             ...(timeLimit && { timeLimit: timeLimit }),
             availability,
             ...(price && { price: price }),
+            paperType,
+            ...(fileUrl && { fileUrl }),
         });
         await paper.save();
         res.status(201).json({
@@ -58,7 +72,8 @@ const createPaper = async (req, res) => {
                 description: paper.description,
                 totalQuestions: paper.totalQuestions,
                 deadline: paper.deadline,
-                timeLimit: paper.timeLimit
+                timeLimit: paper.timeLimit,
+                paperType: paper.paperType,
             }
         });
     }
@@ -133,28 +148,25 @@ const getPaperById = async (req, res) => {
         // Access control logic for students
         const studentType = requestingUser.studentType;
         let hasAccess = false;
-        let paymentRequired = false;
+        // let paymentRequired = false; // Commented out for bypass
         if (paper.availability === 'all') {
             hasAccess = true;
         }
         else if (paper.availability === 'physical' && studentType === 'Physical') {
             hasAccess = true;
         }
-        else if (paper.price && paper.price > 0) {
-            paymentRequired = true;
-        }
         else {
-            // Default to free if price is 0 and no specific availability restriction
+            // Temporarily bypass payment requirement
             hasAccess = true;
         }
-        if (paymentRequired) {
-            return res.status(402).json({
-                message: 'Payment required to access this paper.',
-                price: paper.price,
-                paperTitle: paper.title,
-                paperId: paper._id
-            });
-        }
+        // if (paymentRequired) { // Commented out for bypass
+        //   return res.status(402).json({
+        //     message: 'Payment required to access this paper.',
+        //     price: paper.price,
+        //     paperTitle: paper.title,
+        //     paperId: paper._id
+        //   });
+        // }
         if (!hasAccess) {
             // This case should ideally not be reached if logic is exhaustive, but as a fallback
             return res.status(403).json({ message: 'Access denied to this paper.' });
@@ -162,16 +174,6 @@ const getPaperById = async (req, res) => {
         // If student has access, proceed with existing student logic
         const isPaperExpired = paper.deadline ? (new Date() > paper.deadline) : false;
         const hasAttempted = await StudentAttempt_1.StudentAttempt.exists({ paperId: id, studentId: requestingUser.id });
-        console.log('DEBUG - Paper access conditions:', {
-            paperId: id,
-            studentId: requestingUser.id,
-            isPaperExpired,
-            hasAttempted: !!hasAttempted,
-            showAnswers: !!showAnswers,
-            currentTime: new Date().toISOString(),
-            deadline: paper.deadline?.toISOString(),
-            shouldShowExplanations: ((showAnswers && hasAttempted) || (isPaperExpired && hasAttempted))
-        });
         // Construct studentPaper
         const studentPaper = {
             _id: paper._id,
@@ -180,6 +182,8 @@ const getPaperById = async (req, res) => {
             deadline: paper.deadline,
             timeLimit: paper.timeLimit,
             totalQuestions: paper.totalQuestions,
+            paperType: paper.paperType, // Ensure paperType is included
+            fileUrl: paper.fileUrl, // Include fileUrl for structure papers
             questions: paper.questions.map(q => ({
                 _id: q._id,
                 questionText: q.questionText,
@@ -214,7 +218,7 @@ exports.getPaperById = getPaperById;
 const submitPaper = async (req, res) => {
     try {
         const { id } = req.params;
-        const { answers, timeSpent } = req.body;
+        const { answers, timeSpent, answerFileUrl } = req.body;
         const requestingUser = req.user;
         if (requestingUser.role !== 'student') {
             return res.status(403).json({ message: 'Only students can submit papers' });
@@ -238,42 +242,58 @@ const submitPaper = async (req, res) => {
         if (existingAttempt) {
             return res.status(400).json({ message: 'You have already submitted this paper' });
         }
-        if (!answers || !Array.isArray(answers)) {
-            return res.status(400).json({ message: 'Answers are required' });
-        }
-        // Calculate score
-        let score = 0;
-        const processedAnswers = answers.map((answer) => {
-            const question = paper.questions.find(q => q._id?.toString() === answer.questionId);
-            if (!question) {
-                throw new Error('Invalid question ID');
-            }
-            const selectedOption = question.options.find(opt => opt._id?.toString() === answer.selectedOptionId);
-            if (!selectedOption) {
-                throw new Error('Invalid option ID');
-            }
-            const isCorrect = selectedOption.isCorrect;
-            if (isCorrect)
-                score++;
-            return {
-                questionId: answer.questionId,
-                selectedOptionId: answer.selectedOptionId,
-                isCorrect
-            };
-        });
-        const percentage = Math.round((score / paper.totalQuestions) * 100);
-        // Create attempt record
-        const attempt = new StudentAttempt_1.StudentAttempt({
+        let attemptData = {
             paperId: id,
             studentId: requestingUser.id,
-            answers: processedAnswers,
-            score,
-            totalQuestions: paper.totalQuestions,
-            percentage,
             status: 'submitted',
             submittedAt: new Date(),
             timeSpent: timeSpent || 0
-        });
+        };
+        if (paper.paperType === 'MCQ') {
+            if (!answers || !Array.isArray(answers)) {
+                return res.status(400).json({ message: 'Answers are required for MCQ papers' });
+            }
+            // Calculate score
+            let score = 0;
+            const processedAnswers = answers.map((answer) => {
+                const question = paper.questions.find(q => q._id?.toString() === answer.questionId);
+                if (!question) {
+                    throw new Error('Invalid question ID');
+                }
+                const selectedOption = question.options.find(opt => opt._id?.toString() === answer.selectedOptionId);
+                if (!selectedOption) {
+                    throw new Error('Invalid option ID');
+                }
+                const isCorrect = selectedOption.isCorrect;
+                if (isCorrect)
+                    score++;
+                return {
+                    questionId: answer.questionId,
+                    selectedOptionId: answer.selectedOptionId,
+                    isCorrect
+                };
+            });
+            const percentage = Math.round((score / paper.totalQuestions) * 100);
+            attemptData = {
+                ...attemptData,
+                answers: processedAnswers,
+                score,
+                totalQuestions: paper.totalQuestions,
+                percentage,
+            };
+        }
+        else if (paper.paperType === 'Structure') {
+            if (!answerFileUrl) {
+                return res.status(400).json({ message: 'An answer file is required for structure papers' });
+            }
+            attemptData = {
+                ...attemptData,
+                answerFileUrl,
+                totalQuestions: 0, // No questions for structure papers
+            };
+        }
+        // Create attempt record
+        const attempt = new StudentAttempt_1.StudentAttempt(attemptData);
         await attempt.save();
         res.json({
             message: 'Paper submitted successfully',
@@ -293,15 +313,34 @@ const getStudentResults = async (req, res) => {
         if (requestingUser.role !== 'student') {
             return res.status(403).json({ message: 'Access denied' });
         }
+        // Fetch all student attempts, populating paper details
         const results = await StudentAttempt_1.StudentAttempt.find({
             studentId: requestingUser.id,
             status: 'submitted'
         })
-            .populate('paperId', 'title description deadline')
-            .sort({ submittedAt: -1 });
-        console.log('DEBUG - Populated student results:', results);
-        console.log(`Found ${results.length} submitted results for student ${requestingUser.id}`);
-        res.json({ results });
+            .populate('paperId', 'title description deadline paperType') // Populate paperType as well
+            .sort({ submittedAt: -1 })
+            .lean(); // Use .lean() for performance when modifying results
+        // Extract unique paper IDs from the results
+        const uniquePaperIds = [...new Set(results.filter(r => r.paperId).map(r => r.paperId._id.toString()))];
+        // Calculate average percentage for each unique paper
+        const paperAverages = {};
+        for (const paperId of uniquePaperIds) {
+            const averageResult = await StudentAttempt_1.StudentAttempt.aggregate([
+                { $match: { paperId: new mongoose_1.default.Types.ObjectId(paperId), status: 'submitted' } },
+                { $group: { _id: null, averagePercentage: { $avg: '$percentage' } } }
+            ]);
+            paperAverages[paperId] = averageResult[0]?.averagePercentage ? Math.round(averageResult[0].averagePercentage) : 0;
+        }
+        // Map over results to add averagePercentage to each paperId object
+        const enrichedResults = results.map(result => ({
+            ...result,
+            paperId: {
+                ...result.paperId,
+                averagePercentage: paperAverages[result.paperId._id.toString()] || 0
+            }
+        }));
+        res.json({ results: enrichedResults });
     }
     catch (error) {
         console.error('Get student results error:', error);
@@ -325,19 +364,9 @@ const getPaperResults = async (req, res) => {
             return res.status(404).json({ message: 'Paper not found' });
         }
         // Check if teacher owns this paper
-        console.log('DEBUG - Paper ownership check:', {
-            paperTeacherId: paper.teacherId.toString(),
-            requestingUserId: requestingUser.id.toString(),
-            paperTitle: paper.title,
-            requestingUserRole: requestingUser.role
-        });
         if (paper.teacherId.toString() !== requestingUser.id.toString()) {
             return res.status(403).json({
-                message: 'You can only view results for your own papers',
-                debug: {
-                    paperTeacherId: paper.teacherId.toString(),
-                    yourId: requestingUser.id.toString()
-                }
+                message: 'You can only view results for your own papers'
             });
         }
         const results = await StudentAttempt_1.StudentAttempt.find({
@@ -345,6 +374,7 @@ const getPaperResults = async (req, res) => {
             status: 'submitted'
         })
             .populate('studentId', 'username firstName lastName')
+            .populate('paperId', 'paperType totalQuestions') // Populate paperType and totalQuestions
             .sort({ percentage: -1, submittedAt: 1 });
         const stats = {
             totalSubmissions: results.length,
@@ -517,3 +547,98 @@ const getStudentAttemptForPaper = async (req, res) => {
     }
 };
 exports.getStudentAttemptForPaper = getStudentAttemptForPaper;
+const uploadPaperPdf = (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded.' });
+    }
+    res.status(200).json({
+        message: 'File uploaded successfully',
+        fileUrl: `/uploads/${req.file.filename}`
+    });
+};
+exports.uploadPaperPdf = uploadPaperPdf;
+const downloadStudentAttemptFile = async (req, res) => {
+    try {
+        const { attemptId } = req.params;
+        const requestingUser = req.user;
+        if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
+            return res.status(403).json({ message: 'Access denied. Only teachers and admins can download student attempt files.' });
+        }
+        if (!mongoose_1.default.Types.ObjectId.isValid(attemptId)) {
+            return res.status(400).json({ message: 'Invalid attempt ID' });
+        }
+        const attempt = await StudentAttempt_1.StudentAttempt.findById(attemptId);
+        if (!attempt) {
+            return res.status(404).json({ message: 'Student attempt not found.' });
+        }
+        if (!attempt.answerFileUrl) {
+            return res.status(404).json({ message: 'No answer file found for this attempt.' });
+        }
+        // Ensure the answerFileUrl is correctly formatted (e.g., /uploads/filename.pdf)
+        const relativeFilePath = attempt.answerFileUrl.startsWith('/uploads/')
+            ? attempt.answerFileUrl.substring('/uploads/'.length)
+            : attempt.answerFileUrl;
+        const filePath = path_1.default.join(UPLOADS_DIR, relativeFilePath);
+        res.download(filePath, (err) => {
+            if (err) {
+                console.error('Error downloading file:', err);
+                if (!res.headersSent) {
+                    return res.status(500).json({ message: 'Error downloading file.' });
+                }
+            }
+        });
+    }
+    catch (error) {
+        console.error('Download student attempt file error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.downloadStudentAttemptFile = downloadStudentAttemptFile;
+const updateStudentAttemptMarks = async (req, res) => {
+    try {
+        const { attemptId } = req.params;
+        const { score } = req.body;
+        const requestingUser = req.user;
+        if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
+            return res.status(403).json({ message: 'Access denied. Only teachers and admins can update student attempt marks.' });
+        }
+        if (!mongoose_1.default.Types.ObjectId.isValid(attemptId)) {
+            return res.status(400).json({ message: 'Invalid attempt ID' });
+        }
+        if (typeof score !== 'number' || score < 0) {
+            return res.status(400).json({ message: 'Score must be a non-negative number.' });
+        }
+        const attempt = await StudentAttempt_1.StudentAttempt.findById(attemptId).populate('paperId');
+        if (!attempt) {
+            return res.status(404).json({ message: 'Student attempt not found.' });
+        }
+        const paper = attempt.paperId; // Populate 'paperId' to get totalQuestions
+        if (!paper) {
+            return res.status(404).json({ message: 'Associated paper not found.' });
+        }
+        // Update score and calculate percentage
+        attempt.score = score;
+        // For structure papers, totalQuestions might be 0, so calculate percentage based on score if possible, or set to 0.
+        if (paper.totalQuestions && paper.totalQuestions > 0) {
+            attempt.percentage = Math.round((score / paper.totalQuestions) * 100);
+        }
+        else {
+            // For structure papers, the 'score' received from the frontend is directly the percentage.
+            attempt.percentage = score;
+        }
+        await attempt.save();
+        res.json({
+            message: 'Student attempt marks updated successfully',
+            attempt: {
+                _id: attempt._id,
+                score: attempt.score,
+                percentage: attempt.percentage
+            }
+        });
+    }
+    catch (error) {
+        console.error('Update student attempt marks error:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.updateStudentAttemptMarks = updateStudentAttemptMarks;

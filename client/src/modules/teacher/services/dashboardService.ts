@@ -32,8 +32,8 @@ export class TeacherDashboardService {
     return response.data.data;
   }
 
-  static async getPerformanceDistribution() {
-    const response = await ApiClient.get<{ success: boolean; data: any[] }>('/teacher/dashboard/performance-distribution');
+  static async getPerformanceDistribution(): Promise<PerformanceDistributionData[]> {
+    const response = await ApiClient.get<{ success: boolean; data: PerformanceDistributionData[] }>('/teacher/dashboard/performance-distribution');
     return response.data.data;
   }
 

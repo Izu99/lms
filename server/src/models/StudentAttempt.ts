@@ -18,6 +18,7 @@ export interface IStudentAttempt extends Document {
   startedAt: Date;
   submittedAt?: Date;
   timeSpent: number; // in minutes
+  answerFileUrl?: string;
 }
 
 const studentAnswerSchema = new mongoose.Schema({
@@ -36,7 +37,8 @@ const studentAttemptSchema = new mongoose.Schema<IStudentAttempt>({
   status: { type: String, enum: ['started', 'submitted'], default: 'started' },
   startedAt: { type: Date, default: Date.now },
   submittedAt: { type: Date },
-  timeSpent: { type: Number, default: 0 } // in minutes
+  timeSpent: { type: Number, default: 0 }, // in minutes
+  answerFileUrl: { type: String }
 }, { timestamps: true });
 
 // Ensure one attempt per student per paper

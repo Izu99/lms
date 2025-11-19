@@ -11,18 +11,22 @@ import {
   ChevronsDown,
   Calendar,
   Clock,
+  Download, // Added Download icon
+  Edit,     // Added Edit icon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
-import { API_URL } from "@/lib/constants";
+import { API_URL, API_BASE_URL } from "@/lib/constants";
 import Cookies from "js-cookie";
 import { StudentDetailsModal } from "@/components/teacher/modals/StudentDetailsModal";
+import { GradePaperModal } from "@/components/teacher/modals/GradePaperModal";
 
 interface PaperInfo {
   title: string;
   totalQuestions: number;
   deadline: string;
+  paperType: 'MCQ' | 'Structure'; // Added paperType
 }
 
 interface Student {
@@ -39,6 +43,12 @@ interface Result {
   percentage: number;
   submittedAt: string;
   timeSpent: number;
+  answerFileUrl?: string; // Added for structure papers
+  paperId: { // Populated paperId details
+    _id: string;
+    paperType: 'MCQ' | 'Structure';
+    totalQuestions: number;
+  };
 }
 
 interface Stats {
@@ -60,6 +70,10 @@ export default function PaperResultsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
+  const [currentGradingAttemptId, setCurrentGradingAttemptId] = useState<string>('');
+  const [initialGradingPercentage, setInitialGradingPercentage] = useState<number>(0);
+
 
   useEffect(() => {
     if (!paperId) return;
@@ -71,7 +85,12 @@ export default function PaperResultsPage() {
         const response = await axios.get(`${API_URL}/papers/${paperId}/results`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setPaper(response.data.paper);
+        setPaper({
+          title: response.data.paper.title,
+          totalQuestions: response.data.paper.totalQuestions,
+          deadline: response.data.paper.deadline,
+          paperType: response.data.paper.paperType,
+        });
         setResults(response.data.results);
         setStats(response.data.stats);
         setError(null);
@@ -100,6 +119,48 @@ export default function PaperResultsPage() {
     if (percentage >= 80) return "text-green-500";
     if (percentage >= 50) return "text-yellow-500";
     return "text-red-500";
+  };
+
+  const handleDownloadAnswer = (answerFileUrl: string) => {
+    window.open(`${API_BASE_URL}${answerFileUrl}`, '_blank');
+  };
+
+  const handleOpenGradeModal = (attemptId: string, initialPercentage: number) => {
+    setCurrentGradingAttemptId(attemptId);
+    setInitialGradingPercentage(initialPercentage);
+    setIsGradeModalOpen(true);
+  };
+
+  const handleCloseGradeModal = () => {
+    setIsGradeModalOpen(false);
+    setCurrentGradingAttemptId('');
+    setInitialGradingPercentage(0);
+    setError(null); // Clear any previous error
+  };
+
+  const handleSavePercentage = async (attemptId: string, percentage: number) => {
+    try {
+      setLoading(true); // Indicate loading while saving
+      const token = Cookies.get("token");
+      await axios.put(`${API_URL}/papers/attempts/${attemptId}/marks`, { score: percentage }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      // Refetch results to update the table
+      const response = await axios.get(`${API_URL}/papers/${paperId}/results`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPaper(response.data.paper); // Refresh paper info in case its stats changed
+      setResults(response.data.results);
+      setStats(response.data.stats);
+
+      handleCloseGradeModal(); // Close modal on success
+      setError(null); // Clear any previous score error
+    } catch (err) {
+      console.error("Error saving percentage:", err);
+      setError("Failed to save percentage. Please try again.");
+    } finally {
+      setLoading(false); // End loading
+    }
   };
 
   return (
@@ -207,14 +268,7 @@ export default function PaperResultsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead className="bg-muted/50">
-                    <tr>
-                      <th className="p-4 font-semibold text-muted-foreground">Rank</th>
-                      <th className="p-4 font-semibold text-muted-foreground">Student</th>
-                      <th className="p-4 font-semibold text-muted-foreground">Score</th>
-                      <th className="p-4 font-semibold text-muted-foreground">Percentage</th>
-                      <th className="p-4 font-semibold text-muted-foreground">Time Spent</th>
-                      <th className="p-4 font-semibold text-muted-foreground">Submitted On</th>
-                    </tr>
+                    <tr><th className="p-4 font-semibold text-muted-foreground">Rank</th><th className="p-4 font-semibold text-muted-foreground">Student</th><th className="p-4 font-semibold text-muted-foreground">Percentage</th><th className="p-4 font-semibold text-muted-foreground">Time Spent</th><th className="p-4 font-semibold text-muted-foreground">Submitted On</th><th className="p-4 font-semibold text-muted-foreground">Actions</th></tr>
                   </thead>
                   <tbody>
                     {results.map((result, index) => (
@@ -231,9 +285,7 @@ export default function PaperResultsPage() {
                             {result.studentId.firstName || result.studentId.username}
                           </button>
                         </td>
-                        <td className="p-4 text-muted-foreground">
-                          {result.score} / {paper.totalQuestions}
-                        </td>
+
                         <td className={`p-4 font-bold ${getScoreColor(result.percentage)}`}>
                           {result.percentage}%
                         </td>
@@ -248,6 +300,42 @@ export default function PaperResultsPage() {
                             <Calendar size={14} />
                             {new Date(result.submittedAt).toLocaleDateString()}
                           </div>
+                        </td>
+                        {/* Actions Column */}
+                        <td className="p-4">
+                          {result.paperId.paperType === 'Structure' ? (
+                            <div className="flex flex-wrap gap-2 items-center">
+                              {result.answerFileUrl && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDownloadAnswer(result.answerFileUrl!)}
+                                >
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Answer
+                                </Button>
+                              )}
+
+                              {(result.score === 0 && result.percentage === 0) ? (
+                                <>
+                                  <span className="text-sm text-yellow-600 dark:text-yellow-400 font-medium px-2 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/20">Not Graded Yet</span>
+                                  <Button size="sm" variant="outline" onClick={() => handleOpenGradeModal(result._id, 0)}>
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Add Percentage
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <Button size="sm" variant="outline" onClick={() => handleOpenGradeModal(result._id, result.percentage)}>
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Edit Percentage
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">N/A</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -274,6 +362,13 @@ export default function PaperResultsPage() {
           setIsModalOpen(false);
           setSelectedStudentId(null);
         }}
+      />
+      <GradePaperModal
+        isOpen={isGradeModalOpen}
+        onClose={handleCloseGradeModal}
+        onSubmit={handleSavePercentage}
+        attemptId={currentGradingAttemptId}
+        initialPercentage={initialGradingPercentage}
       />
     </TeacherLayout>
   );

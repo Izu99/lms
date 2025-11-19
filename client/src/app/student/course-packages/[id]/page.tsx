@@ -33,7 +33,7 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
         const response = await api.get<{ coursePackage: CoursePackageData }>(`/course-packages/${id}`);
         console.log('API Response for course package details:', response.data);
         setCoursePackage(response.data.coursePackage);
-      } catch (err: any) {
+      } catch (err: AxiosError) {
         console.error("Error fetching course package details:", err);
         setError(err.response?.data?.message || "Failed to load course package details.");
         toast.error(err.response?.data?.message || "Failed to load course package details.");

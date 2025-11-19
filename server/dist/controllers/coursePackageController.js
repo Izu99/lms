@@ -20,16 +20,16 @@ const getCoursePackages = async (req, res) => {
     try {
         const user = req.user;
         let query = {};
-        // Students should only see packages relevant to them or general ones
-        if (user.role === 'student') {
-            query = {
-                $or: [
-                    { freeForAllInstituteYear: true },
-                    { freeForPhysicalStudents: true, 'studentType': user.studentType }, // Assuming studentType is available on user
-                    { institute: user.institute, year: user.year },
-                ],
-            };
-        }
+        // No specific filtering for students for now, show all packages
+        // if (user.role === 'student') {
+        //   query = {
+        //     $or: [
+        //       { availability: 'all' },
+        //       { availability: 'physical', 'studentType': user.studentType },
+        //       { institute: user.institute, year: user.year },
+        //     ],
+        //   };
+        // }
         const coursePackages = await populateCoursePackage(CoursePackage_1.CoursePackage.find(query)).sort({ createdAt: -1 });
         res.json({ coursePackages });
     }
@@ -49,15 +49,16 @@ const getCoursePackageById = async (req, res) => {
             return res.status(404).json({ message: 'Course package not found' });
         }
         // Basic authorization for students (can be expanded)
-        const user = req.user;
-        if (user.role === 'student') {
-            const isAuthorized = coursePackage.freeForAllInstituteYear ||
-                (coursePackage.freeForPhysicalStudents && user.studentType === 'Physical') ||
-                (coursePackage.institute?.equals(user.institute) && coursePackage.year?.equals(user.year));
-            if (!isAuthorized) {
-                return res.status(403).json({ message: 'Not authorized to view this course package' });
-            }
-        }
+        // const user = (req as any).user;
+        // if (user.role === 'student') {
+        //   const isAuthorized =
+        //     coursePackage.freeForAllInstituteYear ||
+        //     (coursePackage.freeForPhysicalStudents && user.studentType === 'Physical') ||
+        //     (coursePackage.institute?.equals(user.institute) && coursePackage.year?.equals(user.year));
+        //   if (!isAuthorized) {
+        //     return res.status(403).json({ message: 'Not authorized to view this course package' });
+        //   }
+        // }
         res.json({ coursePackage });
     }
     catch (error) {
@@ -71,9 +72,9 @@ exports.getCoursePackageById = getCoursePackageById;
 // @access  Private (Teachers only)
 const createCoursePackage = async (req, res) => {
     try {
-        const { title, description, price, videos, papers, freeForPhysicalStudents, freeForAllInstituteYear, institute, year, } = req.body;
-        if (!title || price === undefined || !Array.isArray(videos) || !Array.isArray(papers)) {
-            return res.status(400).json({ message: 'Title, price, videos (array), and papers (array) are required' });
+        const { title, description, price, videos, papers, availability, institute, year, } = req.body;
+        if (!title || price === undefined || !Array.isArray(videos) || !Array.isArray(papers) || !availability) {
+            return res.status(400).json({ message: 'Title, price, videos (array), papers (array), and availability are required' });
         }
         // Validate video and paper IDs
         const existingVideos = await Video_1.Video.find({ _id: { $in: videos } });
@@ -91,8 +92,7 @@ const createCoursePackage = async (req, res) => {
             price,
             videos,
             papers,
-            freeForPhysicalStudents: freeForPhysicalStudents || false,
-            freeForAllInstituteYear: freeForAllInstituteYear || false,
+            availability,
             institute: institute || undefined,
             year: year || undefined,
             createdBy,
@@ -113,7 +113,7 @@ exports.createCoursePackage = createCoursePackage;
 const updateCoursePackage = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, price, videos, papers, freeForPhysicalStudents, freeForAllInstituteYear, institute, year, } = req.body;
+        const { title, description, price, videos, papers, availability, institute, year, } = req.body;
         const coursePackage = await CoursePackage_1.CoursePackage.findById(id);
         if (!coursePackage) {
             return res.status(404).json({ message: 'Course package not found' });
@@ -141,8 +141,7 @@ const updateCoursePackage = async (req, res) => {
         coursePackage.price = price !== undefined ? price : coursePackage.price;
         coursePackage.videos = videos || coursePackage.videos;
         coursePackage.papers = papers || coursePackage.papers;
-        coursePackage.freeForPhysicalStudents = freeForPhysicalStudents !== undefined ? freeForPhysicalStudents : coursePackage.freeForPhysicalStudents;
-        coursePackage.freeForAllInstituteYear = freeForAllInstituteYear !== undefined ? freeForAllInstituteYear : coursePackage.freeForAllInstituteYear;
+        coursePackage.availability = availability || coursePackage.availability;
         coursePackage.institute = institute || undefined;
         coursePackage.year = year || undefined;
         await coursePackage.save();

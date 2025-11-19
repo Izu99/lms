@@ -85,7 +85,7 @@ app.use((0, cors_1.default)({
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 console.log('✅ Allowed origins:', allowedOrigins);
-app.use('/api/uploads', express_1.default.static(path_1.default.join(__dirname, '..', 'uploads')));
+app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '..', 'uploads')));
 // Use routes
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/institutes', instituteRoutes_1.default);

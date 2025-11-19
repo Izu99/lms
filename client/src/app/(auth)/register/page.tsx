@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState, useEffect, useRef } from "react";
+import useDebounce from "@/hooks/useDebounce"; // Import the useDebounce hook
 import axios from "axios";
 import {
   GraduationCap,
@@ -9,13 +9,121 @@ import {
   BookOpen,
   Target,
   UserPlus,
+  Eye,
+  EyeOff,
+  Search,
+  X,
 } from "lucide-react";
-import { API_URL } from "@/lib/constants";
-import Cookies from 'js-cookie';
-import Step1 from "@/components/register/Step1";
-import Step2 from "@/components/register/Step2";
-import Step3 from "@/components/register/Step3";
-import { useTheme } from "next-themes";
+
+interface Institute {
+  _id: string;
+  name: string;
+  location: string;
+  isActive: boolean;
+}
+
+// Searchable Select Component
+interface SearchableSelectProps {
+  options: { label: string; value: string }[];
+  selected: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+}
+
+function SearchableSelect({
+  options,
+  selected,
+  onChange,
+  placeholder = "Select an option...",
+  disabled = false,
+}: SearchableSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredOptions, setFilteredOptions] = useState(options);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const filtered = options.filter((opt) =>
+      opt.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredOptions(filtered);
+  }, [searchTerm, options]);
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setSearchTerm("");
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  const selectedOption = options.find((o) => o.value === selected);
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      <button
+        type="button"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className="w-full flex justify-between items-center px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <span className={selectedOption ? "text-gray-900" : "text-gray-400"}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        <svg
+          className={`h-5 w-5 text-gray-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 mt-2 w-full bg-white border-2 border-emerald-500 rounded-xl shadow-xl max-h-64 overflow-hidden">
+          <div className="p-3 border-b border-gray-200">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                autoFocus
+              />
+            </div>
+          </div>
+          <ul className="max-h-48 overflow-auto">
+            {filteredOptions.length === 0 && (
+              <li className="p-4 text-gray-500 text-center text-sm">No options found</li>
+            )}
+            {filteredOptions.map((opt) => (
+              <li
+                key={opt.value}
+                className={`px-4 py-3 cursor-pointer hover:bg-emerald-50 transition-colors ${
+                  selected === opt.value ? "bg-emerald-100 font-medium" : ""
+                }`}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                  setSearchTerm("");
+                }}
+              >
+                <span className="text-sm text-gray-900">{opt.label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface RegisterData {
   firstName: string;
@@ -32,10 +140,10 @@ interface RegisterData {
   whatsappNumber: string;
   studentType: "Physical" | "Online";
   institute: string;
+  academicLevel: string; // Add academicLevel to the interface
 }
 
 export default function RegisterPage() {
-  const { setTheme } = useTheme();
   const [step, setStep] = useState(1);
   const [data, setData] = useState<RegisterData>({
     firstName: "",
@@ -52,13 +160,76 @@ export default function RegisterPage() {
     whatsappNumber: "",
     studentType: "Physical",
     institute: "",
+    academicLevel: "", // Initialize academicLevel
   });
-  const [institutes, setInstitutes] = useState([]);
+  const [fetchedInstitutes, setFetchedInstitutes] = useState<Institute[]>([]);
+  const [filteredInstitutes, setFilteredInstitutes] = useState<Institute[]>([]);
+  const [isLoadingInstitutes, setIsLoadingInstitutes] = useState(false);
+  const [instituteError, setInstituteError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usernameAvailability, setUsernameAvailability] = useState<{
+    status: "idle" | "checking" | "available" | "unavailable";
+    message: string;
+  }>({ status: "idle", message: "" });
   const [mounted, setMounted] = useState(false);
   const [currentQuote, setCurrentQuote] = useState(0);
   const [floatingElements, setFloatingElements] = useState<React.CSSProperties[]>([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Debounce the username input
+  const debouncedUsername = useDebounce(data.username, 500);
+
+  // Effect to check username availability
+  useEffect(() => {
+    if (debouncedUsername) {
+      checkUsernameAvailability(debouncedUsername);
+    } else {
+      setUsernameAvailability({ status: "idle", message: "" });
+    }
+  }, [debouncedUsername]);
+
+  const checkUsernameAvailability = async (username: string) => {
+    setUsernameAvailability({ status: "checking", message: "Checking username..." });
+    try {
+      const response = await axios.post("/api/auth/check-username", { username });
+      if (response.data.available) {
+        setUsernameAvailability({ status: "available", message: "Username is available!" });
+      } else {
+        setUsernameAvailability({ status: "unavailable", message: "Username is not available." });
+      }
+    } catch (error) {
+      console.error("Error checking username availability:", error);
+      setUsernameAvailability({ status: "unavailable", message: "Error checking username." });
+    }
+  };
+
+  // Function to fetch institutes from the backend
+  const fetchInstitutes = async () => {
+    setIsLoadingInstitutes(true);
+    setInstituteError(null);
+    try {
+      const response = await axios.get("/api/institutes");
+      setFetchedInstitutes(response.data.institutes);
+    } catch (error) {
+      console.error("Error fetching institutes:", error);
+      setInstituteError("Failed to load institutes. Please try again.");
+    } finally {
+      setIsLoadingInstitutes(false);
+    }
+  };
+
+  // Effect to fetch institutes on component mount
+  useEffect(() => {
+    fetchInstitutes();
+  }, []);
+
+  // Set all institutes without filtering
+  useEffect(() => {
+    setFilteredInstitutes(fetchedInstitutes);
+  }, [fetchedInstitutes]);
+
 
   useEffect(() => {
     const elements = Array.from({ length: 15 }, () => ({
@@ -68,16 +239,6 @@ export default function RegisterPage() {
       animationDelay: `${Math.random() * 4}s`,
     }));
     setFloatingElements(elements);
-    
-    async function fetchInstitutes() {
-      try {
-        const response = await axios.get(`${API_URL}/institutes`);
-        setInstitutes(response.data.institutes);
-      } catch (error) {
-        console.error("Failed to fetch institutes:", error);
-      }
-    }
-    fetchInstitutes();
   }, []);
 
   const motivationalQuotes = [
@@ -111,82 +272,36 @@ export default function RegisterPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const nextStep = () => setStep((prev) => prev + 1);
+  const nextStep = () => {
+    if (step === 1) {
+      if (!data.firstName || !data.lastName || !data.username || !data.password || !data.confirmPassword) {
+        setError("Please fill in all required fields");
+        return;
+      }
+      if (data.password !== data.confirmPassword) {
+        setError("Passwords do not match");
+        return;
+      }
+      setError(null);
+      setStep((prev) => prev + 1);
+    } else {
+      setStep((prev) => prev + 1);
+    }
+  };
+
   const prevStep = () => setStep((prev) => prev - 1);
 
-  async function handleRegister(e: React.FormEvent) {
+  const handleRegister = (e: React.MouseEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    if (data.password !== data.confirmPassword) {
-      setError("Passwords do not match");
+    // Simulate registration
+    setTimeout(() => {
+      alert("Registration successful! (Demo mode)");
       setLoading(false);
-      return;
-    }
-
-    // Create FormData and append fields correctly
-    const formData = new FormData();
-    formData.append('username', data.username);
-    formData.append('password', data.password);
-    formData.append('firstName', data.firstName);
-    formData.append('lastName', data.lastName);
-    formData.append('email', data.email);
-    formData.append('address', data.address || '');
-    formData.append('phoneNumber', data.phoneNumber);
-    formData.append('whatsappNumber', data.whatsappNumber || '');
-    formData.append('telegram', data.telegram || '');
-    formData.append('studentType', data.studentType);
-    formData.append('institute', data.institute);
-
-    // Handle files separately
-    if (data.idCardFront instanceof File) {
-      formData.append('idCardFront', data.idCardFront);
-    }
-    if (data.idCardBack instanceof File) {
-      formData.append('idCardBack', data.idCardBack);
-    }
-
-    try {
-      console.log('Sending registration data:', {
-        ...Object.fromEntries(formData.entries()),
-        idCardFront: data.idCardFront ? 'File present' : 'No file',
-        idCardBack: data.idCardBack ? 'File present' : 'No file'
-      });
-
-      const response = await axios.post(`${API_URL}/auth/register`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      console.log('Registration response:', response.data);
-      
-      // Clear any existing data
-      localStorage.removeItem("token");
-      Cookies.remove("token");
-      
-      // Registration successful - redirect to login
-      alert("Registration successful! Please login with your credentials.");
-      window.location.href = "/auth/login";
-    } catch (e: unknown) {
-      console.error('Registration error:', e);
-      if (axios.isAxiosError(e)) {
-        if (e.response?.status === 400) {
-          setError(e.response.data.message || "Please check your registration details and try again.");
-        } else if (e.response?.status === 409) {
-          setError("This username is already taken. Please choose another one.");
-        } else {
-          setError("Registration failed. Please try again later.");
-        }
-        console.error('Server response:', e.response?.data);
-      } else {
-        setError("An unexpected error occurred. Please try again.");
-        console.error('Unknown error:', e);
-      }
-    }
-    setLoading(false);
-  }
+    }, 1500);
+  };
 
   const quote = motivationalQuotes[currentQuote];
   const QuoteIcon = quote.icon;
@@ -247,10 +362,11 @@ export default function RegisterPage() {
                 Learning Adventure
               </span>
             </h2>
-                          <p className="text-xl text-emerald-100 max-w-lg mx-auto leading-relaxed">
-                            Join ezyICT&apos;s ICT A-Level community and unlock access to programming
-                            tutorials, assignments, and exam preparation resources.
-                          </p>          </div>
+            <p className="text-xl text-emerald-100 max-w-lg mx-auto leading-relaxed">
+              Join ezyICT&apos;s ICT A-Level community and unlock access to programming
+              tutorials, assignments, and exam preparation resources.
+            </p>
+          </div>
 
           {/* Motivational Quote Section */}
           <div
@@ -294,7 +410,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Right side - Register Form with Emerald Theme */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white relative min-h-screen">
+      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50 relative min-h-screen">
         {/* Subtle background pattern */}
         <div className="absolute inset-0 opacity-5">
           <div
@@ -321,7 +437,7 @@ export default function RegisterPage() {
                 />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-foreground">ezyICT</h1>
+                <h1 className="text-3xl font-bold text-gray-900">ezyICT</h1>
                 <p className="text-xs text-emerald-600 font-medium tracking-wider uppercase">
                   Smart Learning Made Easy
                 </p>
@@ -340,10 +456,10 @@ export default function RegisterPage() {
           >
             {/* Header */}
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-foreground mb-3">
+              <h2 className="text-3xl font-bold text-black mb-3">
                 Create Account
               </h2>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-gray-600 text-lg">
                 Join our learning community today
               </p>
               <div className="w-20 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full mx-auto mt-4"></div>
@@ -377,35 +493,302 @@ export default function RegisterPage() {
 
             {/* Step Content */}
             <div className="space-y-6">
+              {/* Step 1: Personal Information */}
               {step === 1 && (
-                <Step1 
-                  data={data} 
-                  setData={(newData) => setData({ ...data, ...newData })} 
-                  nextStep={nextStep} 
-                />
+                <div className="space-y-5">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="form-label">First Name *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={data.firstName}
+                        onChange={(e) => setData({ ...data, firstName: e.target.value })}
+                        placeholder="Enter first name"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">Last Name *</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={data.lastName}
+                        onChange={(e) => setData({ ...data, lastName: e.target.value })}
+                        placeholder="Enter last name"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="form-label">Username *</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={data.username}
+                      onChange={(e) => setData({ ...data, username: e.target.value })}
+                      placeholder="Choose a username"
+                    />
+                    {usernameAvailability.status !== "idle" && (
+                      <p
+                        className={`text-sm mt-2 ${
+                          usernameAvailability.status === "available"
+                            ? "text-green-600"
+                            : usernameAvailability.status === "unavailable"
+                            ? "text-red-600"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {usernameAvailability.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="form-label">Email *</label>
+                    <input
+                      type="email"
+                      className="form-input"
+                      value={data.email}
+                      onChange={(e) => setData({ ...data, email: e.target.value })}
+                      placeholder="your.email@example.com"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="form-label">Password *</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          className="form-input pr-10" // Add padding to the right for the icon
+                          value={data.password}
+                          onChange={(e) => setData({ ...data, password: e.target.value })}
+                          placeholder="Create password"
+                        />
+                        <span
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 hover:text-gray-700"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="form-label">Confirm Password *</label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          className="form-input pr-10" // Add padding to the right for the icon
+                          value={data.confirmPassword}
+                          onChange={(e) => setData({ ...data, confirmPassword: e.target.value })}
+                          placeholder="Confirm password"
+                        />
+                        <span
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 hover:text-gray-700"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={nextStep}
+                    disabled={
+                      step === 1 &&
+                      (usernameAvailability.status === "unavailable" ||
+                        (usernameAvailability.status === "checking" &&
+                          data.username.length > 0))
+                    }
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Continue to Next Step
+                  </button>
+                </div>
               )}
+
+              {/* Step 2: Contact & Institute */}
               {step === 2 && (
-                <Step2
-                  data={data}
-                  setData={(newData) => setData({ ...data, ...newData })}
-                  nextStep={nextStep}
-                  prevStep={prevStep}
-                  institutes={institutes}
-                />
+                <div className="space-y-5">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact & Institute Details</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="form-label">Phone Number *</label>
+                      <input
+                        type="tel"
+                        className="form-input"
+                        value={data.phoneNumber}
+                        onChange={(e) => setData({ ...data, phoneNumber: e.target.value })}
+                        placeholder="+94 77 123 4567"
+                      />
+                    </div>
+                    <div>
+                      <label className="form-label">WhatsApp Number</label>
+                      <input
+                        type="tel"
+                        className="form-input"
+                        value={data.whatsappNumber}
+                        onChange={(e) => setData({ ...data, whatsappNumber: e.target.value })}
+                        placeholder="+94 77 123 4567"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="form-label">Telegram Username</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={data.telegram}
+                      onChange={(e) => setData({ ...data, telegram: e.target.value })}
+                      placeholder="@username"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="form-label">Address</label>
+                    <textarea
+                      className="form-input"
+                      value={data.address}
+                      onChange={(e) => setData({ ...data, address: e.target.value })}
+                      placeholder="Your address"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="form-label">AL or OL *</label>
+                      <select
+                        className="form-input"
+                        value={data.academicLevel}
+                        onChange={(e) => setData({ ...data, academicLevel: e.target.value })}
+                      >
+                        <option value="">Select AL or OL</option>
+                        <option value="AL">AL</option>
+                        <option value="OL">OL</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="form-label">Student Type *</label>
+                      <select
+                        className="form-input"
+                        value={data.studentType}
+                        onChange={(e) => setData({ ...data, studentType: e.target.value as "Physical" | "Online" })}
+                      >
+                        <option value="Physical">Physical</option>
+                        <option value="Online">Online</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="form-label">Select Institute *</label>
+                    {isLoadingInstitutes ? (
+                      <div className="w-full px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-gray-500 text-center">
+                        Loading institutes...
+                      </div>
+                    ) : instituteError ? (
+                      <div className="w-full px-4 py-3 bg-red-50 border-2 border-red-200 rounded-xl text-red-600 text-center text-sm">
+                        {instituteError}
+                      </div>
+                    ) : (
+                      <SearchableSelect
+                        options={filteredInstitutes.map((inst) => ({
+                          label: `${inst.name} - ${inst.location}`,
+                          value: inst._id,
+                        }))}
+                        selected={data.institute}
+                        onChange={(value) => setData({ ...data, institute: value })}
+                        placeholder="Select an institute"
+                        disabled={isLoadingInstitutes}
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={prevStep}
+                      className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-300"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={nextStep}
+                      className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+                    >
+                      Continue
+                    </button>
+                  </div>
+                </div>
               )}
+
+              {/* Step 3: Upload Documents */}
               {step === 3 && (
-                <Step3
-                  data={data}
-                  setData={(newData) => setData({ ...data, ...newData })}
-                  prevStep={prevStep}
-                  handleSubmit={handleRegister}
-                  loading={loading}
-                  studentType={data.studentType}
-                />
+                <div className="space-y-5">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Upload Documents</h3>
+                  
+                  <div>
+                    <label className="form-label">ID Card Front *</label>
+                    <input
+                      type="file"
+                      className="form-input"
+                      onChange={(e) => setData({ ...data, idCardFront: e.target.files?.[0] || null })}
+                      accept="image/*"
+                    />
+                    <p className="text-sm text-gray-500 mt-2">Upload a clear photo of the front side of your ID card</p>
+                  </div>
+
+                  <div>
+                    <label className="form-label">ID Card Back *</label>
+                    <input
+                      type="file"
+                      className="form-input"
+                      onChange={(e) => setData({ ...data, idCardBack: e.target.files?.[0] || null })}
+                      accept="image/*"
+                    />
+                    <p className="text-sm text-gray-500 mt-2">Upload a clear photo of the back side of your ID card</p>
+                  </div>
+
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mt-6">
+                    <h4 className="font-semibold text-emerald-800 mb-2">Review Your Information</h4>
+                    <div className="text-sm text-emerald-700 space-y-1">
+                      <p><span className="font-medium">Name:</span> {data.firstName} {data.lastName}</p>
+                      <p><span className="font-medium">Email:</span> {data.email}</p>
+                      <p><span className="font-medium">Phone:</span> {data.phoneNumber}</p>
+                      <p><span className="font-medium">Student Type:</span> {data.studentType}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={prevStep}
+                      className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-300"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRegister}
+                      disabled={loading}
+                      className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? "Creating Account..." : "Create Account"}
+                    </button>
+                  </div>
+                </div>
               )}
 
               {error && (
-                <div className="bg-destructive/10 border-2 border-destructive/20 text-destructive-foreground px-4 py-4 rounded-xl text-sm text-center font-medium">
+                <div className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-4 rounded-xl text-sm text-center font-medium">
                   {error}
                 </div>
               )}
@@ -424,20 +807,20 @@ export default function RegisterPage() {
               </div>
 
               <div className="text-center">
-                <Link
+                <a
                   href="/login"
                   className="relative text-emerald-600 hover:text-teal-700 font-semibold text-lg transition-colors duration-300 group inline-block"
                 >
                   Sign In Instead
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-emerald-600 to-teal-600 group-hover:w-full transition-all duration-300"></span>
-                </Link>
+                </a>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <style jsx>{`
+      <style jsx global>{`
         @keyframes float {
           0%,
           100% {
@@ -449,6 +832,95 @@ export default function RegisterPage() {
           66% {
             transform: translateY(10px) translateX(-10px) rotate(240deg);
           }
+        }
+
+        /* Modern Form Styles */
+        .form-label {
+          display: block;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+          width: 100%;
+          padding: 0.75rem 1rem;
+          font-size: 0.95rem;
+          line-height: 1.5;
+          color: #1f2937;
+          background-color: #ffffff;
+          border: 1.5px solid #e5e7eb;
+          border-radius: 0.75rem;
+          transition: all 0.2s ease-in-out;
+          outline: none;
+        }
+
+        .form-input:hover {
+          border-color: #d1d5db;
+          background-color: #fafafa;
+        }
+
+        .form-input:focus {
+          border-color: #10b981;
+          background-color: #ffffff;
+          box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .form-input::placeholder {
+          color: #9ca3af;
+        }
+
+        /* Select Dropdown */
+        select.form-input {
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 1rem center;
+          background-size: 12px;
+          padding-right: 2.5rem;
+          cursor: pointer;
+        }
+
+        select.form-input:focus {
+          background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2310b981' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        }
+
+        /* File Input */
+        input[type="file"].form-input {
+          padding: 0.625rem;
+          font-size: 0.875rem;
+        }
+
+        input[type="file"].form-input::file-selector-button {
+          padding: 0.5rem 1rem;
+          margin-right: 1rem;
+          background-color: #f3f4f6;
+          border: 1.5px solid #e5e7eb;
+          border-radius: 0.5rem;
+          color: #374151;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        input[type="file"].form-input::file-selector-button:hover {
+          background-color: #e5e7eb;
+          border-color: #d1d5db;
+        }
+
+        /* Textarea */
+        textarea.form-input {
+          resize: vertical;
+          min-height: 80px;
+        }
+
+        /* Disabled State */
+        .form-input:disabled {
+          background-color: #f9fafb;
+          color: #9ca3af;
+          cursor: not-allowed;
+          opacity: 0.6;
         }
       `}</style>
     </div>

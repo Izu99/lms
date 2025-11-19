@@ -81,6 +81,8 @@ export default function PaperAttempt() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [paymentRequiredError, setPaymentRequiredError] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<{ price: number; paperTitle: string; paperId: string } | null>(null);
 
   // Fetch user
   useEffect(() => {
@@ -200,12 +202,12 @@ export default function PaperAttempt() {
       
       if (attempt) {
         const resultMessage = autoSubmit
-          ? `⏰ Time&apos;s up! Paper submitted automatically.\n\n✅ Score: ${attempt.score}/${attempt.totalQuestions}\n📊 Percentage: ${attempt.percentage}%\n⏱️ Time Used: ${attempt.timeSpent} minutes`
-          : `🎉 Paper submitted successfully!\n\n✅ Score: ${attempt.score}/${attempt.totalQuestions}\n📊 Percentage: ${attempt.percentage}%\n⏱️ Time Used: ${attempt.timeSpent} minutes`;
+          ? `Time&apos;s up! Paper submitted automatically. Score: ${attempt.score}/${attempt.totalQuestions} Percentage: ${attempt.percentage}% Time Used: ${attempt.timeSpent} minutes`
+          : `Paper submitted successfully! Score: ${attempt.score}/${attempt.totalQuestions} Percentage: ${attempt.percentage}% Time Used: ${attempt.timeSpent} minutes`;
 
         toast.info(resultMessage);
       } else {
-        toast.success(autoSubmit ? '⏰ Time\'s up! Paper submitted automatically.' : '🎉 Paper submitted successfully!');
+        toast.success(autoSubmit ? `Time&apos;s up! Paper submitted automatically.` : `Paper submitted successfully!`);
       }
       
       router.push('/student/papers/results');
@@ -240,6 +242,8 @@ export default function PaperAttempt() {
 
     try {
       setLoading(true);
+      setPaymentRequiredError(false); // Reset payment error state
+      setPaymentDetails(null);      // Reset payment details
       const headers = getAuthHeaders();
       console.log('Fetching paper:', paperId);
       const response = await axios.get<{ paper: Paper }>(`${API_URL}/papers/${paperId}`, { headers });
@@ -257,6 +261,14 @@ export default function PaperAttempt() {
       if (axios.isAxiosError(error)) {
         console.error("Error response:", error.response?.data);
         const errorMessage = error.response?.data?.message;
+
+        // Handle 402 Payment Required error
+        if (error.response?.status === 402) {
+          setPaymentRequiredError(true);
+          setPaymentDetails(error.response.data);
+          setError("Payment required to access this paper."); // Set a generic error message
+          return;
+        }
         
         // If already attempted, redirect to results
         if (errorMessage && errorMessage.includes('already attempted')) {
@@ -350,6 +362,24 @@ export default function PaperAttempt() {
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading paper...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (paymentRequiredError && paymentDetails) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="text-center max-w-md p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+          <AlertTriangle className="text-yellow-500 w-16 h-16 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Payment Required</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            To access "{paymentDetails.paperTitle}", a payment of ${paymentDetails.price?.toFixed(2)} is required.
+          </p>
+          <Link href="/student/papers">
+            <Button>Back to Papers</Button>
+          </Link>
+          {/* Optionally, add a "Pay Now" button here */}
         </div>
       </div>
     );

@@ -256,6 +256,13 @@ export default function StudentVideoViewPage() {
     <StudentLayout>
       <div className="flex flex-col lg:flex-row -m-6 lg:-m-8">
         <div className="flex-1 bg-black">
+          {/* New: Video Title at the very top */}
+          <div className="theme-bg-primary p-6 pb-0">
+            <h1 className="text-3xl font-bold theme-text-primary mb-4">
+              {video.title}
+            </h1>
+          </div>
+
           <div className="sticky top-16">
             <div className="relative bg-black" style={{ aspectRatio: "16/9" }}>
               <video
@@ -275,9 +282,10 @@ export default function StudentVideoViewPage() {
                     ? (e) => e.preventDefault()
                     : undefined
                 }
+                preload="metadata"
               >
                 <source
-                  src={`${API_BASE_URL}/api/uploads/${video.videoUrl}`}
+                  src={`${API_BASE_URL}/uploads/${video.videoUrl}`}
                   type="video/mp4"
                 />
                 Your browser does not support the video tag.
@@ -287,10 +295,6 @@ export default function StudentVideoViewPage() {
             <div className="theme-bg-primary p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h1 className="text-2xl font-bold theme-text-primary mb-2">
-                    {video.title}
-                  </h1>
-
                   {(video.class || video.year) && (
                     <div className="flex items-center gap-4 mb-3">
                       {video.class && (
@@ -447,10 +451,10 @@ export default function StudentVideoViewPage() {
                       <div className="relative">
                         <video
                           className="w-20 h-14 bg-gray-200 dark:bg-gray-700 rounded object-cover"
-                          preload=""
+                          preload="metadata"
                         >
                           <source
-                            src={`${API_BASE_URL}/api/uploads/${relatedVideo.videoUrl}`}
+                            src={`${API_BASE_URL}/uploads/${relatedVideo.videoUrl}`}
                           />
                         </video>
                         <div className="absolute top-1 left-1 bg-gray-900 text-white text-xs px-1 rounded">

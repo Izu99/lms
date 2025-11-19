@@ -44,6 +44,8 @@ interface Result {
     title: string;
     description?: string;
     deadline: string;
+    paperType: 'MCQ' | 'Structure'; // Add paperType
+    averagePercentage: number; // New: average percentage for this paper
   };
   score: number;
   totalQuestions: number;
@@ -157,6 +159,7 @@ const ProgressChart = ({ data }) => {
       date: new Date(item.submittedAt),
       name: formatShortDate(item.submittedAt),
       score: item.percentage,
+      paperAverage: item.paperId.averagePercentage, // Add paper-specific average
       title: item.paperId.title,
     }))
     .sort((a, b) => a.date - b.date);
@@ -166,8 +169,11 @@ const ProgressChart = ({ data }) => {
       return (
         <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
           <p className="font-bold text-theme-text-primary">{label}</p>
-          <p className="text-sm text-blue-500">Score: {payload[0].value}%</p>
-          <p className="text-xs text-theme-text-secondary mt-1">{payload[0].payload.title}</p>
+          <p className="text-sm text-blue-500">Your Score: {payload[0].value}%</p>
+          {payload.length > 1 && (
+            <p className="text-sm text-emerald-500">Paper Average: {payload[1].value}%</p>
+          )}
+          <p className="text-xs text-theme-text-secondary mt-1">{payload[0].payload.title.replace(/'/g, '&apos;')}</p>
         </div>
       );
     }
@@ -193,19 +199,32 @@ const ProgressChart = ({ data }) => {
                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
                 <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
               </linearGradient>
+              <linearGradient id="colorPaperAverage" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+              </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.2)" />
             <XAxis dataKey="name" stroke={strokeColor} fontSize={12} />
-            <YAxis stroke={strokeColor} fontSize={12} unit="%" />
+            <YAxis stroke={strokeColor} fontSize={12} unit="%" domain={[0, 105]} />
             <Tooltip content={<CustomTooltip />} />
-            <Area 
-              type="monotone" 
-              dataKey="score" 
-              stroke="#3b82f6" 
-              strokeWidth={2} 
-              fill="url(#colorScore)" 
+            <Area
+              type="monotone"
+              dataKey="score"
+              stroke="#3b82f6"
+              strokeWidth={2}
+              fill="url(#colorScore)"
               dot={{ r: 4, fill: "#3b82f6", stroke: theme === "dark" ? "#0f172a" : "#ffffff", strokeWidth: 2 }}
               activeDot={{ r: 6, fill: "#3b82f6", stroke: theme === "dark" ? "#0f172a" : "#ffffff", strokeWidth: 2 }}
+            />
+            <Area
+              type="monotone"
+              dataKey="paperAverage"
+              stroke="#10b981"
+              strokeWidth={2}
+              fill="url(#colorPaperAverage)"
+              dot={{ r: 4, fill: "#10b981", stroke: theme === "dark" ? "#0f172a" : "#ffffff", strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: "#10b981", stroke: theme === "dark" ? "#0f172a" : "#ffffff", strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -213,7 +232,6 @@ const ProgressChart = ({ data }) => {
     </motion.div>
   );
 };
-
 const ResultCard = ({ result, index }) => {
   const grade = getGradeInfo(result.percentage);
 
@@ -228,6 +246,7 @@ const ResultCard = ({ result, index }) => {
         <div className="flex-1">
           <h3 className="text-xl font-bold text-theme-text-primary mb-1 group-hover:text-blue-600 transition-colors">
             {result.paperId.title}
+            <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">{result.paperId.paperType}</span>
           </h3>
           <div className="flex items-center gap-3 text-sm text-theme-text-tertiary">
             <div className="flex items-center gap-1.5">
@@ -245,27 +264,60 @@ const ResultCard = ({ result, index }) => {
             {grade.letter}
           </div>
           <Link href={`/student/papers/answers/${result.paperId._id}`}>
-            <Button variant="outline">See Answers</Button>
+            <Button variant="outline">
+              {result.paperId.paperType === 'Structure' ? 'View Details' : 'See Answers'}
+            </Button>
           </Link>
         </div>
       </div>
 
       {/* Progress Bar & Stats */}
       <div className="space-y-4">
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 relative overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${result.percentage}%` }}
-            transition={{ duration: 1, delay: index * 0.2 + 0.2 }}
-            className={`h-full rounded-full ${
-              result.percentage >= 60 ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-gradient-to-r from-red-500 to-orange-500'
-            }`}
-          />
+        <div className="space-y-3"> {/* Use space-y-3 for vertical spacing */}
+          {/* Student Score Bar */}
+          <div>
+            <div className="flex justify-between items-center mb-1 text-sm">
+              <span className="font-medium text-theme-text-primary">Your Score</span>
+              <span className="font-bold text-blue-600">{result.percentage}%</span>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 relative overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${result.percentage}%` }}
+                transition={{ duration: 1, delay: index * 0.2 + 0.2 }}
+                className={`h-full rounded-full ${
+                  result.percentage >= 60 ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-gradient-to-r from-red-500 to-orange-500'
+                }`}
+              />
+            </div>
+          </div>
+
+          {/* Average Score Bar */}
+          <div>
+            <div className="flex justify-between items-center mb-1 text-sm">
+              <span className="font-medium text-theme-text-primary">Paper Average</span>
+              <span className="font-bold text-emerald-600">{result.paperId.averagePercentage}%</span>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 relative overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${result.paperId.averagePercentage}%` }}
+                transition={{ duration: 1, delay: index * 0.2 + 0.4 }}
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+              />
+            </div>
+          </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           <div className="bg-gray-100 dark:bg-gray-800/50 p-3 rounded-lg">
             <p className="text-sm text-theme-text-secondary flex items-center justify-center gap-1"><BarChart size={14} /> Score</p>
-            <p className="font-bold text-lg text-theme-text-primary">{result.score}/{result.totalQuestions}</p>
+            <p className="font-bold text-lg text-theme-text-primary">
+              {result.paperId.paperType === 'Structure' ? (
+                <>Score: {result.score}</>
+              ) : (
+                <>{result.score}/{result.totalQuestions}</>
+              )}
+            </p>
           </div>
           <div className="bg-gray-100 dark:bg-gray-800/50 p-3 rounded-lg">
             <p className="text-sm text-theme-text-secondary flex items-center justify-center gap-1"><Percent size={14} /> Percentage</p>
@@ -274,10 +326,6 @@ const ResultCard = ({ result, index }) => {
           <div className="bg-gray-100 dark:bg-gray-800/50 p-3 rounded-lg">
             <p className="text-sm text-theme-text-secondary flex items-center justify-center gap-1"><HelpCircle size={14} /> Total Qs</p>
             <p className="font-bold text-lg text-theme-text-primary">{result.totalQuestions}</p>
-          </div>
-          <div className={`p-3 rounded-lg ${grade.bg}`}>
-            <p className={`text-sm ${grade.color} flex items-center justify-center gap-1`}><Trophy size={14} /> Grade</p>
-            <p className={`font-bold text-lg ${grade.color}`}>{grade.letter}</p>
           </div>
         </div>
       </div>

@@ -20,7 +20,8 @@ const studentAttemptSchema = new mongoose_1.default.Schema({
     status: { type: String, enum: ['started', 'submitted'], default: 'started' },
     startedAt: { type: Date, default: Date.now },
     submittedAt: { type: Date },
-    timeSpent: { type: Number, default: 0 } // in minutes
+    timeSpent: { type: Number, default: 0 }, // in minutes
+    answerFileUrl: { type: String }
 }, { timestamps: true });
 // Ensure one attempt per student per paper
 studentAttemptSchema.index({ paperId: 1, studentId: 1 }, { unique: true });

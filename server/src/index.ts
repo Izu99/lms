@@ -93,7 +93,7 @@ app.use(cors({
 
 console.log('✅ Allowed origins:', allowedOrigins);
 
-app.use('/api/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Use routes
 app.use('/api/auth', authRoutes);

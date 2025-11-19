@@ -83,6 +83,11 @@ export const register = async (req: Request, res: Response) => {
     return res.status(400).json({ message: 'First name and last name are required' });
   }
 
+  if (!whatsappNumber) {
+    console.log('Registration failed: Missing WhatsApp number');
+    return res.status(400).json({ message: 'WhatsApp number is required' });
+  }
+
 
 
   try {

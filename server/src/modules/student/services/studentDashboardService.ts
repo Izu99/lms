@@ -101,24 +101,26 @@ export class StudentDashboardService {
         .limit(limit)
         .lean();
 
-      console.log('Attempts:', JSON.stringify(attempts, null, 2));
-
-      return attempts
-        .filter(attempt => !!attempt.paperId)
+      const processedActivities: (StudentActivity | null)[] = attempts
+        .filter(attempt => !!attempt.paperId) // Filter out attempts where paperId couldn't be populated
         .map(attempt => {
           try {
+            const paperTitle = (attempt.paperId as any).title; // Access title from populated paperId
+
             return {
-              type: attempt.status === 'submitted' ? 'paper_completed' : 'paper_started' as const,
-              title: (attempt.paperId as any).title,
-              timestamp: attempt.status === 'submitted' ? attempt.submittedAt! : attempt.startedAt,
-              score: attempt.status === 'submitted' ? attempt.score : undefined
+              type: attempt.status === 'submitted' ? 'paper_completed' : 'paper_started',
+              title: paperTitle,
+              timestamp: attempt.status === 'submitted' ? attempt.submittedAt! : attempt.startedAt!, // Ensure timestamp is Date
+              score: attempt.status === 'submitted' ? attempt.percentage : undefined // Use percentage for score
             };
           } catch (error) {
-            console.error('Error processing attempt:', attempt, error);
+            console.error('Error processing attempt for recent activity:', attempt, error);
             return null;
           }
-        })
-        .filter((activity): activity is StudentActivity => activity !== null);
+        });
+
+      // Filter out any null activities that resulted from processing errors
+      return processedActivities.filter((activity): activity is StudentActivity => activity !== null);
     } catch (error) {
       console.error('Error fetching recent activity:', error);
       return [];

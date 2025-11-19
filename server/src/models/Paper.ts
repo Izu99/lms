@@ -28,6 +28,8 @@ export interface IPaper extends Document {
   availability: 'all' | 'physical';
   price?: number;
   totalQuestions: number;
+  paperType: 'MCQ' | 'Structure';
+  fileUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,7 +59,9 @@ const paperSchema = new mongoose.Schema<IPaper>({
   timeLimit: { type: Number }, // minutes
   availability: { type: String, enum: ['all', 'physical'], default: 'all' },
   price: { type: Number, default: 0 },
-  totalQuestions: { type: Number, default: 0 }
+  totalQuestions: { type: Number, default: 0 },
+  paperType: { type: String, enum: ['MCQ', 'Structure'], default: 'MCQ' },
+  fileUrl: { type: String }
 }, { timestamps: true });
 
 // Update totalQuestions before saving

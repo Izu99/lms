@@ -70,6 +70,9 @@ export default function CreatePaperPage() {
   const [infoDialogContent, setInfoDialogContent] = useState({ title: "", description: "" });
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [uploadingImages, setUploadingImages] = useState<{[key: string]: boolean}>({});
+  const [paperType, setPaperType] = useState("MCQ");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfUrl, setPdfUrl] = useState("");
   
   // Refs for smooth scrolling
   const questionsRef = useRef<HTMLDivElement>(null);
@@ -232,6 +235,29 @@ export default function CreatePaperPage() {
     setQuestions(newQuestions);
   };
 
+  const handlePdfUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    setPdfFile(file);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const token = localStorage.getItem('token');
+        const headers = {
+            "Content-Type": "multipart/form-data",
+            "Authorization": `Bearer ${token}`
+        };
+
+        const response = await axios.post(`${API_URL}/papers/upload`, formData, { headers });
+        setPdfUrl(response.data.fileUrl);
+    } catch (error) {
+        console.error("Error uploading PDF:", error);
+        setError("Failed to upload PDF");
+    }
+  };
+
   const validateForm = () => {
     if (!title.trim()) return "Paper title is required.";
     if (questions.length === 0) return "At least one question is required.";
@@ -251,44 +277,72 @@ export default function CreatePaperPage() {
   };
 
   const handleSubmit = async () => {
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
-      return;
+    if (paperType === "MCQ") {
+        const validationError = validateForm();
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+    } else { // Structure paper
+        if (!title.trim()) {
+            setError("Paper title is required.");
+            return;
+        }
+        if (!pdfUrl) {
+            setError("Please upload a PDF file for the paper.");
+            return;
+        }
     }
     setError("");
 
     try {
-      setSubmitting(true);
-      const headers = getAuthHeaders();
-      const paperData = {
-        title,
-        description,
-        deadline: deadline || undefined, // Make deadline optional
-        timeLimit: timeLimit > 0 ? timeLimit : undefined, // Make timeLimit optional
-        availability,
-        price,
-        questions: questions.map(({ questionText, options, imageUrl, explanation }) => ({
-          questionText,
-          options,
-          imageUrl,
-          explanation: explanation && (explanation.text || explanation.imageUrl) ? explanation : undefined
-        })),
-      };
+        setSubmitting(true);
+        const headers = getAuthHeaders();
+        let paperData;
 
-      await axios.post(`${API_URL}/papers`, paperData, { headers });
-      
-      toast.success("Paper created successfully! Students can now access and attempt this paper.");
+        if (paperType === "MCQ") {
+            paperData = {
+                title,
+                description,
+                deadline: deadline || undefined,
+                timeLimit: timeLimit > 0 ? timeLimit : undefined,
+                availability,
+                price,
+                paperType: "MCQ",
+                questions: questions.map(({ questionText, options, imageUrl, explanation }) => ({
+                    questionText,
+                    options,
+                    imageUrl,
+                    explanation: explanation && (explanation.text || explanation.imageUrl) ? explanation : undefined
+                })),
+            };
+        } else { // Structure paper
+            paperData = {
+                title,
+                description,
+                deadline: deadline || undefined,
+                timeLimit: timeLimit > 0 ? timeLimit : undefined,
+                availability,
+                price,
+                paperType: "Structure",
+                fileUrl: pdfUrl,
+            };
+        }
+
+        await axios.post(`${API_URL}/papers`, paperData, { headers });
+
+        toast.success("Paper created successfully! Students can now access and attempt this paper.");
+        router.push("/teacher/papers");
 
     } catch (error) {
-      console.error("Error creating paper:", error);
-      if (axios.isAxiosError(error)) {
-        setError(error.response?.data?.message || "Failed to create paper");
-      } else {
-        setError("An unexpected error occurred");
-      }
+        console.error("Error creating paper:", error);
+        if (axios.isAxiosError(error)) {
+            setError(error.response?.data?.message || "Failed to create paper");
+        } else {
+            setError("An unexpected error occurred");
+        }
     } finally {
-      setSubmitting(false);
+        setSubmitting(false);
     }
   };
 
@@ -330,6 +384,18 @@ export default function CreatePaperPage() {
               </div>
               Paper Details
             </h2>
+            <div className="mb-8">
+                <label className="font-semibold text-foreground mb-3 block text-lg">Paper Type</label>
+                <Select value={paperType} onValueChange={setPaperType}>
+                    <SelectTrigger className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl">
+                        <SelectValue placeholder="Select paper type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="MCQ">Multiple Choice Questions (MCQ)</SelectItem>
+                        <SelectItem value="Structure">Structured/Essay Paper (PDF Upload)</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Title */}
               <div className="md:col-span-2">
@@ -411,326 +477,378 @@ export default function CreatePaperPage() {
             </div>
           </motion.div>
 
-          {/* Questions Builder */}
-          <motion.div 
-            className="bg-card rounded-3xl shadow-xl border border-border p-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            ref={questionsRef}
-          >
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-                <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-                  <ListOrdered size={20} className="text-green-500" />
-                </div>
-                Questions Builder
-                <span className="text-lg font-normal text-muted-foreground">({questions.length} questions)</span>
-              </h2>
-              <div className="flex gap-3">
-                {questions.length > 0 && (
-                  <Button onClick={scrollToTop} variant="outline" size="lg" className="border-muted text-muted-foreground">
-                    <ArrowUp size={18} className="mr-2" />
-                    Scroll to Top
-                  </Button>
-                )}
-                <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
-                  <Plus size={18} className="mr-2" />
-                  Add Question
-                </Button>
-              </div>
-            </div>
-
-            {questions.length === 0 ? (
+          {paperType === "MCQ" && (
+            <>
+              {/* Questions Builder */}
               <motion.div 
-                className="text-center py-16 border-2 border-dashed border-border rounded-2xl bg-background"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                className="bg-card rounded-3xl shadow-xl border border-border p-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                ref={questionsRef}
               >
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ListOrdered size={32} className="text-muted-foreground" />
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                    <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
+                      <ListOrdered size={20} className="text-green-500" />
+                    </div>
+                    Questions Builder
+                    <span className="text-lg font-normal text-muted-foreground">({questions.length} questions)</span>
+                  </h2>
+                  <div className="flex gap-3">
+                    {questions.length > 0 && (
+                      <Button onClick={scrollToTop} variant="outline" size="lg" className="border-muted text-muted-foreground">
+                        <ArrowUp size={18} className="mr-2" />
+                        Scroll to Top
+                      </Button>
+                    )}
+                    <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
+                      <Plus size={18} className="mr-2" />
+                      Add Question
+                    </Button>
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">No questions added yet</h3>
-                <p className="text-muted-foreground mb-6">Click &quot;Add Question&quot; to start building your paper with detailed explanations</p>
-                <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600">
-                  <Plus size={18} className="mr-2" />
-                  Add Your First Question
-                </Button>
-              </motion.div>
-            ) : (
-              <div className="space-y-6">
-                <AnimatePresence>
-                  {questions.map((q, qIndex) => (
-                    <motion.div 
-                      key={qIndex}
-                      data-question-index={qIndex}
-                      className="border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: qIndex * 0.1 }}
-                    >
-                      <div 
-                        className="bg-muted/50 p-6 flex items-center justify-between cursor-pointer hover:bg-muted transition-colors"
-                        onClick={() => toggleQuestion(qIndex)}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold text-lg">
-                            {qIndex + 1}
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-foreground text-lg">
-                              Question {qIndex + 1}
-                            </h3>
-                            <p className="text-muted-foreground text-sm">
-                              {q.questionText ? q.questionText.substring(0, 50) + (q.questionText.length > 50 ? '...' : '') : 'Click to add question text'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span>{q.options.length} options</span>
-                            {q.explanation?.text && <BookOpen size={16} className="text-green-500" />}
-                            {q.explanation?.imageUrl && <ImageIcon size={16} className="text-blue-500" />}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeQuestion(qIndex);
-                            }}
-                            className="text-red-500 hover:bg-red-500/10 hover:text-red-600"
-                          >
-                            <Trash2 size={18} />
-                          </Button>
-                          <div className="text-muted-foreground">
-                            {q.open ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
-                          </div>
-                        </div>
-                      </div>
 
-                      <AnimatePresence>
-                        {q.open && (
-                          <motion.div 
-                            className="p-8 space-y-8 bg-card"
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            {/* Question Text */}
-                            <div>
-                              <label className="font-semibold text-foreground mb-3 block text-lg">Question Text</label>
-                              <Textarea
-                                placeholder={`Enter the question text for question ${qIndex + 1}...`}
-                                value={q.questionText}
-                                onChange={(e) => handleQuestionChange(qIndex, e.target.value)}
-                                className="text-lg min-h-[120px] bg-background text-foreground border-border focus:border-primary rounded-xl"
-                              />
-                            </div>
-
-                            {/* Question Image Upload */}
-                            <div>
-                              <label className="font-semibold text-foreground mb-3 block text-lg flex items-center gap-2">
-                                <ImageIcon size={20} className="text-primary" />
-                                Question Image (Optional)
-                              </label>
-                              <div className="border-border border-dashed rounded-xl p-6 hover:border-primary transition-colors bg-background">
-                                {q.imageUrl ? (
-                                  <div className="relative">
-                                    <img 
-                                      src={`${API_BASE_URL}/api/uploads${q.imageUrl}`} 
-                                      alt="Question preview" 
-                                      className="rounded-lg max-h-48 mx-auto shadow-md" 
-                                    />
-                                    <Button
-                                      variant="destructive"
-                                      size="icon"
-                                      className="absolute top-2 right-2"
-                                      onClick={() => removeImage(qIndex, 'question')}
-                                    >
-                                      <X size={16} />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <div className="text-center">
-                                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                                      {uploadingImages[`${qIndex}-question`] ? (
-                                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                      ) : (
-                                        <Upload size={24} className="text-primary" />
-                                      )}
-                                    </div>
-                                    <Input
-                                      type="file"
-                                      accept="image/*"
-                                      onChange={(e) => handleImageUpload(qIndex, e.target.files, 'question')}
-                                      className="max-w-xs mx-auto bg-card text-foreground border-border"
-                                      disabled={uploadingImages[`${qIndex}-question`]}
-                                    />
-                                    <p className="text-sm text-muted-foreground mt-2">Upload an image to accompany this question</p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Options */}
-                            <div>
-                              <div className="flex items-center justify-between mb-4">
-                                <label className="font-semibold text-foreground text-lg">Answer Options</label>
-                                <Button
-                                  onClick={() => addOption(qIndex)}
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={q.options.length >= 6}
-                                  className="border-muted text-muted-foreground"
-                                >
-                                  <Plus size={16} className="mr-1" />
-                                  Add Option
-                                </Button>
-                              </div>
-                              <div className="space-y-4">
-                                {q.options.map((opt, oIndex) => (
-                                  <motion.div 
-                                    key={oIndex}
-                                    className="flex items-center gap-4 p-4 border border-border rounded-xl hover:border-primary transition-colors bg-background"
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: oIndex * 0.1 }}
-                                  >
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setCorrectOption(qIndex, oIndex)}
-                                      className={`rounded-full w-12 h-12 flex-shrink-0 transition-all ${
-                                        opt.isCorrect
-                                          ? "bg-green-500 text-white shadow-lg scale-110"
-                                          : "bg-card text-muted-foreground hover:bg-green-500/10"
-                                      }`}
-                                      title={opt.isCorrect ? "Correct Answer" : "Click to mark as correct"}
-                                    >
-                                      <Check size={20} />
-                                    </Button>
-                                    <div className="flex-1">
-                                      <Input
-                                        placeholder={`Option ${oIndex + 1}`}
-                                        value={opt.optionText}
-                                        onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
-                                        className="text-lg h-12 bg-card text-foreground border-border focus:border-primary rounded-lg"
-                                      />
-                                    </div>
-                                    {q.options.length > 2 && (
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => removeOption(qIndex, oIndex)}
-                                        className="text-red-500 hover:bg-red-500/10 hover:text-red-600"
-                                      >
-                                        <Trash2 size={16} />
-                                      </Button>
-                                    )}
-                                  </motion.div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Detailed Explanation (විවරණ) */}
-                            <div className="border-t border-border pt-8">
-                              <div className="flex items-center gap-3 mb-4">
-                                <div className="w-8 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center">
-                                  <BookOpen size={20} className="text-amber-500" />
-                                </div>
-                                <div>
-                                  <h3 className="font-semibold text-foreground text-lg">Detailed Explanation (විවරණ)</h3>
-                                  <p className="text-sm text-muted-foreground">Optional: Help students understand how to get the correct answer</p>
-                                </div>
-                              </div>
-                              
-                              {/* Explanation Text */}
-                              <div className="mb-6">
-                                <label className="font-medium text-foreground mb-2 block">Explanation Text</label>
-                                <Textarea
-                                  placeholder="Explain the reasoning behind the correct answer, provide step-by-step solution, or give additional context..."
-                                  value={q.explanation?.text || ""}
-                                  onChange={(e) => handleExplanationChange(qIndex, e.target.value)}
-                                  className="min-h-[100px] bg-background text-foreground border-border focus:border-amber-500 rounded-xl"
-                                />
-                              </div>
-
-                              {/* Explanation Image */}
-                              <div>
-                                <label className="font-medium text-foreground mb-2 block flex items-center gap-2">
-                                  <ImageIcon size={16} className="text-amber-500" />
-                                  Explanation Image (Optional)
-                                </label>
-                                <div className="border-border border-dashed rounded-xl p-4 hover:border-amber-500 transition-colors bg-amber-500/10">
-                                  {q.explanation?.imageUrl ? (
-                                    <div className="relative">
-                                      <img 
-                                        src={`${API_BASE_URL}/api/uploads${q.explanation.imageUrl}`} 
-                                        alt="Explanation preview" 
-                                        className="rounded-lg max-h-40 mx-auto shadow-md" 
-                                      />
-                                      <Button
-                                        variant="destructive"
-                                        size="icon"
-                                        className="absolute top-2 right-2"
-                                        onClick={() => removeImage(qIndex, 'explanation')}
-                                      >
-                                        <X size={16} />
-                                      </Button>
-                                    </div>
-                                  ) : (
-                                    <div className="text-center">
-                                      <div className="w-10 h-10 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        {uploadingImages[`${qIndex}-explanation`] ? (
-                                          <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                                        ) : (
-                                          <Upload size={20} className="text-amber-500" />
-                                        )}
-                                      </div>
-                                      <Input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => handleImageUpload(qIndex, e.target.files, 'explanation')}
-                                        className="max-w-xs mx-auto bg-card text-foreground border-border"
-                                        disabled={uploadingImages[`${qIndex}-explanation`]}
-                                      />
-                                      <p className="text-xs text-muted-foreground mt-1">Upload diagrams, charts, or visual aids</p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                
-                {/* Add Question Button at Bottom */}
-                {questions.length > 0 && (
+                {questions.length === 0 ? (
                   <motion.div 
-                    className="text-center pt-6"
+                    className="text-center py-16 border-2 border-dashed border-border rounded-2xl bg-background"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
                   >
-                    <Button 
-                      onClick={addQuestion} 
-                      size="lg" 
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
-                    >
+                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                      <ListOrdered size={32} className="text-muted-foreground" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground mb-2">No questions added yet</h3>
+                    <p className="text-muted-foreground mb-6">Click &quot;Add Question&quot; to start building your paper with detailed explanations</p>
+                    <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600">
                       <Plus size={18} className="mr-2" />
-                      Add Another Question
+                      Add Your First Question
                     </Button>
                   </motion.div>
+                ) : (
+                  <div className="space-y-6">
+                    <AnimatePresence>
+                      {questions.map((q, qIndex) => (
+                        <motion.div 
+                          key={qIndex}
+                          data-question-index={qIndex}
+                          className="border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ delay: qIndex * 0.1 }}
+                        >
+                          <div 
+                            className="bg-muted/50 p-6 flex items-center justify-between cursor-pointer hover:bg-muted transition-colors"
+                            onClick={() => toggleQuestion(qIndex)}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold text-lg">
+                                {qIndex + 1}
+                              </div>
+                              <div>
+                                <h3 className="font-bold text-foreground text-lg">
+                                  Question {qIndex + 1}
+                                </h3>
+                                <p className="text-muted-foreground text-sm">
+                                  {q.questionText ? q.questionText.substring(0, 50) + (q.questionText.length > 50 ? '...' : '') : 'Click to add question text'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <span>{q.options.length} options</span>
+                                {q.explanation?.text && <BookOpen size={16} className="text-green-500" />}
+                                {q.explanation?.imageUrl && <ImageIcon size={16} className="text-blue-500" />}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeQuestion(qIndex);
+                                }}
+                                className="text-red-500 hover:bg-red-500/10 hover:text-red-600"
+                              >
+                                <Trash2 size={18} />
+                              </Button>
+                              <div className="text-muted-foreground">
+                                {q.open ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+                              </div>
+                            </div>
+                          </div>
+
+                          <AnimatePresence>
+                            {q.open && (
+                              <motion.div 
+                                className="p-8 space-y-8 bg-card"
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                              >
+                                {/* Question Text */}
+                                <div>
+                                  <label className="font-semibold text-foreground mb-3 block text-lg">Question Text</label>
+                                  <Textarea
+                                    placeholder={`Enter the question text for question ${qIndex + 1}...`}
+                                    value={q.questionText}
+                                    onChange={(e) => handleQuestionChange(qIndex, e.target.value)}
+                                    className="text-lg min-h-[120px] bg-background text-foreground border-border focus:border-primary rounded-xl"
+                                  />
+                                </div>
+
+                                {/* Question Image Upload */}
+                                <div>
+                                  <label className="font-semibold text-foreground mb-3 block text-lg flex items-center gap-2">
+                                    <ImageIcon size={20} className="text-primary" />
+                                    Question Image (Optional)
+                                  </label>
+                                  <div className="border-border border-dashed rounded-xl p-6 hover:border-primary transition-colors bg-background">
+                                    {q.imageUrl ? (
+                                      <div className="relative">
+                                        <img 
+                                          src={`${API_BASE_URL}/api/uploads${q.imageUrl}`} 
+                                          alt="Question preview" 
+                                          className="rounded-lg max-h-48 mx-auto shadow-md" 
+                                        />
+                                        <Button
+                                          variant="destructive"
+                                          size="icon"
+                                          className="absolute top-2 right-2"
+                                          onClick={() => removeImage(qIndex, 'question')}
+                                        >
+                                          <X size={16} />
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <div className="text-center">
+                                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                          {uploadingImages[`${qIndex}-question`] ? (
+                                            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                          ) : (
+                                            <Upload size={24} className="text-primary" />
+                                          )}
+                                        </div>
+                                        <Input
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={(e) => handleImageUpload(qIndex, e.target.files, 'question')}
+                                          className="max-w-xs mx-auto bg-card text-foreground border-border"
+                                          disabled={uploadingImages[`${qIndex}-question`]}
+                                        />
+                                        <p className="text-sm text-muted-foreground mt-2">Upload an image to accompany this question</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Options */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-4">
+                                    <label className="font-semibold text-foreground text-lg">Answer Options</label>
+                                    <Button
+                                      onClick={() => addOption(qIndex)}
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={q.options.length >= 6}
+                                      className="border-muted text-muted-foreground"
+                                    >
+                                      <Plus size={16} className="mr-1" />
+                                      Add Option
+                                    </Button>
+                                  </div>
+                                  <div className="space-y-4">
+                                    {q.options.map((opt, oIndex) => (
+                                      <motion.div 
+                                        key={oIndex}
+                                        className="flex items-center gap-4 p-4 border border-border rounded-xl hover:border-primary transition-colors bg-background"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: oIndex * 0.1 }}
+                                      >
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => setCorrectOption(qIndex, oIndex)}
+                                          className={`rounded-full w-12 h-12 flex-shrink-0 transition-all ${
+                                            opt.isCorrect
+                                              ? "bg-green-500 text-white shadow-lg scale-110"
+                                              : "bg-card text-muted-foreground hover:bg-green-500/10"
+                                          }`}
+                                          title={opt.isCorrect ? "Correct Answer" : "Click to mark as correct"}
+                                        >
+                                          <Check size={20} />
+                                        </Button>
+                                        <div className="flex-1">
+                                          <Input
+                                            placeholder={`Option ${oIndex + 1}`}
+                                            value={opt.optionText}
+                                            onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                                            className="text-lg h-12 bg-card text-foreground border-border focus:border-primary rounded-lg"
+                                          />
+                                        </div>
+                                        {q.options.length > 2 && (
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => removeOption(qIndex, oIndex)}
+                                            className="text-red-500 hover:bg-red-500/10 hover:text-red-600"
+                                          >
+                                            <Trash2 size={16} />
+                                          </Button>
+                                        )}
+                                      </motion.div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Detailed Explanation (විවරණ) */}
+                                <div className="border-t border-border pt-8">
+                                  <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-8 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center">
+                                      <BookOpen size={20} className="text-amber-500" />
+                                    </div>
+                                    <div>
+                                      <h3 className="font-semibold text-foreground text-lg">Detailed Explanation (විවරණ)</h3>
+                                      <p className="text-sm text-muted-foreground">Optional: Help students understand how to get the correct answer</p>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Explanation Text */}
+                                  <div className="mb-6">
+                                    <label className="font-medium text-foreground mb-2 block">Explanation Text</label>
+                                    <Textarea
+                                      placeholder="Explain the reasoning behind the correct answer, provide step-by-step solution, or give additional context..."
+                                      value={q.explanation?.text || ""}
+                                      onChange={(e) => handleExplanationChange(qIndex, e.target.value)}
+                                      className="min-h-[100px] bg-background text-foreground border-border focus:border-amber-500 rounded-xl"
+                                    />
+                                  </div>
+
+                                  {/* Explanation Image */}
+                                  <div>
+                                    <label className="font-medium text-foreground mb-2 block flex items-center gap-2">
+                                      <ImageIcon size={16} className="text-amber-500" />
+                                      Explanation Image (Optional)
+                                    </label>
+                                    <div className="border-border border-dashed rounded-xl p-4 hover:border-amber-500 transition-colors bg-amber-500/10">
+                                      {q.explanation?.imageUrl ? (
+                                        <div className="relative">
+                                          <img 
+                                            src={`${API_BASE_URL}/api/uploads${q.explanation.imageUrl}`} 
+                                            alt="Explanation preview" 
+                                            className="rounded-lg max-h-40 mx-auto shadow-md" 
+                                          />
+                                          <Button
+                                            variant="destructive"
+                                            size="icon"
+                                            className="absolute top-2 right-2"
+                                            onClick={() => removeImage(qIndex, 'explanation')}
+                                          >
+                                            <X size={16} />
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <div className="text-center">
+                                          <div className="w-10 h-10 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            {uploadingImages[`${qIndex}-explanation`] ? (
+                                              <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                              <Upload size={20} className="text-amber-500" />
+                                            )}
+                                          </div>
+                                          <Input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => handleImageUpload(qIndex, e.target.files, 'explanation')}
+                                            className="max-w-xs mx-auto bg-card text-foreground border-border"
+                                            disabled={uploadingImages[`${qIndex}-explanation`]}
+                                          />
+                                          <p className="text-xs text-muted-foreground mt-1">Upload diagrams, charts, or visual aids</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                    
+                    {/* Add Question Button at Bottom */}
+                    {questions.length > 0 && (
+                      <motion.div 
+                        className="text-center pt-6"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        <Button 
+                          onClick={addQuestion} 
+                          size="lg" 
+                          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
+                        >
+                          <Plus size={18} className="mr-2" />
+                          Add Another Question
+                        </Button>
+                      </motion.div>
+                    )}
+                  </div>
                 )}
-              </div>
-            )}
-          </motion.div>
+              </motion.div>
+            </>
+          )}
+
+          {paperType === "Structure" && (
+            <motion.div
+                className="bg-card rounded-3xl shadow-xl border border-border p-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+            >
+                <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+                    <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                        <Upload size={20} className="text-purple-500" />
+                    </div>
+                    Upload Paper PDF
+                </h2>
+                <div className="border-border border-dashed rounded-xl p-6 hover:border-primary transition-colors bg-background">
+                    {pdfUrl ? (
+                        <div className="relative">
+                            <p className="text-lg font-semibold text-green-600">PDF uploaded successfully!</p>
+                            <p className="text-muted-foreground">{pdfFile?.name}</p>
+                            <Button
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-2 right-2"
+                                onClick={() => {
+                                    setPdfFile(null);
+                                    setPdfUrl("");
+                                }}
+                            >
+                                <X size={16} />
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <Upload size={24} className="text-primary" />
+                            </div>
+                            <Input
+                                type="file"
+                                accept="application/pdf"
+                                onChange={(e) => handlePdfUpload(e.target.files)}
+                                className="max-w-xs mx-auto bg-card text-foreground border-border"
+                            />
+                            <p className="text-sm text-muted-foreground mt-2">Upload the paper in PDF format.</p>
+                        </div>
+                    )}
+                </div>
+            </motion.div>
+          )}
 
           {/* Error Display */}
           <AnimatePresence>
@@ -761,7 +879,7 @@ export default function CreatePaperPage() {
           >
             <Button
               onClick={handleSubmit}
-              disabled={submitting || questions.length === 0}
+              disabled={submitting || (paperType === 'MCQ' && questions.length === 0) || (paperType === 'Structure' && !pdfUrl)}
               size="lg"
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-12 py-4 rounded-2xl font-semibold text-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all"
             >

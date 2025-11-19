@@ -190,7 +190,7 @@ export default function TeacherVideosPage() {
               className="relative w-full h-48 bg-gray-900 cursor-pointer group overflow-hidden"
             >
               <video
-                src={`${API_BASE_URL}/api/uploads/${video.videoUrl}`}
+                src={`${API_BASE_URL}/uploads/${video.videoUrl}`}
                 className="w-full h-full object-cover"
                 preload="metadata"
               />

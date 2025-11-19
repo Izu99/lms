@@ -15,6 +15,7 @@ interface Step2Props {
     whatsappNumber: string;
     studentType: "Physical" | "Online";
     institute: string;
+    alOrOl?: "AL" | "OL";
   };
   setData: (data: Step2Props['data']) => void;
   nextStep: () => void;
@@ -25,7 +26,7 @@ interface Step2Props {
 export default function Step2({ data, setData, nextStep, prevStep, institutes }: Step2Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (data.address && data.institute && data.studentType) {
+    if (data.address && data.institute && data.studentType && data.alOrOl) {
       nextStep();
     }
   };
@@ -38,8 +39,27 @@ export default function Step2({ data, setData, nextStep, prevStep, institutes }:
       className="space-y-6"
     >
       <form onSubmit={handleSubmit} className="space-y-6" role="form">
-        {/* Student Type and Institute */}
+        {/* AL or OL Selection */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label htmlFor="alOrOl" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <GraduationCap size={16} className="text-emerald-500" />
+              AL or OL <span className="text-red-500">*</span>
+            </label>
+            <Select
+              value={data.alOrOl}
+              onValueChange={(value) => setData({ ...data, alOrOl: value as "AL" | "OL" })}
+            >
+              <SelectTrigger className="h-14 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200">
+                <SelectValue placeholder="Select AL or OL" />
+              </SelectTrigger>
+              <SelectContent className="bg-white">
+                <SelectItem value="AL" className="border-b border-gray-200 last:border-b-0 rounded-none">AL</SelectItem>
+                <SelectItem value="OL" className="border-b border-gray-200 last:border-b-0 rounded-none">OL</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {/* Student Type and Institute */}
           <div className="space-y-2">
             <label htmlFor="studentType" className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <GraduationCap size={16} className="text-emerald-500" />
@@ -53,8 +73,8 @@ export default function Step2({ data, setData, nextStep, prevStep, institutes }:
                 <SelectValue placeholder="Select student type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Physical">Physical</SelectItem>
-                <SelectItem value="Online">Online</SelectItem>
+                <SelectItem value="Physical" className="border-b border-gray-200 last:border-b-0 rounded-none">Physical</SelectItem>
+                <SelectItem value="Online" className="border-b border-gray-200 last:border-b-0 rounded-none">Online</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -70,12 +90,15 @@ export default function Step2({ data, setData, nextStep, prevStep, institutes }:
               <SelectTrigger className="h-14 border border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 rounded-xl text-sm font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200">
                 <SelectValue placeholder="Select an institute" />
               </SelectTrigger>
-              <SelectContent>
-                {institutes.map((institute) => (
-                  <SelectItem key={institute._id} value={institute._id}>
-                    {institute.name}
-                  </SelectItem>
-                ))}
+              <SelectContent className="bg-white">
+                {institutes.map((institute) => {
+                  console.log("Rendering institute:", institute); // Debug log
+                  return (
+                    <SelectItem key={institute._id} value={institute._id} className="border-b border-gray-200 last:border-b-0 rounded-none">
+                      {institute.name}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

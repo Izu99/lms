@@ -38,7 +38,7 @@ export default function TeacherCoursePackagesPage() {
       await CoursePackageService.deleteCoursePackage(id);
       toast.success("Course package deleted successfully!");
       refetch();
-    } catch (error: any) {
+    } catch (error: AxiosError) {
       const errorMessage = error?.response?.data?.message || "Failed to delete course package";
       toast.error(errorMessage);
       console.error(error);

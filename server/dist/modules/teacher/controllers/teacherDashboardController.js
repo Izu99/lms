@@ -49,6 +49,17 @@ class TeacherDashboardController {
             return responseHelper_1.ResponseHelper.serverError(res, 'Failed to fetch analytics');
         }
     }
+    static async getPerformanceDistribution(req, res) {
+        try {
+            const teacherId = req.user.id;
+            const distribution = await teacherDashboardService_1.TeacherDashboardService.getPerformanceDistribution(teacherId);
+            return responseHelper_1.ResponseHelper.success(res, distribution, 'Performance distribution retrieved successfully');
+        }
+        catch (error) {
+            console.error('Error fetching performance distribution:', error);
+            return responseHelper_1.ResponseHelper.serverError(res, 'Failed to fetch performance distribution');
+        }
+    }
     static async getStudents(req, res) {
         try {
             const teacherId = req.user.id;

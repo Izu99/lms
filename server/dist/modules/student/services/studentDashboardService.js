@@ -81,19 +81,36 @@ class StudentDashboardService {
         });
     }
     static async getRecentActivity(studentId, limit = 10) {
-        const attempts = await StudentAttempt_1.StudentAttempt.find({ studentId })
-            .populate('paperId', 'title')
-            .sort({ updatedAt: -1 })
-            .limit(limit)
-            .lean();
-        return attempts
-            .filter(attempt => !!attempt.paperId)
-            .map(attempt => ({
-            type: attempt.status === 'submitted' ? 'paper_completed' : 'paper_started',
-            title: attempt.paperId.title,
-            timestamp: attempt.status === 'submitted' ? attempt.submittedAt : attempt.startedAt,
-            score: attempt.status === 'submitted' ? attempt.score : undefined
-        }));
+        try {
+            const attempts = await StudentAttempt_1.StudentAttempt.find({ studentId })
+                .populate('paperId', 'title')
+                .sort({ updatedAt: -1 })
+                .limit(limit)
+                .lean();
+            const processedActivities = attempts
+                .filter(attempt => !!attempt.paperId) // Filter out attempts where paperId couldn't be populated
+                .map(attempt => {
+                try {
+                    const paperTitle = attempt.paperId.title; // Access title from populated paperId
+                    return {
+                        type: attempt.status === 'submitted' ? 'paper_completed' : 'paper_started',
+                        title: paperTitle,
+                        timestamp: attempt.status === 'submitted' ? attempt.submittedAt : attempt.startedAt, // Ensure timestamp is Date
+                        score: attempt.status === 'submitted' ? attempt.percentage : undefined // Use percentage for score
+                    };
+                }
+                catch (error) {
+                    console.error('Error processing attempt for recent activity:', attempt, error);
+                    return null;
+                }
+            });
+            // Filter out any null activities that resulted from processing errors
+            return processedActivities.filter((activity) => activity !== null);
+        }
+        catch (error) {
+            console.error('Error fetching recent activity:', error);
+            return [];
+        }
     }
 }
 exports.StudentDashboardService = StudentDashboardService;

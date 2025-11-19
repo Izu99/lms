@@ -34,9 +34,11 @@ interface Paper {
   deadline: string;
   timeLimit: number;
   createdAt: string;
-  attemptCount?: number; // Number of students who attempted this paper
-  isCompleted?: boolean; // For student view
-  percentage?: number; // For student view
+  attemptCount?: number;
+  isCompleted?: boolean;
+  percentage?: number;
+  paperType: 'MCQ' | 'Structure';
+  fileUrl?: string;
 }
 
 export default function StudentPapersPage() {
@@ -165,7 +167,6 @@ export default function StudentPapersPage() {
               </div>
             </div>
 
-            {/* Show My Results page */}
             <Link href="/student/papers/results">
               <Button className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                 <Trophy size={20} className="mr-2" />
@@ -195,7 +196,7 @@ export default function StudentPapersPage() {
           </div>
         </motion.div>
 
-        {/* Tabs for Students */}
+        {/* Tabs */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -205,21 +206,21 @@ export default function StudentPapersPage() {
           <Button 
             variant={activeTab === 'not-answered' ? 'default' : 'outline'}
             onClick={() => setActiveTab('not-answered')}
-            className={activeTab === 'not-answered' ? "bg-blue-600 hover:bg-blue-700 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}
+            className={`transition-all duration-300 ${activeTab === 'not-answered' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
           >
             Not Answered
           </Button>
           <Button 
             variant={activeTab === 'answered' ? 'default' : 'outline'}
             onClick={() => setActiveTab('answered')}
-            className={activeTab === 'answered' ? "bg-blue-600 hover:bg-blue-700 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}
+            className={`transition-all duration-300 ${activeTab === 'answered' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
           >
             Answered
           </Button>
           <Button 
             variant={activeTab === 'expired' ? 'default' : 'outline'}
             onClick={() => setActiveTab('expired')}
-            className={activeTab === 'expired' ? "bg-blue-600 hover:bg-blue-700 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}
+            className={`transition-all duration-300 ${activeTab === 'expired' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
           >
             Expired
           </Button>
@@ -232,7 +233,6 @@ export default function StudentPapersPage() {
           transition={{ delay: 0.15 }}
           className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
         >
-          {/* Total Papers */}
           <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg theme-border p-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
@@ -247,7 +247,6 @@ export default function StudentPapersPage() {
             </div>
           </div>
 
-          {/* Active Papers */}
           <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg theme-border p-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
@@ -262,7 +261,6 @@ export default function StudentPapersPage() {
             </div>
           </div>
 
-          {/* Answered Papers */}
           <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg theme-border p-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
@@ -277,7 +275,6 @@ export default function StudentPapersPage() {
             </div>
           </div>
 
-          {/* Expired Papers */}
           <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg theme-border p-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
@@ -332,28 +329,34 @@ export default function StudentPapersPage() {
                 transition={{ delay: index * 0.1 }}
                 className="group"
               >
-                <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg theme-border p-6 h-full flex flex-col hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <div className="theme-card rounded-2xl shadow-lg theme-border p-6 h-full flex flex-col hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                  {/* Header with Status Badge */}
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
-                        <BookOpen className="text-white" size={20} />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`w-10 h-10 bg-gradient-to-r ${paper.paperType === 'Structure' ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-indigo-500'} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                          <BookOpen className="text-white" size={20} />
+                        </div>
+                        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${paper.paperType === 'Structure' ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300'}`}>
+                          {paper.paperType}
+                        </span>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-bold theme-text-primary text-lg leading-tight line-clamp-2">
-                          {paper.title}
-                        </h3>
-                      </div>
+                      <h3 className="font-bold theme-text-primary text-lg leading-tight line-clamp-2">
+                        {paper.title}
+                      </h3>
                     </div>
                     
-                    {isExpired(paper.deadline) ? (
-                      <span className="px-3 py-1 bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 text-xs font-medium rounded-full">
-                        Expired
-                      </span>
-                    ) : (
-                      <span className="px-3 py-1 bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 text-xs font-medium rounded-full">
-                        Available
-                      </span>
-                    )}
+                    <div className="ml-3 flex-shrink-0">
+                      {isExpired(paper.deadline) ? (
+                        <span className="px-3 py-1 bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 text-xs font-medium rounded-full whitespace-nowrap">
+                          Expired
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 text-xs font-medium rounded-full whitespace-nowrap">
+                          Available
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {paper.description && (
@@ -375,10 +378,10 @@ export default function StudentPapersPage() {
                     
                     <div className="flex items-center gap-2 text-sm theme-text-secondary">
                       <Calendar size={16} className="text-orange-500" />
-                      <span>Due: {formatDate(paper.deadline)}</span>
+                      <span>Due: {paper.deadline ? formatDate(paper.deadline) : 'Not set'}</span>
                     </div>
 
-                    {!isExpired(paper.deadline) && (
+                    {!isExpired(paper.deadline) && paper.deadline && (
                       <div className="flex items-center gap-2 text-sm">
                         <Clock size={16} className="text-yellow-500" />
                         <span className="font-medium text-yellow-700 dark:text-yellow-400">
@@ -388,12 +391,12 @@ export default function StudentPapersPage() {
                     )}
                   </div>
 
-                  {/* Action Buttons - Student View */}
+                  {/* Action Buttons */}
                   <div className="flex gap-2 mt-auto">
                     {answeredPapers.includes(paper._id) ? (
                       <Link href={`/student/papers/answers/${paper._id}`} className="w-full">
                         <Button 
-                          className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700"
+                          className="w-full bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white"
                         >
                           <Trophy size={16} className="mr-2" />
                           See Answer
@@ -403,10 +406,19 @@ export default function StudentPapersPage() {
                       <Button variant="outline" disabled className="w-full bg-black text-white">
                         Expired
                       </Button>
+                    ) : paper.paperType === 'Structure' ? (
+                      <Link href={`/student/papers/structure/${paper._id}`} className="w-full">
+                          <Button 
+                              className="w-full bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white"
+                          >
+                              <Eye size={16} className="mr-2" />
+                              View Paper
+                          </Button>
+                      </Link>
                     ) : (
                       <Link href={`/student/papers/${paper._id}`} className="w-full">
                         <Button 
-                          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                          className="w-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
                         >
                           <Play size={16} className="mr-2" />
                           Start Exam
