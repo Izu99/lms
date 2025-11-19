@@ -11,8 +11,6 @@ import {
   UserPlus,
   Eye,
   EyeOff,
-  Search,
-  X,
 } from "lucide-react";
 
 interface Institute {
@@ -22,8 +20,8 @@ interface Institute {
   isActive: boolean;
 }
 
-// Searchable Select Component
-interface SearchableSelectProps {
+// Custom Dropdown Component (No Search)
+interface CustomSelectProps {
   options: { label: string; value: string }[];
   selected: string;
   onChange: (value: string) => void;
@@ -31,30 +29,20 @@ interface SearchableSelectProps {
   disabled?: boolean;
 }
 
-function SearchableSelect({
+function CustomSelect({
   options,
   selected,
   onChange,
   placeholder = "Select an option...",
   disabled = false,
-}: SearchableSelectProps) {
+}: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredOptions, setFilteredOptions] = useState(options);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const filtered = options.filter((opt) =>
-      opt.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredOptions(filtered);
-  }, [searchTerm, options]);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
-        setSearchTerm("");
       }
     }
     document.addEventListener("mousedown", onClickOutside);
@@ -69,7 +57,7 @@ function SearchableSelect({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className="w-full flex justify-between items-center px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex justify-between items-center px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
       >
         <span className={selectedOption ? "text-gray-900" : "text-gray-400"}>
           {selectedOption ? selectedOption.label : placeholder}
@@ -85,25 +73,12 @@ function SearchableSelect({
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-2 w-full bg-white border-2 border-emerald-500 rounded-xl shadow-xl max-h-64 overflow-hidden">
-          <div className="p-3 border-b border-gray-200">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                autoFocus
-              />
-            </div>
-          </div>
-          <ul className="max-h-48 overflow-auto">
-            {filteredOptions.length === 0 && (
-              <li className="p-4 text-gray-500 text-center text-sm">No options found</li>
+        <div className="absolute z-50 mt-2 w-full bg-white border-2 border-emerald-500 rounded-xl shadow-xl max-h-64 overflow-auto">
+          <ul className="divide-y divide-gray-200">
+            {options.length === 0 && (
+              <li className="p-4 text-gray-500 text-center text-sm">No options available</li>
             )}
-            {filteredOptions.map((opt) => (
+            {options.map((opt) => (
               <li
                 key={opt.value}
                 className={`px-4 py-3 cursor-pointer hover:bg-emerald-50 transition-colors ${
@@ -112,7 +87,6 @@ function SearchableSelect({
                 onClick={() => {
                   onChange(opt.value);
                   setIsOpen(false);
-                  setSearchTerm("");
                 }}
               >
                 <span className="text-sm text-gray-900">{opt.label}</span>
@@ -664,26 +638,27 @@ export default function RegisterPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="form-label">AL or OL *</label>
-                      <select
-                        className="form-input"
-                        value={data.academicLevel}
-                        onChange={(e) => setData({ ...data, academicLevel: e.target.value })}
-                      >
-                        <option value="">Select AL or OL</option>
-                        <option value="AL">AL</option>
-                        <option value="OL">OL</option>
-                      </select>
+                      <CustomSelect
+                        options={[
+                          { label: "AL", value: "AL" },
+                          { label: "OL", value: "OL" },
+                        ]}
+                        selected={data.academicLevel}
+                        onChange={(value) => setData({ ...data, academicLevel: value })}
+                        placeholder="Select AL or OL"
+                      />
                     </div>
                     <div>
                       <label className="form-label">Student Type *</label>
-                      <select
-                        className="form-input"
-                        value={data.studentType}
-                        onChange={(e) => setData({ ...data, studentType: e.target.value as "Physical" | "Online" })}
-                      >
-                        <option value="Physical">Physical</option>
-                        <option value="Online">Online</option>
-                      </select>
+                      <CustomSelect
+                        options={[
+                          { label: "Physical", value: "Physical" },
+                          { label: "Online", value: "Online" },
+                        ]}
+                        selected={data.studentType}
+                        onChange={(value) => setData({ ...data, studentType: value as "Physical" | "Online" })}
+                        placeholder="Select Student Type"
+                      />
                     </div>
                   </div>
 
@@ -698,7 +673,7 @@ export default function RegisterPage() {
                         {instituteError}
                       </div>
                     ) : (
-                      <SearchableSelect
+                      <CustomSelect
                         options={filteredInstitutes.map((inst) => ({
                           label: `${inst.name} - ${inst.location}`,
                           value: inst._id,
