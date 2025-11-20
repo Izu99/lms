@@ -147,7 +147,7 @@ export function TeacherDashboard() {
               <p className="text-sm text-gray-400 mt-1">Avg Engagement</p>
             </div>
             <div className="text-center">
-              <p className="text-3xl font-bold text-orange-400">{data.stats.activePapers}</p>
+              <p className="text-3xl font-bold text-orange-400">{data.stats.totalPapers}</p>
               <p className="text-sm text-gray-400 mt-1">Active Papers</p>
             </div>
           </div>

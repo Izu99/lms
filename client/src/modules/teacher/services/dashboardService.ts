@@ -4,7 +4,8 @@ import {
   TeacherDashboardStats, 
   TeacherAnalytics,
   StudentSummary,
-  DailyActivity // New import
+  DailyActivity,
+  PerformanceDistributionData
 } from '../types/dashboard.types';
 
 export class TeacherDashboardService {
