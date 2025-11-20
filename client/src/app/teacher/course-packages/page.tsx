@@ -8,9 +8,10 @@ import { CoursePackageForm } from "@/components/teacher/CoursePackageForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useCoursePackages } from "@/modules/teacher/hooks/useCoursePackages";
 import { CoursePackageData } from "@/modules/shared/types/course-package.types";
-import { CoursePackageService } from "@/modules/teacher/services/coursePackageService";
+import { CoursePackageService } from "@/modules/teacher/services/CoursePackageService";
 import { toast } from "sonner";
 import { CoursePackageCard } from "@/components/teacher/CoursePackageCard";
+import axios, { AxiosError } from "axios";
 
 export default function TeacherCoursePackagesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -38,10 +39,15 @@ export default function TeacherCoursePackagesPage() {
       await CoursePackageService.deleteCoursePackage(id);
       toast.success("Course package deleted successfully!");
       refetch();
-    } catch (error: AxiosError) {
-      const errorMessage = error?.response?.data?.message || "Failed to delete course package";
-      toast.error(errorMessage);
-      console.error(error);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || "Failed to delete course package";
+        toast.error(errorMessage);
+        console.error(error);
+      } else {
+        toast.error("An unexpected error occurred.");
+        console.error(error);
+      }
     }
   };
 

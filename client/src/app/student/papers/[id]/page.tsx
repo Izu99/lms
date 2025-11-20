@@ -374,7 +374,7 @@ export default function PaperAttempt() {
           <AlertTriangle className="text-yellow-500 w-16 h-16 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Payment Required</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            To access "{paymentDetails.paperTitle}", a payment of ${paymentDetails.price?.toFixed(2)} is required.
+            To access &quot;{paymentDetails.paperTitle}&quot;, a payment of ${paymentDetails.price?.toFixed(2)} is required.
           </p>
           <Link href="/student/papers">
             <Button>Back to Papers</Button>

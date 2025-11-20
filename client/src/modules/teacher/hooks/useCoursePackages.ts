@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { CoursePackageData } from '../../shared/types/course-package.types';
-import { CoursePackageService } from '../services/coursePackageService';
+import { CoursePackageService } from '../services/CoursePackageService';
 import { AxiosError } from 'axios';
 
 interface UseCoursePackagesReturn {

@@ -333,7 +333,9 @@ const getStudentResults = async (req, res) => {
             paperAverages[paperId] = averageResult[0]?.averagePercentage ? Math.round(averageResult[0].averagePercentage) : 0;
         }
         // Map over results to add averagePercentage to each paperId object
-        const enrichedResults = results.map(result => ({
+        const enrichedResults = results
+            .filter(result => result.paperId !== null) // Add this filter
+            .map(result => ({
             ...result,
             paperId: {
                 ...result.paperId,

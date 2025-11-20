@@ -1,6 +1,5 @@
 "use client"; 
 import { useState, useEffect, useRef } from "react";
-import useDebounce from "@/hooks/useDebounce"; // Import the useDebounce hook
 import axios from "axios";
 import {
   GraduationCap,
@@ -11,7 +10,28 @@ import {
   UserPlus,
   Eye,
   EyeOff,
+  Check,
+  X,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
+
+// Custom hook for debouncing
+function useDebounce(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 interface Institute {
   _id: string;
@@ -114,7 +134,55 @@ interface RegisterData {
   whatsappNumber: string;
   studentType: "Physical" | "Online";
   institute: string;
-  academicLevel: string; // Add academicLevel to the interface
+  academicLevel: string;
+}
+
+// Password Strength Checker
+interface PasswordStrength {
+  score: number;
+  label: string;
+  color: string;
+  requirements: {
+    minLength: boolean;
+    hasUpperCase: boolean;
+    hasLowerCase: boolean;
+    hasNumber: boolean;
+    hasSpecialChar: boolean;
+  };
+}
+
+function checkPasswordStrength(password: string): PasswordStrength {
+  const requirements = {
+    minLength: password.length >= 8,
+    hasUpperCase: /[A-Z]/.test(password),
+    hasLowerCase: /[a-z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+    hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+  };
+
+  const score = Object.values(requirements).filter(Boolean).length;
+
+  let label = "";
+  let color = "";
+
+  if (score === 0) {
+    label = "";
+    color = "";
+  } else if (score <= 2) {
+    label = "Weak";
+    color = "bg-red-500";
+  } else if (score === 3) {
+    label = "Fair";
+    color = "bg-orange-500";
+  } else if (score === 4) {
+    label = "Good";
+    color = "bg-yellow-500";
+  } else {
+    label = "Strong";
+    color = "bg-green-500";
+  }
+
+  return { score, label, color, requirements };
 }
 
 export default function RegisterPage() {
@@ -134,7 +202,7 @@ export default function RegisterPage() {
     whatsappNumber: "",
     studentType: "Physical",
     institute: "",
-    academicLevel: "", // Initialize academicLevel
+    academicLevel: "",
   });
   const [fetchedInstitutes, setFetchedInstitutes] = useState<Institute[]>([]);
   const [filteredInstitutes, setFilteredInstitutes] = useState<Institute[]>([]);
@@ -151,9 +219,41 @@ export default function RegisterPage() {
   const [floatingElements, setFloatingElements] = useState<React.CSSProperties[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState<PasswordStrength>({
+    score: 0,
+    label: "",
+    color: "",
+    requirements: {
+      minLength: false,
+      hasUpperCase: false,
+      hasLowerCase: false,
+      hasNumber: false,
+      hasSpecialChar: false,
+    },
+  });
 
   // Debounce the username input
   const debouncedUsername = useDebounce(data.username, 500);
+
+  // Update password strength when password changes
+  useEffect(() => {
+    if (data.password) {
+      setPasswordStrength(checkPasswordStrength(data.password));
+    } else {
+      setPasswordStrength({
+        score: 0,
+        label: "",
+        color: "",
+        requirements: {
+          minLength: false,
+          hasUpperCase: false,
+          hasLowerCase: false,
+          hasNumber: false,
+          hasSpecialChar: false,
+        },
+      });
+    }
+  }, [data.password]);
 
   // Effect to check username availability
   useEffect(() => {
@@ -203,7 +303,6 @@ export default function RegisterPage() {
   useEffect(() => {
     setFilteredInstitutes(fetchedInstitutes);
   }, [fetchedInstitutes]);
-
 
   useEffect(() => {
     const elements = Array.from({ length: 15 }, () => ({
@@ -256,6 +355,10 @@ export default function RegisterPage() {
         setError("Passwords do not match");
         return;
       }
+      if (passwordStrength.score < 3) {
+        setError("Please choose a stronger password");
+        return;
+      }
       setError(null);
       setStep((prev) => prev + 1);
     } else {
@@ -265,16 +368,59 @@ export default function RegisterPage() {
 
   const prevStep = () => setStep((prev) => prev - 1);
 
-  const handleRegister = (e: React.MouseEvent) => {
+  const handleRegister = async (e: React.MouseEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    // Simulate registration
-    setTimeout(() => {
-      alert("Registration successful! (Demo mode)");
+    if (data.password !== data.confirmPassword) {
+      setError("Passwords do not match");
       setLoading(false);
-    }, 1500);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('username', data.username);
+    formData.append('password', data.password);
+    formData.append('firstName', data.firstName);
+    formData.append('lastName', data.lastName);
+    formData.append('email', data.email);
+    formData.append('address', data.address || '');
+    formData.append('phoneNumber', data.phoneNumber);
+    formData.append('whatsappNumber', data.whatsappNumber || '');
+    formData.append('telegram', data.telegram || '');
+    formData.append('studentType', data.studentType);
+    formData.append('institute', data.institute);
+    formData.append('academicLevel', data.academicLevel);
+
+    if (data.idCardFront) {
+      formData.append('idCardFront', data.idCardFront);
+    }
+    if (data.idCardBack) {
+      formData.append('idCardBack', data.idCardBack);
+    }
+
+    try {
+      await axios.post('/api/auth/register', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      alert("Registration successful! Please login with your new credentials.");
+      // Redirect to login page
+      window.location.href = '/login';
+
+    } catch (err: unknown) {
+      console.error("Registration failed:", err);
+      if (axios.isAxiosError(err) && err.response) {
+        setError(err.response.data.message || 'An error occurred during registration.');
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const quote = motivationalQuotes[currentQuote];
@@ -536,7 +682,7 @@ export default function RegisterPage() {
                       <div className="relative">
                         <input
                           type={showPassword ? "text" : "password"}
-                          className="form-input pr-10" // Add padding to the right for the icon
+                          className="form-input pr-10"
                           value={data.password}
                           onChange={(e) => setData({ ...data, password: e.target.value })}
                           placeholder="Create password"
@@ -554,11 +700,22 @@ export default function RegisterPage() {
                       <div className="relative">
                         <input
                           type={showConfirmPassword ? "text" : "password"}
-                          className="form-input pr-10" // Add padding to the right for the icon
+                          className="form-input pr-16" // Increased padding to accommodate both icons
                           value={data.confirmPassword}
                           onChange={(e) => setData({ ...data, confirmPassword: e.target.value })}
                           placeholder="Confirm password"
                         />
+                        {data.confirmPassword.length > 0 && (
+                          <span
+                            className="absolute inset-y-0 right-10 flex items-center" // Position checkmark/cross
+                          >
+                            {data.password === data.confirmPassword ? (
+                              <CheckCircle size={16} className="text-green-500" />
+                            ) : (
+                              <XCircle size={16} className="text-red-500" />
+                            )}
+                          </span>
+                        )}
                         <span
                           className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 hover:text-gray-700"
                           onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -568,6 +725,101 @@ export default function RegisterPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Password Strength Indicator */}
+                  {data.password && (
+                    <div className="space-y-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">Password Strength:</span>
+                        <span className={`text-sm font-semibold ${
+                          passwordStrength.score <= 2 ? 'text-red-600' :
+                          passwordStrength.score === 3 ? 'text-orange-600' :
+                          passwordStrength.score === 4 ? 'text-yellow-600' :
+                          'text-green-600'
+                        }`}>
+                          {passwordStrength.label}
+                        </span>
+                      </div>
+                      
+                      {/* Strength Bar */}
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((level) => (
+                          <div
+                            key={level}
+                            className={`h-2 flex-1 rounded-full transition-all duration-300 ${
+                              level <= passwordStrength.score
+                                ? passwordStrength.color
+                                : 'bg-gray-200'
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Requirements Checklist */}
+                      <div className="space-y-2 mt-3">
+                        <div className="flex items-center gap-2">
+                          {passwordStrength.requirements.minLength ? (
+                            <Check size={16} className="text-green-600" />
+                          ) : (
+                            <X size={16} className="text-gray-400" />
+                          )}
+                          <span className={`text-xs ${
+                            passwordStrength.requirements.minLength ? 'text-green-600' : 'text-gray-600'
+                          }`}>
+                            At least 8 characters
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {passwordStrength.requirements.hasUpperCase ? (
+                            <Check size={16} className="text-green-600" />
+                          ) : (
+                            <X size={16} className="text-gray-400" />
+                          )}
+                          <span className={`text-xs ${
+                            passwordStrength.requirements.hasUpperCase ? 'text-green-600' : 'text-gray-600'
+                          }`}>
+                            One uppercase letter
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {passwordStrength.requirements.hasLowerCase ? (
+                            <Check size={16} className="text-green-600" />
+                          ) : (
+                            <X size={16} className="text-gray-400" />
+                          )}
+                          <span className={`text-xs ${
+                            passwordStrength.requirements.hasLowerCase ? 'text-green-600' : 'text-gray-600'
+                          }`}>
+                            One lowercase letter
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {passwordStrength.requirements.hasNumber ? (
+                            <Check size={16} className="text-green-600" />
+                          ) : (
+                            <X size={16} className="text-gray-400" />
+                          )}
+                          <span className={`text-xs ${
+                            passwordStrength.requirements.hasNumber ? 'text-green-600' : 'text-gray-600'
+                          }`}>
+                            One number
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {passwordStrength.requirements.hasSpecialChar ? (
+                            <Check size={16} className="text-green-600" />
+                          ) : (
+                            <X size={16} className="text-gray-400" />
+                          )}
+                          <span className={`text-xs ${
+                            passwordStrength.requirements.hasSpecialChar ? 'text-green-600' : 'text-gray-600'
+                          }`}>
+                            One special character (!@#$%^&*)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <button
                     type="button"
@@ -602,7 +854,7 @@ export default function RegisterPage() {
                       />
                     </div>
                     <div>
-                      <label className="form-label">WhatsApp Number</label>
+                      <label className="form-label">WhatsApp Number <span className="text-red-500">*</span></label>
                       <input
                         type="tel"
                         className="form-input"

@@ -34,7 +34,9 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  TooltipProps,
 } from "recharts";
+import { ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 
 // --- INTERFACES ---
 interface Result {
@@ -52,6 +54,14 @@ interface Result {
   percentage: number;
   timeSpent: number;
   submittedAt: string;
+}
+
+interface ChartData {
+  date: Date;
+  name: string;
+  score: number;
+  paperAverage: number;
+  title: string;
 }
 
 // --- HELPER FUNCTIONS ---
@@ -137,7 +147,15 @@ const Header = () => (
   </motion.div>
 );
 
-const SummaryCard = ({ icon: Icon, label, value, color, iconBg }) => (
+interface SummaryCardProps {
+  icon: React.ElementType;
+  label: string;
+  value: string | number;
+  color: string;
+  iconBg: string;
+}
+
+const SummaryCard = ({ icon: Icon, label, value, color, iconBg }: SummaryCardProps) => (
   <div className="theme-card p-6 flex items-center gap-5">
     <div className={`w-12 h-12 ${iconBg} rounded-xl flex items-center justify-center`}>
       <Icon className={color} size={24} />
@@ -149,11 +167,20 @@ const SummaryCard = ({ icon: Icon, label, value, color, iconBg }) => (
   </div>
 );
 
-const ProgressChart = ({ data }) => {
+interface ProgressChartProps {
+  data: Result[];
+}
+
+interface ResultCardProps {
+  result: Result;
+  index: number;
+}
+
+const ProgressChart = ({ data }: ProgressChartProps) => {
   const { theme } = useTheme();
   const strokeColor = theme === "dark" ? "#94a3b8" : "#6b7280";
 
-  const chartData = data
+  const chartData: ChartData[] = data
     .filter(item => item.paperId)
     .map(item => ({
       date: new Date(item.submittedAt),
@@ -162,10 +189,11 @@ const ProgressChart = ({ data }) => {
       paperAverage: item.paperId.averagePercentage, // Add paper-specific average
       title: item.paperId.title,
     }))
-    .sort((a, b) => a.date - b.date);
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload, label }: TooltipProps<ValueType, NameType>) => {
     if (active && payload && payload.length) {
+      const chartPayload = payload[0].payload as ChartData;
       return (
         <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
           <p className="font-bold text-theme-text-primary">{label}</p>
@@ -173,7 +201,7 @@ const ProgressChart = ({ data }) => {
           {payload.length > 1 && (
             <p className="text-sm text-emerald-500">Paper Average: {payload[1].value}%</p>
           )}
-          <p className="text-xs text-theme-text-secondary mt-1">{payload[0].payload.title.replace(/'/g, '&apos;')}</p>
+          <p className="text-xs text-theme-text-secondary mt-1">{chartPayload.title.replace(/'/g, '&apos;')}</p>
         </div>
       );
     }
@@ -232,7 +260,7 @@ const ProgressChart = ({ data }) => {
     </motion.div>
   );
 };
-const ResultCard = ({ result, index }) => {
+const ResultCard = ({ result, index }: ResultCardProps) => {
   const grade = getGradeInfo(result.percentage);
 
   return (
@@ -415,7 +443,7 @@ export default function MyResultsPage() {
           </div>
           <h3 className="text-2xl font-semibold text-theme-text-primary mb-2">No Results Yet</h3>
           <p className="text-theme-text-secondary mb-6 max-w-md mx-auto">
-            It looks like you haven't completed any papers. Finish one to see your performance here.
+            It looks like you haven&apos;t completed any papers. Finish one to see your performance here.
           </p>
           <Link href="/student/papers">
             <Button size="lg" className="bg-blue-600 hover:bg-blue-700">

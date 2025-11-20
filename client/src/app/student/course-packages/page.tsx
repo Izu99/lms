@@ -62,7 +62,8 @@ export default function StudentCoursePackagesPage() {
                 <div className="text-sm theme-text-secondary mb-2">
                   {/* The shared CoursePackageData type has institute/year as populated objects or IDs.
                       For student display, we expect them to be populated if applicable. */}
-                  {pkg.institute?.name && pkg.year?.name ? (
+                  {typeof pkg.institute === 'object' && pkg.institute.name &&
+                   typeof pkg.year === 'object' && pkg.year.name ? (
                     <span>For {pkg.institute.name} - {pkg.year.name}</span>
                   ) : (
                     <span>General Package</span>

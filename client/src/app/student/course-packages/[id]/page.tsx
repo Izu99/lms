@@ -3,9 +3,12 @@
 import { StudentLayout } from "@/components/student/StudentLayout";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
-import { CoursePackageData, VideoData, PaperData } from "@/modules/shared/types/course-package.types";
+import { CoursePackageData } from "@/modules/shared/types/course-package.types";
+import { VideoData } from "@/modules/shared/types/video.types";
+import { PaperData } from "@/modules/shared/types/paper.types";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Video, FileText, School, GraduationCap, Play } from "lucide-react";
 import { LoadingComponent } from "@/components/common/LoadingComponent";
@@ -33,10 +36,16 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
         const response = await api.get<{ coursePackage: CoursePackageData }>(`/course-packages/${id}`);
         console.log('API Response for course package details:', response.data);
         setCoursePackage(response.data.coursePackage);
-      } catch (err: AxiosError) {
+      } catch (err) {
         console.error("Error fetching course package details:", err);
-        setError(err.response?.data?.message || "Failed to load course package details.");
-        toast.error(err.response?.data?.message || "Failed to load course package details.");
+        if (axios.isAxiosError(err)) {
+          const errorMessage = err.response?.data?.message || "Failed to load course package details.";
+          setError(errorMessage);
+          toast.error(errorMessage);
+        } else {
+          setError("An unexpected error occurred.");
+          toast.error("An unexpected error occurred.");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -97,7 +106,8 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
               <span className="text-2xl font-bold text-green-600 dark:text-green-400">LKR {coursePackage.price?.toFixed(2) ?? '0.00'}</span>
             </div>
 
-            {coursePackage.institute?.name && coursePackage.year?.name && (
+            {typeof coursePackage.institute === 'object' && coursePackage.institute.name &&
+             typeof coursePackage.year === 'object' && coursePackage.year.name && (
               <div className="flex items-center gap-2 text-base theme-text-secondary">
                 <School className="w-5 h-5 text-purple-500" />
                 <span>For {coursePackage.institute.name} - {coursePackage.year.name}</span>

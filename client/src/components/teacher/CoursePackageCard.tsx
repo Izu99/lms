@@ -31,7 +31,7 @@ export function CoursePackageCard({ pkg, onEdit, onDelete }: CoursePackageCardPr
         </div>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4 text-sm theme-text-secondary">
-          {pkg.institute && pkg.year ? (
+          {pkg.institute && typeof pkg.institute !== 'string' && pkg.year && typeof pkg.year !== 'string' ? (
             <div className="flex items-center gap-1">
               <School className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               <span>

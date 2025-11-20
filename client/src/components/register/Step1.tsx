@@ -1,4 +1,3 @@
-
 "use client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -63,7 +62,7 @@ export default function Step1({ data, setData, nextStep }: Step1Props) {
       const hasLowercase = /[a-z]/.test(password);
       const hasUppercase = /[A-Z]/.test(password);
       const hasNumber = /[0-9]/.test(password);
-      const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(password);
+      const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
 
       if (password.length >= 8 && hasLowercase && hasUppercase && hasNumber && hasSymbol) {
         strength = 'strong';

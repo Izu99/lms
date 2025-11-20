@@ -5,9 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { CoursePackageData } from "@/modules/shared/types/course-package.types";
 import { toast } from "sonner";
 import { api } from "@/lib/api-client";
-import { CoursePackageService } from "@/modules/teacher/services/coursePackageService";
+import { CoursePackageService } from "@/modules/teacher/services/CoursePackageService";
 import { Search, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import axios, { AxiosError } from "axios";
 
 interface SearchableMultiSelectProps {
   options: { label: string; value: string }[];
@@ -193,7 +194,16 @@ interface YearData {
 }
 
 export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePackageFormProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    price: number;
+    videos: string[];
+    papers: string[];
+    availability: "all" | "physical";
+    instituteId: string;
+    yearId: string;
+  }>({
     title: "",
     description: "",
     price: 0,
@@ -219,8 +229,8 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
         videos: initialData.videos?.map(v => (typeof v === 'string' ? v : v._id)) || [],
         papers: initialData.papers?.map(p => (typeof p === 'string' ? p : p._id)) || [],
         availability: initialData.availability || "all",
-        instituteId: initialData.institute?._id || "",
-        yearId: initialData.year?._id || "",
+        instituteId: typeof initialData.institute !== 'string' ? initialData.institute?._id || "" : "",
+        yearId: typeof initialData.year !== 'string' ? initialData.year?._id || "" : "",
       });
     }
   }, [initialData, loading]);
@@ -268,24 +278,51 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
         price: formData.price,
         videos: formData.videos,
         papers: formData.papers,
-        availability: formData.availability,
+        freeForAllInstituteYear: formData.availability === "all",
+        freeForPhysicalStudents: formData.availability === "physical",
         institute: formData.instituteId,
         year: formData.yearId,
       };
 
       if (initialData?._id) {
-        await CoursePackageService.updateCoursePackage(initialData._id, packageData);
+        await CoursePackageService.updateCoursePackage(
+          initialData._id,
+          packageData.title,
+          packageData.description,
+          packageData.price,
+          packageData.videos,
+          packageData.papers,
+          packageData.freeForPhysicalStudents,
+          packageData.freeForAllInstituteYear,
+          packageData.institute,
+          packageData.year
+        );
         toast.success("Course package updated successfully!");
       } else {
-        await CoursePackageService.createCoursePackage(packageData);
+        await CoursePackageService.createCoursePackage(
+          packageData.title,
+          packageData.description,
+          packageData.price,
+          packageData.videos,
+          packageData.papers,
+          packageData.freeForPhysicalStudents,
+          packageData.freeForAllInstituteYear,
+          packageData.institute,
+          packageData.year
+        );
         toast.success("Course package created successfully!");
       }
       
       onSuccess();
-    } catch (error: AxiosError) {
-      const errorMessage = error?.response?.data?.message || "Failed to save course package";
-      toast.error(errorMessage);
-      console.error(error);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || "Failed to save course package";
+        toast.error(errorMessage);
+        console.error(error);
+      } else {
+        toast.error("An unexpected error occurred.");
+        console.error(error);
+      }
     }
   };
 
