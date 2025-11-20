@@ -46,7 +46,7 @@ export default function StudentPapersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<'not-answered' | 'answered' | 'expired'>('not-answered');
+  const [activeTab, setActiveTab] = useState<'all' | 'mcq' | 'structure'>('all');
   const [answeredPapers, setAnsweredPapers] = useState<string[]>([]);
 
   const getAuthHeaders = () => {
@@ -115,17 +115,14 @@ export default function StudentPapersPage() {
     const matchesSearch = paper.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           paper.description?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const isAnswered = answeredPapers.includes(paper._id);
-    const expired = isExpired(paper.deadline);
-
-    if (activeTab === 'not-answered') {
-      return matchesSearch && !isAnswered && !expired;
+    if (activeTab === 'all') {
+      return matchesSearch;
     }
-    if (activeTab === 'answered') {
-      return matchesSearch && isAnswered;
+    if (activeTab === 'mcq') {
+      return matchesSearch && paper.paperType === 'MCQ';
     }
-    if (activeTab === 'expired') {
-      return matchesSearch && expired;
+    if (activeTab === 'structure') {
+      return matchesSearch && paper.paperType === 'Structure';
     }
     return false;
   });
@@ -196,7 +193,7 @@ export default function StudentPapersPage() {
           </div>
         </motion.div>
 
-        {/* Tabs */}
+        {/* Tabs for Paper Types */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -204,25 +201,25 @@ export default function StudentPapersPage() {
           className="mb-8 flex space-x-4"
         >
           <Button 
-            variant={activeTab === 'not-answered' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('not-answered')}
-            className={`transition-all duration-300 ${activeTab === 'not-answered' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+            variant={activeTab === 'all' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('all')}
+            className={`transition-all duration-300 ${activeTab === 'all' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
           >
-            Not Answered
+            All Papers
           </Button>
           <Button 
-            variant={activeTab === 'answered' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('answered')}
-            className={`transition-all duration-300 ${activeTab === 'answered' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+            variant={activeTab === 'mcq' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('mcq')}
+            className={`transition-all duration-300 ${activeTab === 'mcq' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
           >
-            Answered
+            MCQ Papers
           </Button>
           <Button 
-            variant={activeTab === 'expired' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('expired')}
-            className={`transition-all duration-300 ${activeTab === 'expired' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+            variant={activeTab === 'structure' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('structure')}
+            className={`transition-all duration-300 ${activeTab === 'structure' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
           >
-            Expired
+            Structure Papers
           </Button>
         </motion.div>
 
