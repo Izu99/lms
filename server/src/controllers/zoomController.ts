@@ -25,10 +25,11 @@ export const getZoomLinks = async (req: Request, res: Response) => {
 // Create new zoom link
 export const createZoomLink = async (req: Request, res: Response) => {
   try {
-    const { title, description, link, institute: instituteId, year: yearId } = req.body;
-    
-    if (!title || !link || !instituteId || !yearId) {
-      return res.status(400).json({ message: 'Title, link, institute, and year are required' });
+    const { meeting, institute: instituteId, year: yearId } = req.body; // Expect meeting object
+    const { title, zoomLink } = meeting; // Extract from meeting
+
+    if (!title || !zoomLink || !instituteId || !yearId) {
+      return res.status(400).json({ message: 'Title, Zoom link, institute, and year are required' });
     }
 
     const userId = (req as any).user.id;
@@ -37,9 +38,12 @@ export const createZoomLink = async (req: Request, res: Response) => {
     }
 
     const newZoomLink = new ZoomLink({
-      title,
-      description,
-      link,
+      meeting: { // Pass meeting object directly
+        title: meeting.title,
+        description: meeting.description,
+        zoomLink: meeting.zoomLink,
+        youtubeLink: meeting.youtubeLink,
+      },
       uploadedBy: userId,
       institute: instituteId,
       year: yearId,
@@ -69,6 +73,64 @@ export const deleteZoomLink = async (req: Request, res: Response) => {
     res.json({ message: 'Zoom link deleted successfully' });
   } catch (error) {
     console.error("Delete zoom link error:", error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Update zoom link
+export const updateZoomLink = async (req: Request, res: Response) => {
+  try {
+    const { meeting, institute, year } = req.body; // Expect meeting object
+    const { id } = req.params;
+
+    const zoomLink = await ZoomLink.findById(id);
+
+    if (!zoomLink) {
+      return res.status(404).json({ message: 'Zoom link not found' });
+    }
+
+    // Ensure the uploader is the same as the authenticated user, or an admin
+    const userId = (req as any).user.id;
+    if (zoomLink.uploadedBy.toString() !== userId && (req as any).user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to update this Zoom link' });
+    }
+
+    // Explicitly update properties if provided in the request body
+    if (meeting) { // Check if meeting object is provided
+      // Initialize zoomLink.meeting if it doesn't exist (for older documents)
+      if (!zoomLink.meeting) {
+        zoomLink.meeting = { title: '', zoomLink: '' }; // Initialize with required fields
+      }
+
+      if (meeting.title !== undefined) {
+        zoomLink.meeting.title = meeting.title;
+      }
+      if (meeting.description !== undefined) {
+        zoomLink.meeting.description = meeting.description;
+      }
+      if (meeting.zoomLink !== undefined) {
+        zoomLink.meeting.zoomLink = meeting.zoomLink;
+      }
+      if (meeting.youtubeLink !== undefined) {
+        zoomLink.meeting.youtubeLink = meeting.youtubeLink;
+      }
+    }
+
+    if (institute !== undefined) {
+      zoomLink.institute = institute;
+    }
+    if (year !== undefined) {
+      zoomLink.year = year;
+    }
+
+    await zoomLink.save();
+    await zoomLink.populate('uploadedBy', 'username role');
+    await zoomLink.populate('institute', 'name location');
+    await zoomLink.populate('year', 'year name');
+
+    res.json({ message: 'Zoom link updated successfully', zoomLink });
+  } catch (error) {
+    console.error("Update zoom link error:", error);
     res.status(500).json({ message: 'Server error' });
   }
 };

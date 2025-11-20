@@ -12,6 +12,7 @@ import {
   Users,
   TrendingUp,
   Calendar,
+  Eye,
 } from "lucide-react";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import { LoadingComponent } from "@/components/common/LoadingComponent";
@@ -33,7 +34,128 @@ import { Pagination } from "@/components/ui/pagination";
 import { TeacherPaperService } from "@/modules/teacher/services/PaperService";
 import { PaperData } from "@/modules/teacher/types/paper.types";
 import { isAxiosError } from '@/lib/utils/error';
-import { useTeacherPapers } from "@/modules/teacher/hooks/useTeacherPapers"; // Import the hook
+import { useTeacherPapers } from "@/modules/teacher/hooks/useTeacherPapers";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"; // Import Tabs components
+
+// New component for displaying papers list
+const TeacherPapersList = ({
+  paginatedPapers,
+  handleEdit,
+  handleDelete,
+  deleteLoading,
+  router,
+  formatDate,
+}: {
+  paginatedPapers: PaperData[];
+  handleEdit: (paper: PaperData) => void;
+  handleDelete: (id: string) => void;
+  deleteLoading: string | null;
+  router: any; // Next.js router
+  formatDate: (dateString: string | Date) => string;
+}) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {paginatedPapers.map((paper, index) => (
+      <div
+        key={paper._id}
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+        style={{
+          animation: `slideInRight 0.5s ease-out ${index * 0.1}s both`,
+        }}
+      >
+        {/* Thumbnail/Icon area */}
+        <div
+          onClick={() => router.push(`/teacher/papers/${paper._id}/results`)}
+          className="relative w-full h-48 bg-gradient-to-br from-purple-700 to-purple-900 cursor-pointer group overflow-hidden flex items-center justify-center"
+        >
+          <FileText className="w-24 h-24 text-white/50 group-hover:scale-110 transition-transform" />
+          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg opacity-0 group-hover:opacity-100">
+              <Eye className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+            View Paper
+          </div>
+          {paper.submissionCount !== undefined && paper.submissionCount > 0 && (
+            <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+              <Users className="w-3 h-3" />
+              {paper.submissionCount}
+            </div>
+          )}
+        </div>
+        <div className="p-4">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-2 truncate">
+            {paper.title}
+          </h3>
+          {paper.description && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 min-h-[40px]">
+              {paper.description}
+            </p>
+          )}
+
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
+            <span className="flex items-center gap-1">
+              <FileText className="w-4 h-4" />
+              {paper.questions?.length || 0} questions
+            </span>
+            <span className="flex items-center gap-1">
+              <TrendingUp className="w-4 h-4" />
+              Avg: {paper.averageScore?.toFixed(1) || 0}%
+            </span>
+            <span className="flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              {paper.deadline && formatDate(paper.deadline)}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/teacher/papers/${paper._id}/results`);
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors text-sm font-medium"
+              title="View Results"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Results
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEdit(paper);
+              }}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium"
+              title="Edit"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(paper._id);
+              }}
+              disabled={deleteLoading === paper._id}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+              title="Delete"
+            >
+              {deleteLoading === paper._id ? (
+                <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 
 export default function TeacherPapersPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -42,26 +164,40 @@ export default function TeacherPapersPage() {
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const papersPerPage = 10;
+  const [activeTab, setActiveTab] = useState("all-papers");
 
   const router = useRouter();
 
-  const { papers, isLoading, error, refetch } = useTeacherPapers(); // Destructure from the hook
+  const { papers, isLoading, error, refetch } = useTeacherPapers();
 
   const filteredPapers = papers.filter((paper) =>
     paper.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     paper.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredPapers.length / papersPerPage);
+  const mcqPapers = filteredPapers.filter(
+    (paper) => paper.paperType === "MCQ"
+  );
+
+  const structurePapers = filteredPapers.filter(
+    (paper) => paper.paperType === "Structure"
+  );
+
+  const displayPapers = activeTab === "mcq"
+    ? mcqPapers
+    : activeTab === "structure"
+    ? structurePapers
+    : filteredPapers;
+
+
+  const totalPages = Math.ceil(displayPapers.length / papersPerPage);
   const startIndex = (currentPage - 1) * papersPerPage;
   const endIndex = startIndex + papersPerPage;
-  const paginatedPapers = filteredPapers.slice(startIndex, endIndex);
+  const paginatedPapers = displayPapers.slice(startIndex, endIndex);
 
-  // Reset to page 1 when search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, activeTab]); // Reset to page 1 when search or tab changes
 
   const formatDate = (dateString: string | Date) => {
     const date = new Date(dateString);
@@ -103,7 +239,7 @@ export default function TeacherPapersPage() {
     router.push(`/teacher/papers/${paper._id}/edit`);
   };
 
-  const renderContent = () => {
+  const renderPaperList = (papersToRender: PaperData[], emptyMessage: string) => {
     if (isLoading) {
       return <LoadingComponent />;
     }
@@ -112,11 +248,11 @@ export default function TeacherPapersPage() {
       return <ErrorComponent message={error} onRetry={refetch} />;
     }
 
-    if (filteredPapers.length === 0) {
+    if (papersToRender.length === 0) {
       return (
         <EmptyStateComponent
           Icon={FileText}
-          title={searchQuery ? "No papers found" : "No papers yet"}
+          title={searchQuery ? "No papers found" : emptyMessage}
           description={
             searchQuery
               ? "Try a different search term"
@@ -137,110 +273,15 @@ export default function TeacherPapersPage() {
 
     return (
       <>
-        {/* Papers List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedPapers.map((paper, index) => (
-          <div
-            key={paper._id}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-            style={{
-              animation: `slideInRight 0.5s ease-out ${index * 0.1}s both`,
-            }}
-          >
-            {/* Thumbnail/Icon area */}
-            <div 
-              onClick={() => router.push(`/teacher/papers/${paper._id}/results`)} // Click to view results
-              className="relative w-full h-48 bg-gradient-to-br from-purple-700 to-purple-900 cursor-pointer group overflow-hidden flex items-center justify-center"
-            >
-              <FileText className="w-24 h-24 text-white/50 group-hover:scale-110 transition-transform" />
-              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg opacity-0 group-hover:opacity-100">
-                  <Search className="w-8 h-8 text-white" /> {/* Changed to Search icon for papers */}
-                </div>
-              </div>
-              <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                View Paper
-              </div>
-              {paper.submissionCount !== undefined && paper.submissionCount > 0 && (
-                <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-                  <Users className="w-3 h-3" />
-                  {paper.submissionCount}
-                </div>
-              )}
-            </div>
-            <div className="p-4">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-2 truncate">
-                {paper.title}
-              </h3>
-              {paper.description && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 min-h-[40px]">
-                  {paper.description}
-                </p>
-              )}
-              
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
-                <span className="flex items-center gap-1">
-                  <FileText className="w-4 h-4" />
-                  {paper.questions?.length || 0} questions
-                </span>
-                <span className="flex items-center gap-1">
-                  <TrendingUp className="w-4 h-4" />
-                  Avg: {paper.averageScore?.toFixed(1) || 0}%
-                </span>
-                <span className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  {paper.deadline && formatDate(paper.deadline)}
-                </span>
-              </div>
+        <TeacherPapersList
+          paginatedPapers={papersToRender.slice(startIndex, endIndex)}
+          handleEdit={handleEdit}
+          handleDelete={handleDelete}
+          deleteLoading={deleteLoading}
+          router={router}
+          formatDate={formatDate}
+        />
 
-              <div className="flex items-center gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/teacher/papers/${paper._id}/results`);
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors text-sm font-medium"
-                  title="View Results"
-                >
-                  <TrendingUp className="w-4 h-4" />
-                  Results
-                </button>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEdit(paper);
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors text-sm font-medium"
-                  title="Edit"
-                >
-                  <Edit className="w-4 h-4" />
-                  Edit
-                </button>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(paper._id);
-                  }}
-                  disabled={deleteLoading === paper._id}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
-                  title="Delete"
-                >
-                  {deleteLoading === paper._id ? (
-                    <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <Trash2 className="w-4 h-4" />
-                      Delete
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-          ))}
-        </div>
-
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="mt-8">
             <Pagination
@@ -293,7 +334,23 @@ export default function TeacherPapersPage() {
           </div>
         </div>
 
-        {renderContent()}
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="all-papers">All Papers</TabsTrigger>
+            <TabsTrigger value="mcq">MCQ</TabsTrigger>
+            <TabsTrigger value="structure">Structure</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all-papers">
+            {renderPaperList(filteredPapers, "No papers yet")}
+          </TabsContent>
+          <TabsContent value="mcq">
+            {renderPaperList(mcqPapers, "No MCQ papers found.")}
+          </TabsContent>
+          <TabsContent value="structure">
+            {renderPaperList(structurePapers, "No Structure papers found.")}
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Delete Confirmation Dialog */}

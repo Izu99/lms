@@ -34,11 +34,15 @@ export default function StudentZoomPage() {
         {zoomLinks.map((link) => (
           <div key={link._id} className="flex items-center justify-between bg-card rounded-lg shadow-md p-4 border border-border">
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-semibold text-foreground truncate">{link.title}</h3>
-              {link.description && <p className="text-sm text-muted-foreground truncate">{link.description}</p>}
-              <a href={link.link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm truncate">
-                {link.link}
-              </a>
+              <h3 className="text-lg font-semibold text-foreground truncate">{link.meeting?.title}</h3>
+              {(link.meeting?.description) && <p className="text-sm text-muted-foreground truncate">{link.meeting?.description}</p>}
+              <a href={link.meeting?.zoomLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm truncate">
+                {link.meeting?.zoomLink}
+              </a>              {(link.meeting?.youtubeLink) && (
+                <a href={link.meeting?.youtubeLink} target="_blank" rel="noopener noreferrer" className="text-red-500 hover:underline text-sm truncate mt-1 block">
+                  YouTube Video
+                </a>
+              )}
               <div className="text-sm text-muted-foreground mt-1">
                 {link.institute && <span>{link.institute.name}</span>}
                 {link.institute && link.year && " - "}
@@ -59,14 +63,14 @@ export default function StudentZoomPage() {
             <div className="w-10 h-10 sidebar-icon sidebar-icon-videos">
               <Video className="w-6 h-6" />
             </div>
-            Zoom Links
+            Meeting Links
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Here are the Zoom links for your classes.
+            Here are the meeting links for your classes.
           </p>
         </div>
         <div className="bg-card rounded-xl shadow-md border border-border p-6">
-          <h2 className="text-xl font-bold mb-4">Your Zoom Links</h2>
+          <h2 className="text-xl font-bold mb-4">Your Meeting Links</h2>
           {renderContent()}
         </div>
       </div>

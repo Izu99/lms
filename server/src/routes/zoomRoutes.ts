@@ -7,5 +7,6 @@ const router = express.Router();
 router.get('/', protect, zoomController.getZoomLinks);
 router.post('/', protect, zoomController.createZoomLink);
 router.delete('/:id', protect, zoomController.deleteZoomLink);
+router.put('/:id', protect, zoomController.updateZoomLink); // New PUT route for update
 
 export default router;

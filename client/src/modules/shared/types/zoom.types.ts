@@ -1,8 +1,13 @@
-export interface ZoomLinkData {
-  _id: string;
+export interface MeetingDetails {
   title: string;
   description?: string;
-  link: string;
+  zoomLink: string;
+  youtubeLink?: string;
+}
+
+export interface ZoomLinkData {
+  _id: string;
+  meeting: MeetingDetails; // Encapsulate meeting details
   uploadedBy: {
     _id: string;
     username: string;

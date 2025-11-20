@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteZoomLink = exports.createZoomLink = exports.getZoomLinks = void 0;
+exports.updateZoomLink = exports.deleteZoomLink = exports.createZoomLink = exports.getZoomLinks = void 0;
 const ZoomLink_1 = require("../models/ZoomLink");
 // Get all zoom links
 const getZoomLinks = async (req, res) => {
@@ -25,18 +25,22 @@ exports.getZoomLinks = getZoomLinks;
 // Create new zoom link
 const createZoomLink = async (req, res) => {
     try {
-        const { title, description, link, institute: instituteId, year: yearId } = req.body;
-        if (!title || !link || !instituteId || !yearId) {
-            return res.status(400).json({ message: 'Title, link, institute, and year are required' });
+        const { meeting, institute: instituteId, year: yearId } = req.body; // Expect meeting object
+        const { title, zoomLink } = meeting; // Extract from meeting
+        if (!title || !zoomLink || !instituteId || !yearId) {
+            return res.status(400).json({ message: 'Title, Zoom link, institute, and year are required' });
         }
         const userId = req.user.id;
         if (!userId) {
             return res.status(401).json({ message: 'Authentication failed - no user ID' });
         }
         const newZoomLink = new ZoomLink_1.ZoomLink({
-            title,
-            description,
-            link,
+            meeting: {
+                title: meeting.title,
+                description: meeting.description,
+                zoomLink: meeting.zoomLink,
+                youtubeLink: meeting.youtubeLink,
+            },
             uploadedBy: userId,
             institute: instituteId,
             year: yearId,
@@ -69,3 +73,54 @@ const deleteZoomLink = async (req, res) => {
     }
 };
 exports.deleteZoomLink = deleteZoomLink;
+// Update zoom link
+const updateZoomLink = async (req, res) => {
+    try {
+        const { meeting, institute, year } = req.body; // Expect meeting object
+        const { id } = req.params;
+        const zoomLink = await ZoomLink_1.ZoomLink.findById(id);
+        if (!zoomLink) {
+            return res.status(404).json({ message: 'Zoom link not found' });
+        }
+        // Ensure the uploader is the same as the authenticated user, or an admin
+        const userId = req.user.id;
+        if (zoomLink.uploadedBy.toString() !== userId && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized to update this Zoom link' });
+        }
+        // Explicitly update properties if provided in the request body
+        if (meeting) { // Check if meeting object is provided
+            // Initialize zoomLink.meeting if it doesn't exist (for older documents)
+            if (!zoomLink.meeting) {
+                zoomLink.meeting = { title: '', zoomLink: '' }; // Initialize with required fields
+            }
+            if (meeting.title !== undefined) {
+                zoomLink.meeting.title = meeting.title;
+            }
+            if (meeting.description !== undefined) {
+                zoomLink.meeting.description = meeting.description;
+            }
+            if (meeting.zoomLink !== undefined) {
+                zoomLink.meeting.zoomLink = meeting.zoomLink;
+            }
+            if (meeting.youtubeLink !== undefined) {
+                zoomLink.meeting.youtubeLink = meeting.youtubeLink;
+            }
+        }
+        if (institute !== undefined) {
+            zoomLink.institute = institute;
+        }
+        if (year !== undefined) {
+            zoomLink.year = year;
+        }
+        await zoomLink.save();
+        await zoomLink.populate('uploadedBy', 'username role');
+        await zoomLink.populate('institute', 'name location');
+        await zoomLink.populate('year', 'year name');
+        res.json({ message: 'Zoom link updated successfully', zoomLink });
+    }
+    catch (error) {
+        console.error("Update zoom link error:", error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+exports.updateZoomLink = updateZoomLink;

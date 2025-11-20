@@ -43,4 +43,5 @@ const router = express_1.default.Router();
 router.get('/', auth_1.protect, zoomController.getZoomLinks);
 router.post('/', auth_1.protect, zoomController.createZoomLink);
 router.delete('/:id', auth_1.protect, zoomController.deleteZoomLink);
+router.put('/:id', auth_1.protect, zoomController.updateZoomLink); // New PUT route for update
 exports.default = router;

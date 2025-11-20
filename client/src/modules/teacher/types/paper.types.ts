@@ -12,4 +12,5 @@ export interface PaperData {
   submissionCount?: number;
   averageScore?: number;
   createdAt: string;
+  paperType?: 'MCQ' | 'Structure'; // Added for categorization based on backend
 }
