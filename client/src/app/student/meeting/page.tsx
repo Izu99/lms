@@ -2,36 +2,34 @@
 
 import { Video } from "lucide-react";
 import { StudentLayout } from "@/components/student/StudentLayout";
-import { useStudentZoom } from "@/modules/student/hooks/useStudentZoom";
+import { useStudentMeeting } from "@/modules/student/hooks/useStudentMeeting"; // Updated hook name
 import { LoadingComponent } from "@/components/common/LoadingComponent";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { EmptyStateComponent } from "@/components/common/EmptyStateComponent";
 
-export default function StudentZoomPage() {
-  const { zoomLinks, isLoading, error, refetch } = useStudentZoom();
+export default function StudentMeetingPage() { // Renamed function
+  const { meetingLinks, isLoading, error, refetch } = useStudentMeeting(); // Renamed variable and hook
 
   const renderContent = () => {
-    if (isLoading) {
-      return <LoadingComponent />;
-    }
+
 
     if (error) {
       return <ErrorComponent message={error} onRetry={refetch} />;
     }
 
-    if (zoomLinks.length === 0) {
+    if (meetingLinks.length === 0) { // Renamed variable
       return (
         <EmptyStateComponent
           Icon={Video}
-          title="No Zoom links yet"
-          description="Your teacher has not added any Zoom links yet."
+          title="No Meeting links yet" // Updated text
+          description="Your teacher has not added any meeting links yet." // Updated text
         />
       );
     }
 
     return (
       <div className="space-y-4">
-        {zoomLinks.map((link) => (
+        {meetingLinks.map((link) => ( // Renamed variable
           <div key={link._id} className="flex items-center justify-between bg-card rounded-lg shadow-md p-4 border border-border">
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-semibold text-foreground truncate">{link.meeting?.title}</h3>
@@ -70,7 +68,7 @@ export default function StudentZoomPage() {
           </p>
         </div>
         <div className="bg-card rounded-xl shadow-md border border-border p-6">
-          <h2 className="text-xl font-bold mb-4">Your Meeting Links</h2>
+          <h2 className="text-xl font-bold mb-4">Your Meeting Links</h2> {/* Updated text */}
           {renderContent()}
         </div>
       </div>

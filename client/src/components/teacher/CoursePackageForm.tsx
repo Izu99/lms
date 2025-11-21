@@ -9,6 +9,7 @@ import { CoursePackageService } from "@/modules/teacher/services/CoursePackageSe
 import { Search, X } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import axios, { AxiosError } from "axios";
+import { API_BASE_URL } from "@/lib/constants";
 
 interface SearchableMultiSelectProps {
   options: { label: string; value: string }[];
@@ -203,6 +204,8 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
     availability: "all" | "physical";
     instituteId: string;
     yearId: string;
+    image?: File;
+    backgroundImage?: string;
   }>({
     title: "",
     description: "",
@@ -214,6 +217,7 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
     yearId: "",
   });
 
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [availableVideos, setAvailableVideos] = useState<Video[]>([]);
   const [availablePapers, setAvailablePapers] = useState<Paper[]>([]);
   const [institutes, setInstitutes] = useState<InstituteData[]>([]);
@@ -231,7 +235,15 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
         availability: initialData.availability || "all",
         instituteId: typeof initialData.institute !== 'string' ? initialData.institute?._id || "" : "",
         yearId: typeof initialData.year !== 'string' ? initialData.year?._id || "" : "",
+        backgroundImage: initialData.backgroundImage,
       });
+      if (initialData.backgroundImage) {
+        // Ensure API_BASE_URL is a valid string and initialData.backgroundImage exists
+        const fullImageUrl = initialData.backgroundImage.startsWith('http')
+          ? initialData.backgroundImage
+          : `${API_BASE_URL}/${initialData.backgroundImage}`;
+        setImagePreview(fullImageUrl);
+      }
     }
   }, [initialData, loading]);
 
@@ -258,6 +270,14 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
     fetchData();
   }, []);
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFormData({ ...formData, image: file });
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -272,44 +292,24 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
     }
 
     try {
-      const packageData = {
-        title: formData.title,
-        description: formData.description,
-        price: formData.price,
-        videos: formData.videos,
-        papers: formData.papers,
-        freeForAllInstituteYear: formData.availability === "all",
-        freeForPhysicalStudents: formData.availability === "physical",
-        institute: formData.instituteId,
-        year: formData.yearId,
-      };
+      const packageData = new FormData();
+      packageData.append("title", formData.title);
+      packageData.append("description", formData.description);
+      packageData.append("price", formData.price.toString());
+      formData.videos.forEach(v => packageData.append("videos", v));
+      formData.papers.forEach(p => packageData.append("papers", p));
+      packageData.append("availability", formData.availability);
+      packageData.append("institute", formData.instituteId);
+      packageData.append("year", formData.yearId);
+      if (formData.image) {
+        packageData.append("image", formData.image);
+      }
 
       if (initialData?._id) {
-        await CoursePackageService.updateCoursePackage(
-          initialData._id,
-          packageData.title,
-          packageData.description,
-          packageData.price,
-          packageData.videos,
-          packageData.papers,
-          packageData.freeForPhysicalStudents,
-          packageData.freeForAllInstituteYear,
-          packageData.institute,
-          packageData.year
-        );
+        await CoursePackageService.updateCoursePackage(initialData._id, packageData);
         toast.success("Course package updated successfully!");
       } else {
-        await CoursePackageService.createCoursePackage(
-          packageData.title,
-          packageData.description,
-          packageData.price,
-          packageData.videos,
-          packageData.papers,
-          packageData.freeForPhysicalStudents,
-          packageData.freeForAllInstituteYear,
-          packageData.institute,
-          packageData.year
-        );
+        await CoursePackageService.createCoursePackage(packageData);
         toast.success("Course package created successfully!");
       }
       
@@ -358,6 +358,20 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
           onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
           required
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2 theme-text-primary">Package Image</label>
+        <Input
+          type="file"
+          onChange={handleImageChange}
+          accept="image/*"
+        />
+        {imagePreview && (
+          <div className="mt-4 w-32 h-32 overflow-hidden rounded-lg">
+            <img src={imagePreview} alt="Package Preview" className="w-full h-full object-cover" />
+          </div>
+        )}
       </div>
 
       {/* Institute Selection */}

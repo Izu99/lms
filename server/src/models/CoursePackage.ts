@@ -4,6 +4,7 @@ export interface ICoursePackage extends Document {
   title: string;
   description?: string;
   price: number;
+  backgroundImage?: string;
   videos: Types.ObjectId[];
   papers: Types.ObjectId[];
   availability: "all" | "physical";
@@ -19,6 +20,7 @@ const CoursePackageSchema: Schema = new Schema(
     title: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
     price: { type: Number, required: true, min: 0 },
+    backgroundImage: { type: String, trim: true },
     videos: [{ type: Schema.Types.ObjectId, ref: 'Video' }],
     papers: [{ type: Schema.Types.ObjectId, ref: 'Paper' }],
     availability: { type: String, enum: ['all', 'physical'], default: 'all' },

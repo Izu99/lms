@@ -7,6 +7,7 @@ import {
   updateCoursePackage,
   deleteCoursePackage,
 } from '../controllers/coursePackageController';
+import { uploadPackageImage } from '../config/packageImageUpload';
 
 const router = express.Router();
 
@@ -15,11 +16,11 @@ router.use(protect);
 
 router.route('/')
   .get(getCoursePackages)
-  .post(createCoursePackage);
+  .post(uploadPackageImage.single('image'), createCoursePackage);
 
 router.route('/:id')
   .get(getCoursePackageById)
-  .put(updateCoursePackage)
+  .put(uploadPackageImage.single('image'), updateCoursePackage)
   .delete(deleteCoursePackage);
 
 export default router;

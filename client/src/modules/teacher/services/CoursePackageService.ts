@@ -12,58 +12,27 @@ export class CoursePackageService {
     return response.data.coursePackage;
   }
 
-  static async createCoursePackage(
-    title: string,
-    description: string,
-    price: number,
-    videos: string[],
-    papers: string[],
-    freeForPhysicalStudents: boolean,
-    freeForAllInstituteYear: boolean,
-    institute?: string,
-    year?: string
-  ): Promise<CoursePackageData> {
+  static async createCoursePackage(packageData: FormData): Promise<CoursePackageData> {
     const response = await ApiClient.post<{ coursePackage: CoursePackageData }>(
       '/course-packages',
+      packageData,
       {
-        title,
-        description,
-        price,
-        videos,
-        papers,
-        freeForPhysicalStudents,
-        freeForAllInstituteYear,
-        institute,
-        year,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       }
     );
     return response.data.coursePackage;
   }
 
-  static async updateCoursePackage(
-    id: string,
-    title: string,
-    description: string,
-    price: number,
-    videos: string[],
-    papers: string[],
-    freeForPhysicalStudents: boolean,
-    freeForAllInstituteYear: boolean,
-    institute?: string,
-    year?: string
-  ): Promise<CoursePackageData> {
+  static async updateCoursePackage(id: string, packageData: FormData): Promise<CoursePackageData> {
     const response = await ApiClient.put<{ coursePackage: CoursePackageData }>(
       `/course-packages/${id}`,
+      packageData,
       {
-        title,
-        description,
-        price,
-        videos,
-        papers,
-        freeForPhysicalStudents,
-        freeForAllInstituteYear,
-        institute,
-        year,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       }
     );
     return response.data.coursePackage;

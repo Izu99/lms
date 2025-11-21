@@ -1,10 +1,10 @@
-"use client";
-
+import { GlobalFooter } from "@/components/common/GlobalFooter";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { TeacherSidebar } from "./TeacherSidebar";
 import { useAuth } from "@/modules/shared/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Toaster } from "@/components/ui/sonner";
 
 interface TeacherLayoutProps {
   children: React.ReactNode;
@@ -58,9 +58,11 @@ function TeacherLayoutContent({ children }: TeacherLayoutProps) {
       <main
         className={`flex-1 transition-all duration-300 ease-in-out ${
           isCollapsed ? "ml-20" : "ml-72"
-        }`}
+        } flex flex-col`}
       >
-        <div className="p-6 lg:p-8 max-w-[1600px]">{children}</div>
+        <div className="p-6 lg:p-8 max-w-[1600px] flex-grow">{children}</div>
+        <Toaster />
+        <GlobalFooter />
       </main>
     </div>
   );

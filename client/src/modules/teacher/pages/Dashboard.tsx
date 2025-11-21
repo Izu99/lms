@@ -46,9 +46,7 @@ export function TeacherDashboard() {
     { label: "Below Average (<60%)", percentage: 10, color: "bg-red-500", count: 10 },
   ];
 
-  if (isLoading) {
-    return <LoadingComponent />;
-  }
+
 
   if (error) {
     return <ErrorComponent message={error} onRetry={refetch} />;

@@ -1,17 +1,15 @@
 "use client";
 
 import { SelfHostedVideoPlayerModal } from "@/components/common/SelfHostedVideoPlayerModal";
-import { StudentLayout } from "@/components/student/StudentLayout";
+import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { CoursePackageData } from "@/modules/shared/types/course-package.types";
-import { VideoData } from "@/modules/shared/types/video.types";
-import { PaperData } from "@/modules/shared/types/paper.types";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { Video, FileText, School, GraduationCap, Play } from "lucide-react";
+import { Video, FileText, School, Play } from "lucide-react";
 import { LoadingComponent } from "@/components/common/LoadingComponent";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { API_BASE_URL } from "@/lib/constants";
@@ -60,13 +58,29 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
     }
   }, [id]);
 
-  const handlePurchase = async () => {
+  const handleEdit = () => {
+    router.push(`/teacher/course-packages/edit/${id}`);
+  };
+
+  const handleDelete = async () => {
     if (!coursePackage) return;
-    // Implement purchase logic here
-    toast.info(`Attempting to purchase "${coursePackage.title}" for LKR ${coursePackage.price?.toFixed(2) ?? '0.00'}`);
-    // Example: await CoursePackageService.purchaseCoursePackage(coursePackage._id);
-    // On success: toast.success("Purchase successful!");
-    // On failure: toast.error("Purchase failed.");
+    if (!confirm(`Are you sure you want to delete "${coursePackage.title}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await api.delete(`/course-packages/${id}`);
+      toast.success("Course package deleted successfully!");
+      router.push("/teacher/course-packages");
+    } catch (err) {
+      console.error("Error deleting course package:", err);
+      if (axios.isAxiosError(err)) {
+        const errorMessage = err.response?.data?.message || "Failed to delete course package.";
+        toast.error(errorMessage);
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    }
   };
 
   const handleVideoClick = (videoUrl: string, title: string) => {
@@ -79,26 +93,26 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
 
   if (error) {
     return (
-      <StudentLayout>
+      <TeacherLayout>
         <ErrorComponent message={error} onRetry={() => router.back()} />
-      </StudentLayout>
+      </TeacherLayout>
     );
   }
 
   if (!coursePackage) {
     return (
-      <StudentLayout>
+      <TeacherLayout>
         <div className="text-center py-8">
           <h2 className="text-xl font-semibold theme-text-primary mb-2">Course Package Not Found</h2>
           <p className="theme-text-secondary mb-4">The requested course package could not be loaded.</p>
           <Button onClick={() => router.back()}>Go Back</Button>
         </div>
-      </StudentLayout>
+      </TeacherLayout>
     );
   }
 
   return (
-    <StudentLayout>
+    <TeacherLayout>
       <div className="space-y-8">
         {/* Header Section */}
         <div className="theme-card p-6 sm:p-8">
@@ -125,10 +139,6 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
               <span className="px-3 py-1 text-sm font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded-full">Free for Physical</span>
             )}
           </div>
-
-          <Button className="w-full sm:w-auto bg-brand-primary hover:bg-brand-primary-dark text-white text-lg py-3 px-6" onClick={handlePurchase}>
-            Purchase Package
-          </Button>
         </div>
 
         {/* Videos Section */}
@@ -204,10 +214,19 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
           )}
         </div>
 
-        {/* Purchase Button at the bottom */}
-        <div className="theme-card p-6 flex justify-center">
-          <Button className="w-full sm:w-auto bg-brand-primary hover:bg-brand-primary-dark text-white text-lg py-3 px-6" onClick={handlePurchase}>
-            Purchase Package
+        {/* Action Buttons */}
+        <div className="flex gap-3 mt-8">
+          <Button
+            onClick={handleEdit}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 backdrop-blur-sm text-blue-300 rounded-lg transition-all duration-200 text-sm font-semibold border border-blue-500/30"
+          >
+            Edit Package
+          </Button>
+          <Button
+            onClick={handleDelete}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 backdrop-blur-sm text-red-300 rounded-lg transition-all duration-200 text-sm font-semibold border border-red-500/30"
+          >
+            Delete Package
           </Button>
         </div>
       </div>
@@ -218,6 +237,6 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
         videoUrl={currentVideoUrl}
         title={currentVideoTitle}
       />
-    </StudentLayout>
+    </TeacherLayout>
   );
 }

@@ -88,6 +88,8 @@ export const createCoursePackage = async (req: Request, res: Response) => {
       year,
     } = req.body;
 
+    const backgroundImage = req.file ? req.file.path : undefined;
+
     if (!title || price === undefined || !Array.isArray(videos) || !Array.isArray(papers) || !availability) {
       return res.status(400).json({ message: 'Title, price, videos (array), papers (array), and availability are required' });
     }
@@ -108,6 +110,7 @@ export const createCoursePackage = async (req: Request, res: Response) => {
       title,
       description,
       price,
+      backgroundImage,
       videos,
       papers,
       availability,
@@ -142,6 +145,8 @@ export const updateCoursePackage = async (req: Request, res: Response) => {
       year,
     } = req.body;
 
+    const backgroundImage = req.file ? req.file.path : undefined;
+
     const coursePackage = await CoursePackage.findById(id);
 
     if (!coursePackage) {
@@ -171,6 +176,9 @@ export const updateCoursePackage = async (req: Request, res: Response) => {
     coursePackage.title = title || coursePackage.title;
     coursePackage.description = description || coursePackage.description;
     coursePackage.price = price !== undefined ? price : coursePackage.price;
+    if (backgroundImage) {
+      coursePackage.backgroundImage = backgroundImage;
+    }
     coursePackage.videos = videos || coursePackage.videos;
     coursePackage.papers = papers || coursePackage.papers;
     coursePackage.availability = availability || coursePackage.availability;

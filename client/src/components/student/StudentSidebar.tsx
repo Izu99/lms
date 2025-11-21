@@ -53,9 +53,9 @@ const menuItems = [
     colorClass: "sidebar-icon-papers",
   },
   {
-    title: "Zoom",
+    title: "Meeting",
     icon: Video,
-    href: "/student/zoom",
+    href: "/student/meeting",
     colorClass: "sidebar-icon-zoom",
   },
   {

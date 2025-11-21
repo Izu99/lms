@@ -18,13 +18,7 @@ export function StudentDashboard() {
 
   console.log('Dashboard data:', data);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen theme-bg-secondary flex justify-center items-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+
 
   if (error) {
     return (
@@ -306,12 +300,7 @@ export function StudentDashboard() {
           </div>
         </div>
 
-        {/* Subtle Footer Branding */}
-        <div className="mt-12 text-center">
-          <p className="theme-text-tertiary text-sm">
-            Powered by <span className="font-semibold text-blue-500 dark:text-blue-400">ezyICT</span> - Smart Learning Made Easy
-          </p>
-        </div>
+
       </main>
     </div>
   );

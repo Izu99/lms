@@ -6,6 +6,7 @@ export interface CoursePackageData {
   title: string;
   description?: string;
   price: number;
+  backgroundImage?: string;
   videos: (string | VideoData)[]; // Array of Video IDs or populated videos
   papers: (string | PaperData)[]; // Array of Paper IDs or populated papers
   availability: "all" | "physical";

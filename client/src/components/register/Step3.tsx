@@ -20,6 +20,7 @@ interface Step3Data {
   whatsappNumber: string;
   studentType: "Physical" | "Online";
   institute: string;
+  alOrOl?: "AL" | "OL"; // Added for conditional rendering
 }
 
 interface Step3Props {
@@ -28,10 +29,9 @@ interface Step3Props {
   prevStep: () => void;
   handleSubmit: (e: React.FormEvent) => void;
   loading?: boolean;
-  studentType: "Physical" | "Online";
 }
 
-export default function Step3({ data, setData, prevStep, handleSubmit, loading, studentType }: Step3Props) {
+export default function Step3({ data, setData, prevStep, handleSubmit, loading }: Step3Props) {
   const [frontPreviewUrl, setFrontPreviewUrl] = useState<string | null>(null);
   const [backPreviewUrl, setBackPreviewUrl] = useState<string | null>(null);
 
@@ -65,7 +65,8 @@ export default function Step3({ data, setData, prevStep, handleSubmit, loading, 
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (studentType === 'Physical' && (!data.idCardFront || !data.idCardBack)) {
+    // Validate ID card images only if required
+    if (data.studentType === 'Physical' && data.alOrOl === 'AL' && (!data.idCardFront || !data.idCardBack)) {
       alert("Please upload both front and back of your ID card.");
       return;
     }
@@ -95,9 +96,9 @@ export default function Step3({ data, setData, prevStep, handleSubmit, loading, 
           />
         </div>
 
-        {studentType === 'Physical' && (
+        {(data.studentType === 'Physical' && data.alOrOl === 'AL') && (
           <>
-            {/* ID Card Image */}
+            {/* ID Card Front Image */}
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <ImagePlus size={16} className="text-emerald-500" />
@@ -108,13 +109,13 @@ export default function Step3({ data, setData, prevStep, handleSubmit, loading, 
                 <div className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center hover:border-emerald-500 transition-colors duration-200">
                   <input
                     type="file"
-                    id="idCardImage"
+                    id="idCardFrontImage"
                     accept="image/*"
                     onChange={handleFrontImageChange}
                     className="hidden"
                   />
                   <label
-                    htmlFor="idCardImage"
+                    htmlFor="idCardFrontImage"
                     className="cursor-pointer block"
                   >
                     <div className="mx-auto w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-4">

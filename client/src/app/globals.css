@@ -212,7 +212,8 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: #0f172a; /* Always ensure a dark background to prevent white flash */
+    @apply text-foreground;
   }
 }
 
