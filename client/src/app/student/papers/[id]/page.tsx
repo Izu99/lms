@@ -37,6 +37,7 @@ import {
 interface Option {
   _id: string;
   optionText: string;
+  imageUrl?: string;
 }
 
 interface Question {
@@ -620,7 +621,17 @@ export default function PaperAttempt() {
                                 <span className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-300">
                                   {String.fromCharCode(65 + optionIndex)}
                                 </span>
-                                <span className="text-gray-900 dark:text-white flex-1 text-lg">{option.optionText}</span>
+                                <span className="text-gray-900 dark:text-white flex-1 text-lg">
+                                  {option.imageUrl ? (
+                                    <img
+                                      src={`${API_BASE_URL}/api/uploads${option.imageUrl}`}
+                                      alt={`Option ${String.fromCharCode(65 + optionIndex)}`}
+                                      className="rounded-md h-16 w-16 object-contain inline-block mr-2"
+                                    />
+                                  ) : (
+                                    option.optionText
+                                  )}
+                                </span>
                               </label>
                             ))}
                           </div>

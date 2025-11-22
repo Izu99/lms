@@ -3,8 +3,45 @@ import { Paper } from '../models/Paper';
 import { StudentAttempt } from '../models/StudentAttempt';
 import mongoose from 'mongoose';
 import path from 'path'; // Import path module
+import { IPaper, IQuestion } from '../models/Paper';
+import { deleteFile } from '../utils/fileUploadUtils'; // Import the deleteFile utility
 
 const UPLOADS_DIR = path.join(__dirname, '../../uploads'); // Define uploads directory
+
+/**
+ * Extracts all image URLs from a given paper object.
+ * @param paper The paper object (IPaper) from which to extract image URLs.
+ * @returns An array of unique image URLs (strings).
+ */
+const extractImageUrlsFromPaper = (paper: IPaper): string[] => {
+  const imageUrls: string[] = [];
+
+  // Add paper-level fileUrl if it exists (for Structure papers)
+  if (paper.fileUrl) {
+    imageUrls.push(paper.fileUrl);
+  }
+
+  // Extract image URLs from questions, options, and explanations
+  if (paper.questions && paper.questions.length > 0) {
+    paper.questions.forEach((question: IQuestion) => {
+      if (question.imageUrl) {
+        imageUrls.push(question.imageUrl);
+      }
+      if (question.explanation?.imageUrl) {
+        imageUrls.push(question.explanation.imageUrl);
+      }
+      if (question.options && question.options.length > 0) {
+        question.options.forEach(option => {
+          if (option.imageUrl) {
+            imageUrls.push(option.imageUrl);
+          }
+        });
+      }
+    });
+  }
+  // Return unique URLs to avoid attempting to delete the same file multiple times
+  return [...new Set(imageUrls)];
+};
 
 // Create Paper (Teachers only)
 export const createPaper = async (req: Request, res: Response) => {
@@ -213,6 +250,7 @@ export const getPaperById = async (req: Request, res: Response) => {
         options: q.options.map(opt => ({
           _id: opt._id,
           optionText: opt.optionText,
+          imageUrl: opt.imageUrl, // Always include imageUrl for options
           // Include isCorrect if:
           // 1. Viewing answers page AND student has attempted, OR
           // 2. Paper is expired AND student has attempted
@@ -475,18 +513,34 @@ export const updatePaper = async (req: Request, res: Response) => {
 
 
 
-    const { title, description, questions, deadline, timeLimit, availability, price } = req.body;
+    // 1. Find the existing paper before the update
+    const oldPaper = await Paper.findById(id);
+    if (!oldPaper) {
+      return res.status(404).json({ message: 'Paper not found' }); // Should not happen if previous check passed, but for type safety
+    }
+    const oldImageUrls = extractImageUrlsFromPaper(oldPaper);
 
-    // Validate questions if provided
+    const { title, description, questions, deadline, timeLimit, availability, price, paperType, fileUrl } = req.body;
+
+    // Validate questions if provided (keep existing validation)
     if (questions) {
       for (let i = 0; i < questions.length; i++) {
         const question = questions[i];
-        if (!question.questionText || !question.options || question.options.length < 2) {
+        // Ensure that questionText or an imageUrl is provided for options
+        if (!question.questionText && !question.imageUrl && question.options) {
+            // Check if options have either text or image
+            const optionsAreValid = question.options.every((opt: any) => opt.optionText || opt.imageUrl);
+            if (!optionsAreValid) {
+                return res.status(400).json({
+                    message: `Question ${i + 1} must have question text or image, and all options must have text or image.`
+                });
+            }
+        }
+        if (!question.options || question.options.length < 2) {
           return res.status(400).json({ 
-            message: `Question ${i + 1} must have question text and at least 2 options` 
+            message: `Question ${i + 1} must have at least 2 options` 
           });
         }
-
         const correctAnswers = question.options.filter((opt: any) => opt.isCorrect);
         if (correctAnswers.length !== 1) {
           return res.status(400).json({ 
@@ -496,24 +550,54 @@ export const updatePaper = async (req: Request, res: Response) => {
       }
     }
 
-    // Update paper
-    const updateData: any = {};
-    if (title) updateData.title = title;
-    if (description !== undefined) updateData.description = description;
-    if (deadline !== undefined) updateData.deadline = deadline ? new Date(deadline) : undefined;
-    if (timeLimit !== undefined) updateData.timeLimit = timeLimit;
-    if (availability !== undefined) updateData.availability = availability;
-    if (price !== undefined) updateData.price = price;
-    if (questions) {
+    // Prepare update data
+    const updateData: any = {
+      title,
+      description,
+      deadline: deadline ? new Date(deadline) : undefined,
+      timeLimit,
+      availability,
+      price,
+    };
+
+    if (paperType === 'MCQ') {
       updateData.questions = questions.map((q: any, index: number) => ({
         ...q,
         order: index + 1
       }));
+      updateData.fileUrl = undefined; // Ensure fileUrl is cleared for MCQ papers
+    } else if (paperType === 'Structure') {
+      updateData.fileUrl = fileUrl;
+      updateData.questions = []; // Ensure questions are cleared for Structure papers
     }
 
+    // 2. Perform the update
     const updatedPaper = await Paper.findByIdAndUpdate(id, updateData, { 
-      new: true 
+      new: true,
+      runValidators: true // Ensure Mongoose validators run on update
     });
+
+    if (!updatedPaper) {
+      return res.status(404).json({ message: 'Paper not found after update attempt' });
+    }
+
+    // 3. Extract new image URLs from the updated paper
+    const newImageUrls = extractImageUrlsFromPaper(updatedPaper);
+
+    // 4. Compare and Delete: Delete images that are no longer referenced
+    const imagesToKeep = new Set(newImageUrls);
+    for (const oldImageUrl of oldImageUrls) {
+      // Check if the old image URL is a paper-level fileUrl for structure papers
+      // If the paperType changed from Structure to MCQ, and oldImageURL was the fileUrl, delete it.
+      if (oldPaper.paperType === 'Structure' && oldPaper.fileUrl === oldImageUrl && updatedPaper.paperType === 'MCQ') {
+        await deleteFile(oldImageUrl);
+        continue;
+      }
+      // Delete if the old image URL is not in the new set of image URLs
+      if (!imagesToKeep.has(oldImageUrl)) {
+        await deleteFile(oldImageUrl);
+      }
+    }
 
     res.json({ 
       message: 'Paper updated successfully', 
@@ -552,7 +636,16 @@ export const deletePaper = async (req: Request, res: Response) => {
 
 
 
+    // Extract all image URLs associated with the paper
+    const imageUrlsToDelete = extractImageUrlsFromPaper(paper);
+
+    // Delete the paper document
     await Paper.findByIdAndDelete(id);
+
+    // Delete associated image files from the file system
+    for (const imageUrl of imageUrlsToDelete) {
+      await deleteFile(imageUrl);
+    }
 
     res.json({ 
       message: 'Paper deleted successfully' 

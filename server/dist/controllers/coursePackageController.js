@@ -73,6 +73,7 @@ exports.getCoursePackageById = getCoursePackageById;
 const createCoursePackage = async (req, res) => {
     try {
         const { title, description, price, videos, papers, availability, institute, year, } = req.body;
+        const backgroundImage = req.file ? req.file.path : undefined;
         if (!title || price === undefined || !Array.isArray(videos) || !Array.isArray(papers) || !availability) {
             return res.status(400).json({ message: 'Title, price, videos (array), papers (array), and availability are required' });
         }
@@ -90,6 +91,7 @@ const createCoursePackage = async (req, res) => {
             title,
             description,
             price,
+            backgroundImage,
             videos,
             papers,
             availability,
@@ -114,6 +116,7 @@ const updateCoursePackage = async (req, res) => {
     try {
         const { id } = req.params;
         const { title, description, price, videos, papers, availability, institute, year, } = req.body;
+        const backgroundImage = req.file ? req.file.path : undefined;
         const coursePackage = await CoursePackage_1.CoursePackage.findById(id);
         if (!coursePackage) {
             return res.status(404).json({ message: 'Course package not found' });
@@ -139,6 +142,9 @@ const updateCoursePackage = async (req, res) => {
         coursePackage.title = title || coursePackage.title;
         coursePackage.description = description || coursePackage.description;
         coursePackage.price = price !== undefined ? price : coursePackage.price;
+        if (backgroundImage) {
+            coursePackage.backgroundImage = backgroundImage;
+        }
         coursePackage.videos = videos || coursePackage.videos;
         coursePackage.papers = papers || coursePackage.papers;
         coursePackage.availability = availability || coursePackage.availability;

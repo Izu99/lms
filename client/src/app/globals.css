@@ -487,6 +487,11 @@ button.sidebar-icon-logout:hover {
   background-color: var(--student-table-row-bg);
 }
 
+.video-upload-popup-background {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+
 
 /* ============================================
    CUSTOM SCROLLBAR STYLES - Modern & Sleek

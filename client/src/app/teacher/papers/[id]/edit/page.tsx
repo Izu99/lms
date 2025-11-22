@@ -33,6 +33,7 @@ import { toast } from "sonner";
 interface Option {
   optionText: string;
   isCorrect: boolean;
+  imageUrl?: string; // Add this line
 }
 
 interface Explanation {
@@ -134,11 +135,11 @@ export default function EditPaperPage() {
     const newQuestion: Question = {
       questionText: "",
       options: [
-        { optionText: "", isCorrect: true },
-        { optionText: "", isCorrect: false },
-        { optionText: "", isCorrect: false },
-        { optionText: "", isCorrect: false },
-        { optionText: "", isCorrect: false },
+        { optionText: "", isCorrect: true, imageUrl: "" },
+        { optionText: "", isCorrect: false, imageUrl: "" },
+        { optionText: "", isCorrect: false, imageUrl: "" },
+        { optionText: "", isCorrect: false, imageUrl: "" },
+        { optionText: "", isCorrect: false, imageUrl: "" },
       ],
       open: true,
       imageUrl: "",
@@ -154,13 +155,13 @@ export default function EditPaperPage() {
     }, 100);
   };
 
-  const handleImageUpload = async (qIndex: number, files: FileList | null, type: 'question' | 'explanation' = 'question') => {
+  const handleImageUpload = async (qIndex: number, files: FileList | null, type: 'question' | 'explanation' | 'option', oIndex?: number) => {
     if (!files || files.length === 0) return;
     const file = files[0];
     const formData = new FormData();
     formData.append("image", file);
 
-    const uploadKey = `${qIndex}-${type}`;
+    const uploadKey = `${qIndex}-${type}${oIndex !== undefined ? `-${oIndex}` : ''}`;
     setUploadingImages(prev => ({ ...prev, [uploadKey]: true }));
 
     try {
@@ -182,10 +183,16 @@ export default function EditPaperPage() {
           newQuestions[qIndex].explanation = {};
         }
         newQuestions[qIndex].explanation!.imageUrl = response.data.imageUrl;
-      } else {
+      } else if (type === 'question') {
         newQuestions[qIndex].imageUrl = response.data.imageUrl;
+      } else if (type === 'option' && oIndex !== undefined) {
+        newQuestions[qIndex].options[oIndex].imageUrl = response.data.imageUrl;
+        newQuestions[qIndex].options[oIndex].optionText = ""; // Clear text when image is uploaded
       }
       setQuestions(newQuestions);
+      if (type === 'option' && oIndex !== undefined) {
+        toast.success(`Option ${oIndex + 1} image uploaded successfully!`);
+      }
     } catch (error) {
       console.error("Error uploading image:", error);
       setError(`Failed to upload ${type} image`);
@@ -194,14 +201,16 @@ export default function EditPaperPage() {
     }
   };
 
-  const removeImage = (qIndex: number, type: 'question' | 'explanation' = 'question') => {
+  const removeImage = (qIndex: number, type: 'question' | 'explanation' | 'option', oIndex?: number) => {
     const newQuestions = [...questions];
     if (type === 'explanation') {
       if (newQuestions[qIndex].explanation) {
         newQuestions[qIndex].explanation!.imageUrl = "";
       }
-    } else {
+    } else if (type === 'question') {
       newQuestions[qIndex].imageUrl = "";
+    } else if (type === 'option' && oIndex !== undefined) {
+      newQuestions[qIndex].options[oIndex].imageUrl = "";
     }
     setQuestions(newQuestions);
   };
@@ -244,6 +253,9 @@ export default function EditPaperPage() {
   const handleOptionChange = (qIndex: number, oIndex: number, value: string) => {
     const newQuestions = [...questions];
     newQuestions[qIndex].options[oIndex].optionText = value;
+    if (value.trim() !== "") { // If text is entered, clear image
+      newQuestions[qIndex].options[oIndex].imageUrl = "";
+    }
     setQuestions(newQuestions);
   };
 
@@ -271,8 +283,8 @@ export default function EditPaperPage() {
       const q = questions[i];
       if (!q.questionText.trim()) return `Question ${i + 1} text is required.`;
       if (q.options.length < 2) return `Question ${i + 1} must have at least two options.`;
-      if (q.options.some(opt => !opt.optionText.trim())) {
-        return `All options for Question ${i + 1} must have text.`;
+      if (q.options.some(opt => !opt.optionText.trim() && !opt.imageUrl)) {
+        return `All options for Question ${i + 1} must have either text or an image.`;
       }
       if (!q.options.some(opt => opt.isCorrect)) {
         return `A correct answer must be selected for Question ${i + 1}.`;
@@ -622,13 +634,55 @@ export default function EditPaperPage() {
                                     >
                                       <Check size={20} />
                                     </Button>
-                                    <div className="flex-1">
-                                      <Input
-                                        placeholder={`Option ${oIndex + 1}`}
-                                        value={opt.optionText}
-                                        onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
-                                        className="text-lg h-12 bg-card text-foreground border-border focus:border-primary rounded-lg"
-                                      />
+                                    <div className="flex-1 space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <Input
+                                          placeholder={`Option ${oIndex + 1}`}
+                                          value={opt.optionText}
+                                          onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                                          className="flex-1 text-lg h-12 bg-card text-foreground border-border focus:border-primary rounded-lg"
+                                          disabled={!!opt.imageUrl} // Disable if image is present
+                                        />
+                                      </div>
+                                      {/* Option Image Upload */}
+                                      <div className="border-border border-dashed rounded-lg p-2 hover:border-primary transition-colors bg-background">
+                                        {opt.imageUrl ? (
+                                          <div className="relative w-24 h-24 mx-auto">
+                                            <img 
+                                              src={`${API_BASE_URL}/api/uploads${opt.imageUrl}`} 
+                                              alt="Option preview" 
+                                              className="rounded-md w-full h-full object-contain shadow-sm" 
+                                            />
+                                            {console.log("Option Image src:", `${API_BASE_URL}/api/uploads${opt.imageUrl}`)}
+                                            <Button
+                                              variant="destructive"
+                                              size="icon"
+                                              className="absolute top-1 right-1 h-7 w-7"
+                                              onClick={() => removeImage(qIndex, 'option', oIndex)}
+                                            >
+                                              <X size={14} />
+                                            </Button>
+                                          </div>
+                                        ) : (
+                                          <div className="text-center">
+                                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-1">
+                                              {uploadingImages[`${qIndex}-option-${oIndex}`] ? (
+                                                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                              ) : (
+                                                <Upload size={16} className="text-primary" />
+                                              )}
+                                            </div>
+                                            <Input
+                                              type="file"
+                                              accept="image/*"
+                                              onChange={(e) => handleImageUpload(qIndex, e.target.files, 'option', oIndex)}
+                                              className="max-w-[150px] text-xs mx-auto bg-card text-foreground border-border h-8"
+                                              disabled={!!opt.optionText} // Disable if text is present
+                                            />
+                                            <p className="text-xs text-muted-foreground mt-1">Image for option</p>
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                     {q.options.length > 2 && (
                                       <Button
