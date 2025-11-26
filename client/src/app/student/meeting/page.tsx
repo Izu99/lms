@@ -76,23 +76,61 @@ export default function StudentMeetingPage() {
               <div className="mt-4">
                 <h4 className="text-sm font-medium theme-text-primary mb-2">Recording:</h4>
                 <div className="aspect-video w-full rounded-lg overflow-hidden">
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    src={`https://www.youtube.com/embed/${(() => {
+                  {(() => {
+                    const extractYouTubeId = (input?: string) => {
+                      if (!input) return null;
                       try {
-                        const url = new URL(link.meeting.youtubeLink);
-                        return url.searchParams.get('v') || link.meeting.youtubeLink.split('v=')[1]?.split('&')[0];
-                      } catch {
-                        return link.meeting.youtubeLink.split('v=')[1]?.split('&')[0];
+                        const url = new URL(input);
+
+                        // Short URL format (youtu.be/ID)
+                        if (url.hostname.includes('youtu.be')) {
+                          return url.pathname.split('/').filter(Boolean).pop() || null;
+                        }
+
+                        // Direct v= query param (watch?v=ID)
+                        const v = url.searchParams.get('v');
+                        if (v) return v;
+
+                        // /embed/:id, /live/:id, /shorts/:id
+                        const parts = url.pathname.split('/').filter(Boolean);
+                        if (parts.length === 0) return null;
+                        if (parts[0] === 'embed' && parts[1]) return parts[1];
+                        return parts[parts.length - 1] || null;
+                      } catch (err) {
+                        // Fallback: try to find a 11-character youtube id anywhere
+                        const m = String(input).match(/(?:v=|\/|^)([0-9A-Za-z_-]{11})(?:\b|$)/);
+                        return m ? m[1] : null;
                       }
-                    })()}`}
-                    title="YouTube video player"
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="w-full h-full"
-                  ></iframe>
+                    };
+
+                    const id = extractYouTubeId(link.meeting?.youtubeLink);
+                    if (!id) {
+                      // If we can't extract an id, provide a fallback anchor to open YouTube directly
+                      return (
+                        <a
+                          href={link.meeting?.youtubeLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex w-full h-full items-center justify-center bg-neutral-900 text-white"
+                        >
+                          Open on YouTube
+                        </a>
+                      );
+                    }
+
+                    return (
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        src={`https://www.youtube.com/embed/${id}`}
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="w-full h-full"
+                      />
+                    );
+                  })()}
                 </div>
               </div>
             )}
