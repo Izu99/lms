@@ -30,6 +30,27 @@ export function SidebarProvider({ children, defaultCollapsed = false }: SidebarP
     setIsCollapsed((prev) => !prev);
   }, []);
 
+  // Auto-collapse on mobile
+  React.useEffect(() => {
+    const checkScreenSize = () => {
+      if (window.innerWidth < 768) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+    };
+
+    // Check on initial load
+    checkScreenSize();
+
+    // Check on resize
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => {
+      window.removeEventListener("resize", checkScreenSize);
+    };
+  }, []);
+
   return (
     <SidebarContext.Provider value={{ isCollapsed, toggleCollapse }}>
       {children}
@@ -64,7 +85,7 @@ interface SidebarHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function SidebarHeader({ children, className, ...props }: SidebarHeaderProps) {
   const { isCollapsed } = useSidebar();
-  
+
   return (
     <div
       className={cn(
@@ -109,7 +130,7 @@ interface SidebarMenuProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function SidebarMenu({ children, className, ...props }: SidebarMenuProps) {
   const { isCollapsed } = useSidebar();
-  
+
   return (
     <nav className={cn("space-y-2", isCollapsed ? "px-2" : "px-3", className)} {...props}>
       {children}
@@ -139,8 +160,8 @@ export function SidebarMenuItem({
         isActive
           ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
           : "theme-text-primary hover:bg-gray-100 dark:hover:bg-gray-800",
-        isCollapsed 
-          ? "justify-center p-2" 
+        isCollapsed
+          ? "justify-center p-2"
           : "gap-3 px-3 py-2.5",
         className
       )}
@@ -152,7 +173,7 @@ export function SidebarMenuItem({
         </span>
       )}
       {!isCollapsed && <span className="truncate text-left flex-1 whitespace-nowrap">{children}</span>}
-      
+
       {/* Tooltip for collapsed state */}
       {isCollapsed && children && (
         <span className="absolute left-full ml-3 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs font-medium rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl pointer-events-none">

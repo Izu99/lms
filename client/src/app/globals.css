@@ -323,7 +323,7 @@
 }
 
 /* Logout button when expanded - full width with proper layout */
-button.sidebar-icon-logout {
+button.sidebar-icon-logout:not(.sidebar-icon) {
   background: transparent !important;
 }
 

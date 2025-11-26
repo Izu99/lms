@@ -129,7 +129,7 @@ export function StudentSidebar({ user, onLogout }: StudentSidebarProps) {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
-            
+
             return (
               <SidebarMenuItem
                 key={item.href}
@@ -162,7 +162,7 @@ export function StudentSidebar({ user, onLogout }: StudentSidebarProps) {
               <ThemeToggle />
             </div>
           )}
-          
+
           {/* User Profile - Show first when expanded */}
           {!isCollapsed && (
             <div
@@ -183,9 +183,9 @@ export function StudentSidebar({ user, onLogout }: StudentSidebarProps) {
           <button
             onClick={onLogout}
             className={cn(
-              "relative flex items-center rounded-xl text-sm font-medium transition-all duration-200 group text-white shadow-md hover:shadow-lg hover:scale-105",
-              isCollapsed 
-                ? "w-11 h-11 justify-center sidebar-icon sidebar-icon-logout sidebar-icon-collapsed" 
+              "relative flex items-center rounded-xl text-sm font-medium transition-all duration-200 group theme-text-primary shadow-md hover:shadow-lg hover:scale-105",
+              isCollapsed
+                ? "w-11 h-11 justify-center sidebar-icon sidebar-icon-logout sidebar-icon-collapsed text-white"
                 : "w-full gap-3 px-4 py-3 sidebar-icon-logout"
             )}
           >
@@ -196,7 +196,7 @@ export function StudentSidebar({ user, onLogout }: StudentSidebarProps) {
               <LogOut className="w-5 h-5" />
             </div>
             {!isCollapsed && <span className="whitespace-nowrap flex-1 text-left">Logout</span>}
-            
+
             {/* Tooltip for collapsed state */}
             {isCollapsed && (
               <span className="absolute left-full ml-3 px-3 py-2 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 shadow-xl pointer-events-none">

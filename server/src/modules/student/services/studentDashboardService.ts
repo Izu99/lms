@@ -43,10 +43,10 @@ export class StudentDashboardService {
       createdAt: video.createdAt,
       updatedAt: video.updatedAt,
       class: video.class,
-      uploadedBy: {
+      uploadedBy: video.uploadedBy ? {
         ...video.uploadedBy,
         _id: video.uploadedBy._id.toString()
-      },
+      } : undefined,
       institute: video.institute ? {
         ...video.institute,
         _id: video.institute._id.toString()

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import { api } from "@/lib/api-client";
 import {
   GraduationCap,
   Quote,
@@ -204,7 +204,7 @@ export default function RegisterPage() {
   const checkUsernameAvailability = async (username: string) => {
     setUsernameAvailability({ status: "checking", message: "Checking username..." });
     try {
-      const response = await axios.post("/api/auth/check-username", { username });
+      const response = await api.post<{ available: boolean }>("/auth/check-username", { username });
       if (response.data.available) {
         setUsernameAvailability({ status: "available", message: "Username is available!" });
       } else {
@@ -221,8 +221,8 @@ export default function RegisterPage() {
     setIsLoadingInstitutes(true);
     setInstituteError(null);
     try {
-      const response = await axios.get("/api/institutes");
-      setFetchedInstitutes(response.data.institutes);
+      const response = await api.get<{ institutes: Institute[] }>("/institutes");
+      setFetchedInstitutes(response.data.institutes || []);
     } catch (error) {
       console.error("Error fetching institutes:", error);
       setInstituteError("Failed to load institutes. Please try again.");
@@ -361,7 +361,7 @@ export default function RegisterPage() {
     }
 
     try {
-      await axios.post('/api/auth/register', formData, {
+      await api.post('/auth/register', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -373,7 +373,10 @@ export default function RegisterPage() {
 
     } catch (err: unknown) {
       console.error("Registration failed:", err);
-      if (axios.isAxiosError(err) && err.response) {
+      console.error("Registration failed:", err);
+      // @ts-ignore - Basic error handling for now
+      if (err.response) {
+        // @ts-ignore
         setErrors({ apiError: err.response.data.message || 'An error occurred during registration.' });
       } else {
         setErrors({ apiError: 'An unexpected error occurred. Please try again.' });
