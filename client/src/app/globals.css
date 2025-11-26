@@ -252,9 +252,16 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    background-color: #0f172a;
+    /* Force dark background on html element */
+  }
+
   body {
     background-color: #0f172a;
     /* Always ensure a dark background to prevent white flash */
+    color: #f1f5f9;
+    /* Force light text color */
     @apply text-foreground;
   }
 }

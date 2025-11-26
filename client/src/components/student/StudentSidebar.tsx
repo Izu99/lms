@@ -102,9 +102,9 @@ export function StudentSidebar({ user, onLogout }: StudentSidebarProps) {
             <div className="w-12 h-12 bg-brand-primary rounded-xl flex items-center justify-center shadow-md">
               <GraduationCap className="w-7 h-7 text-white" />
             </div>
-            <SidebarToggle
+            {/* <SidebarToggle
               icon={<ChevronRight className="w-5 h-5 text-gray-600" />}
-            />
+            /> */}
           </>
         ) : (
           <>
@@ -117,9 +117,9 @@ export function StudentSidebar({ user, onLogout }: StudentSidebarProps) {
                 <p className="text-xs theme-text-secondary truncate">Student Portal</p>
               </div>
             </div>
-            <SidebarToggle
+            {/* <SidebarToggle
               icon={<ChevronLeft className="w-5 h-5 text-gray-600" />}
-            />
+            /> */}
           </>
         )}
       </SidebarHeader>

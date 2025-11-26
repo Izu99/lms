@@ -136,8 +136,8 @@ export default function VideosPage() {
 
   return (
     <StudentLayout>
-      <div>
-        <h1 className="text-3xl font-bold theme-text-primary mb-8">Video Lessons</h1>
+      <div className="w-full">
+        <h1 className="text-2xl sm:text-3xl font-bold theme-text-primary mb-6 sm:mb-8">Video Lessons</h1>
 
         {/* Filter Component */}
         <CommonFilter

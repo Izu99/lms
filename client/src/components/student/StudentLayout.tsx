@@ -54,14 +54,14 @@ function StudentLayoutContent({ children, hideSidebar }: StudentLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen theme-bg-secondary">
+    <div className="flex h-screen overflow-hidden theme-bg-secondary">
       {!hideSidebar && <StudentSidebar user={user} onLogout={handleLogout} />}
       <main
         className={`flex-1 transition-all duration-300 ease-in-out ${
           hideSidebar ? "ml-0" : (isCollapsed ? "ml-20" : "ml-72")
-        } flex flex-col`}
+        } flex flex-col h-screen overflow-y-auto`}
       >
-        <div className="p-6 lg:p-8 max-w-[1600px] flex-grow">{children}</div>
+        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full flex-grow">{children}</div>
         <Toaster />
         <GlobalFooter />
       </main>

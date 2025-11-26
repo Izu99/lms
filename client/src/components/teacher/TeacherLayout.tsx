@@ -53,12 +53,12 @@ function TeacherLayoutContent({ children }: TeacherLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen theme-bg-secondary">
+    <div className="flex h-screen overflow-hidden theme-bg-secondary">
       <TeacherSidebar user={user} onLogout={handleLogout} />
       <main
         className={`flex-1 transition-all duration-300 ease-in-out ${
           isCollapsed ? "ml-20" : "ml-72"
-        } flex flex-col`}
+        } flex flex-col h-screen overflow-y-auto`}
       >
         <div className="p-6 lg:p-8 max-w-[1600px] flex-grow">{children}</div>
         <Toaster />

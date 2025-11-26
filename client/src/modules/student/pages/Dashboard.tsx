@@ -23,9 +23,9 @@ export function StudentDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen theme-bg-secondary">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+      <div className="w-full">
+        <div className="w-full max-w-7xl mx-auto">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
             <h3 className="text-lg font-medium text-red-800 mb-2">Error Loading Dashboard</h3>
             <p className="text-red-600 mb-4">{error}</p>
             <button
@@ -42,8 +42,8 @@ export function StudentDashboard() {
 
   if (isLoading || !data) {
     return (
-      <div className="min-h-screen theme-bg-secondary">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full">
+        <div className="w-full max-w-7xl mx-auto">
           <StudentDashboardSkeleton />
         </div>
       </div>
@@ -58,10 +58,10 @@ export function StudentDashboard() {
   };
 
   return (
-    <div className="min-h-screen theme-bg-secondary">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full">
+      <main className="w-full max-w-7xl mx-auto">
         {/* Welcome Header */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <div className="theme-bg-primary rounded-lg shadow-sm theme-border p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-4">
@@ -92,8 +92,8 @@ export function StudentDashboard() {
         <DashboardStats stats={data.stats} />
 
         {/* Upcoming Deadlines & Study Time */}
-        <div className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="mb-6 sm:mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Upcoming Deadlines */}
             <div className="theme-bg-primary rounded-lg shadow-sm theme-border p-4">
               <h3 className="text-sm font-semibold theme-text-primary mb-3 flex items-center gap-2">
@@ -146,7 +146,7 @@ export function StudentDashboard() {
         </div>
 
         {/* Recent Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
           {/* Recent Videos */}
           <div className="theme-bg-primary rounded-lg shadow-sm theme-border p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
@@ -252,10 +252,10 @@ export function StudentDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mb-8">
-          <div className="theme-bg-primary rounded-lg shadow-sm theme-border p-6">
-            <h2 className="text-xl font-bold theme-text-primary mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="mb-6 sm:mb-8">
+          <div className="theme-bg-primary rounded-lg shadow-sm theme-border p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold theme-text-primary mb-4">Quick Actions</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
               <button
                 onClick={() => router.push('/student/videos')}
                 className="flex flex-col items-center gap-3 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
