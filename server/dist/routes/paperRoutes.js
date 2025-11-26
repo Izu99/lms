@@ -11,7 +11,7 @@ const router = express_1.default.Router();
 // Paper CRUD operations
 router.post('/', auth_1.protect, multer_1.upload.fields([{ name: 'file', maxCount: 1 }, { name: 'previewImage', maxCount: 1 }]), paperController_1.createPaper);
 router.get('/', auth_1.protect, paperController_1.getAllPapers);
-router.post('/upload', auth_1.protect, multer_1.upload.single('file'), paperController_1.uploadPaperPdf);
+router.post('/upload', auth_1.protect, multer_1.uploadPdf.single('file'), paperController_1.uploadPaperPdf);
 // Paper attempts and results - MUST come before /:id routes
 router.get('/results/my-results', auth_1.protect, paperController_1.getStudentResults);
 router.get('/student/all', auth_1.protect, paperController_1.getAllPapersForStudent);
