@@ -2,19 +2,8 @@ import React from "react";
 import { Video, FileText, Edit, Trash2, School, Eye } from "lucide-react";
 import { API_BASE_URL } from "@/lib/constants";
 import { useRouter } from "next/navigation";
+import { CoursePackageData } from "@/modules/shared/types/course-package.types";
 
-interface CoursePackageData {
-  _id: string;
-  title: string;
-  description?: string;
-  price: number;
-  availability: "all" | "physical" | "paid";
-  institute?: { name: string } | string;
-  year?: { name: string } | string;
-  videos: any[];
-  papers: any[];
-  backgroundImage?: string;
-}
 
 interface CoursePackageCardProps {
   pkg: CoursePackageData;
@@ -32,7 +21,7 @@ export function CoursePackageCard({ pkg, onEdit, onDelete }: CoursePackageCardPr
     <div className="relative w-full h-[600px] rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
-        <img 
+        <img
           src={backgroundImage}
           alt={pkg.title}
           className="w-full h-full object-cover"
@@ -110,24 +99,24 @@ export function CoursePackageCard({ pkg, onEdit, onDelete }: CoursePackageCardPr
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-2 pt-2">
           <button
             onClick={() => router.push(`/teacher/course-packages/${pkg._id}`)}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 backdrop-blur-sm text-blue-300 rounded-lg transition-all duration-200 text-sm font-semibold border border-blue-500/30"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-lg"
             title="View Details"
           >
             <Eye className="w-4 h-4" /> View
           </button>
           <button
             onClick={() => onEdit(pkg)}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-lg transition-all duration-200 text-sm font-semibold border border-white/20"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-lg transition-all duration-200 text-sm font-medium border border-white/20"
             title="Edit"
           >
             <Edit className="w-4 h-4" /> Edit
           </button>
           <button
             onClick={() => onDelete(pkg._id)}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 backdrop-blur-sm text-red-300 rounded-lg transition-all duration-200 text-sm font-semibold border border-red-500/30"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-600/80 hover:bg-red-700/80 backdrop-blur-md text-white rounded-lg transition-all duration-200 text-sm font-medium shadow-lg"
             title="Delete"
           >
             <Trash2 className="w-4 h-4" /> Delete
@@ -146,10 +135,13 @@ export default function CoursePackageDemo() {
     description: "This is a comprehensive package for theory students covering all fundamental ICT concepts with detailed video explanations and practice papers.",
     price: 200.00,
     availability: "all",
-    institute: { name: "Dakma" },
-    year: { name: "2020" },
-    videos: [1, 2],
-    papers: [1, 2],
+    institute: { _id: "inst1", name: "Dakma" },
+    year: { _id: "year1", name: "2020" },
+    videos: [],
+    papers: [],
+    createdBy: { _id: "user1", username: "teacher" },
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
     backgroundImage: "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800&q=80"
   };
 
@@ -166,7 +158,7 @@ export default function CoursePackageDemo() {
   return (
     <div className="min-h-screen bg-gray-900 p-8">
       <div className="max-w-md mx-auto">
-        <CoursePackageCard 
+        <CoursePackageCard
           pkg={samplePackage}
           onEdit={handleEdit}
           onDelete={handleDelete}

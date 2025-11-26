@@ -13,7 +13,11 @@ interface UseTeacherZoomReturn {
   refetch: () => void;
 }
 
-export const useTeacherZoom = (): UseTeacherZoomReturn => {
+export const useTeacherZoom = (
+  instituteId?: string,
+  yearId?: string,
+  academicLevelId?: string
+): UseTeacherZoomReturn => {
   const [zoomLinks, setZoomLinks] = useState<ZoomLinkData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +26,7 @@ export const useTeacherZoom = (): UseTeacherZoomReturn => {
     try {
       setIsLoading(true);
       setError(null);
-      const zoomLinkData = await ZoomService.getZoomLinks();
+      const zoomLinkData = await ZoomService.getZoomLinks(instituteId, yearId, academicLevelId);
       setZoomLinks(zoomLinkData);
     } catch (err: unknown) {
       let errorMessage = 'Failed to fetch zoom links';
@@ -38,7 +42,7 @@ export const useTeacherZoom = (): UseTeacherZoomReturn => {
 
   useEffect(() => {
     fetchZoomLinks();
-  }, []);
+  }, [instituteId, yearId, academicLevelId]);
 
   return {
     zoomLinks,

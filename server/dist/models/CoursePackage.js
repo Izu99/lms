@@ -42,9 +42,11 @@ const CoursePackageSchema = new mongoose_1.Schema({
     backgroundImage: { type: String, trim: true },
     videos: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Video' }],
     papers: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Paper' }],
-    availability: { type: String, enum: ['all', 'physical'], default: 'all' },
+    tutes: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Tute' }],
+    availability: { type: String, enum: ['all', 'physical', 'paid'], default: 'all' },
     institute: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Institute' },
     year: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Year' },
+    academicLevel: { type: String, enum: ['OL', 'AL'] },
     createdBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true },
 }, { timestamps: true });
 exports.CoursePackage = mongoose_1.default.model('CoursePackage', CoursePackageSchema);

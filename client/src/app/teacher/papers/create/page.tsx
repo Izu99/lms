@@ -26,7 +26,10 @@ import {
   BookOpen,
   Upload,
   X,
-  ArrowUp
+  ArrowUp,
+  Loader2,
+  School,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,11 +73,24 @@ export default function CreatePaperPage() {
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [infoDialogContent, setInfoDialogContent] = useState({ title: "", description: "" });
   const [showScrollToTop, setShowScrollToTop] = useState(false);
-  const [uploadingImages, setUploadingImages] = useState<{[key: string]: boolean}>({});
+  const [uploadingImages, setUploadingImages] = useState<{ [key: string]: boolean }>({});
   const [paperType, setPaperType] = useState("MCQ");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState("");
-  
+  const [previewImage, setPreviewImage] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [institutes, setInstitutes] = useState<{ _id: string, name: string }[]>([]);
+  const [years, setYears] = useState<{ _id: string, year: string, name: string }[]>([]);
+  const [instituteId, setInstituteId] = useState("");
+  const [yearId, setYearId] = useState("");
+  const [academicLevelId, setAcademicLevelId] = useState(""); // Add academicLevelId state
+  // Hardcoded academic levels
+  const academicLevels = [
+    { _id: "OL", name: "Ordinary Level" },
+    { _id: "AL", name: "Advanced Level" }
+  ];
+  const [dataLoading, setDataLoading] = useState(true);
+
   const questionsRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
 
@@ -86,12 +102,34 @@ export default function CreatePaperPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const headers = { 'Authorization': `Bearer ${token}` };
+        const [instituteRes, yearRes] = await Promise.all([
+          axios.get(`${API_URL}/institutes`, { headers }),
+          axios.get(`${API_URL}/years`, { headers })
+        ]);
+        setInstitutes(instituteRes.data.institutes || []);
+        setYears(yearRes.data.years || []);
+      } catch (error) {
+        console.error("Error fetching dropdown data:", error);
+        toast.error("Failed to load institutes and years.");
+      } finally {
+        setDataLoading(false);
+      }
+    };
+    fetchDropdownData();
+  }, []);
+
+
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
-    return { 
+    return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
-    }; 
+    };
   };
 
   const scrollToTop = () => {
@@ -116,9 +154,9 @@ export default function CreatePaperPage() {
       imageUrl: "",
       explanation: { text: "", imageUrl: "" }
     };
-    
+
     setQuestions([...questions, newQuestion]);
-    
+
     setTimeout(() => {
       const questionElements = document.querySelectorAll('[data-question-index]');
       const lastQuestion = questionElements[questionElements.length - 1];
@@ -128,7 +166,22 @@ export default function CreatePaperPage() {
 
   const handleImageUpload = async (qIndex: number, files: FileList | null, type: 'question' | 'explanation' | 'option', oIndex?: number) => {
     if (!files || files.length === 0) return;
+
     const file = files[0];
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size too large. Maximum size is 5MB.');
+      return;
+    }
+
     const formData = new FormData();
     formData.append("image", file);
 
@@ -137,53 +190,102 @@ export default function CreatePaperPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const headers = { 
+      const headers = {
         "Content-Type": "multipart/form-data",
         "Authorization": `Bearer ${token}`
       };
-      
-      const endpoint = type === 'explanation' 
-        ? `${API_URL}/images/upload/explanation`
-        : `${API_URL}/images/upload/paper-options`;
-        
-      const response = await axios.post(endpoint, formData, { headers });
-      
+
+      // Use specific endpoints for each upload type
+      let endpoint: string;
+      if (type === 'question') {
+        endpoint = `${API_URL}/images/upload/question`;
+      } else if (type === 'explanation') {
+        endpoint = `${API_URL}/images/upload/explanation`;
+      } else if (type === 'option') {
+        endpoint = `${API_URL}/images/upload/paper-options`;
+      } else {
+        endpoint = `${API_URL}/images/upload/paper-content`;
+        console.warn(`Unknown upload type encountered: ${type}. Defaulting to paper-content.`);
+      }
+
+      const response = await axios.post(endpoint, formData, {
+        headers,
+        timeout: 30000 // 30 second timeout
+      });
+
+      if (!response.data.imageUrl) {
+        throw new Error('No image URL returned from server');
+      }
+
       const newQuestions = [...questions];
       if (type === 'explanation') {
         if (!newQuestions[qIndex].explanation) {
           newQuestions[qIndex].explanation = {};
         }
         newQuestions[qIndex].explanation!.imageUrl = response.data.imageUrl;
+        toast.success('Explanation image uploaded successfully!');
       } else if (type === 'question') {
         newQuestions[qIndex].imageUrl = response.data.imageUrl;
+        toast.success('Question image uploaded successfully!');
       } else if (type === 'option' && oIndex !== undefined) {
         newQuestions[qIndex].options[oIndex].imageUrl = response.data.imageUrl;
         newQuestions[qIndex].options[oIndex].optionText = "";
-      }
-      setQuestions(newQuestions);
-      if (type === 'option' && oIndex !== undefined) {
         toast.success(`Option ${String.fromCharCode(65 + oIndex)} image uploaded successfully!`);
       }
-    } catch (error) {
+      setQuestions(newQuestions);
+    } catch (error: any) {
       console.error("Error uploading image:", error);
-      setError(`Failed to upload ${type} image`);
+      const errorMsg = error.response?.data?.message || error.message || `Failed to upload ${type} image`;
+      toast.error(errorMsg);
+      setError(errorMsg);
     } finally {
       setUploadingImages(prev => ({ ...prev, [uploadKey]: false }));
     }
   };
 
-  const removeImage = (qIndex: number, type: 'question' | 'explanation' | 'option', oIndex?: number) => {
+  const removeImage = async (qIndex: number, type: 'question' | 'explanation' | 'option', oIndex?: number) => {
     const newQuestions = [...questions];
+    let imageUrlToRemove = '';
+
     if (type === 'explanation') {
       if (newQuestions[qIndex].explanation) {
-        newQuestions[qIndex].explanation!.imageUrl = "";
+        imageUrlToRemove = newQuestions[qIndex].explanation!.imageUrl || '';
       }
     } else if (type === 'question') {
-      newQuestions[qIndex].imageUrl = "";
+      imageUrlToRemove = newQuestions[qIndex].imageUrl || '';
     } else if (type === 'option' && oIndex !== undefined) {
-      newQuestions[qIndex].options[oIndex].imageUrl = "";
+      imageUrlToRemove = newQuestions[qIndex].options[oIndex].imageUrl || '';
     }
-    setQuestions(newQuestions);
+
+    if (!imageUrlToRemove) {
+      toast.error("No image URL found to remove.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/images/delete`,
+        { fileUrl: imageUrlToRemove },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+
+      // On successful deletion, update the state
+      if (type === 'explanation') {
+        if (newQuestions[qIndex].explanation) {
+          newQuestions[qIndex].explanation!.imageUrl = "";
+        }
+      } else if (type === 'question') {
+        newQuestions[qIndex].imageUrl = "";
+      } else if (type === 'option' && oIndex !== undefined) {
+        newQuestions[qIndex].options[oIndex].imageUrl = "";
+      }
+      setQuestions(newQuestions);
+      toast.success("Image removed successfully!");
+
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      toast.error("Failed to remove image. Please try again.");
+    }
   };
 
   const removeQuestion = (index: number) => {
@@ -253,18 +355,31 @@ export default function CreatePaperPage() {
     formData.append("file", file);
 
     try {
-        const token = localStorage.getItem('token');
-        const headers = {
-            "Content-Type": "multipart/form-data",
-            "Authorization": `Bearer ${token}`
-        };
+      const token = localStorage.getItem('token');
+      const headers = {
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}`
+      };
 
-        const response = await axios.post(`${API_URL}/papers/upload`, formData, { headers });
-        setPdfUrl(response.data.fileUrl);
+      const response = await axios.post(`${API_URL}/papers/upload`, formData, { headers });
+      setPdfUrl(response.data.fileUrl);
     } catch (error) {
-        console.error("Error uploading PDF:", error);
-        setError("Failed to upload PDF");
+      console.error("Error uploading PDF:", error);
+      setError("Failed to upload PDF");
     }
+  };
+
+  const handlePreviewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setPreviewImage(file);
+      setImagePreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const removePreviewImage = () => {
+    setPreviewImage(null);
+    setImagePreviewUrl("");
   };
 
   const validateForm = () => {
@@ -287,77 +402,91 @@ export default function CreatePaperPage() {
 
   const handleSubmit = async () => {
     if (paperType === "MCQ") {
-        const validationError = validateForm();
-        if (validationError) {
-            setError(validationError);
-            return;
-        }
+      const validationError = validateForm();
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
     } else {
-        if (!title.trim()) {
-            setError("Paper title is required.");
-            return;
-        }
-        if (!pdfUrl) {
-            setError("Please upload a PDF file for the paper.");
-            return;
-        }
+      if (!title.trim()) {
+        setError("Paper title is required.");
+        return;
+      }
+      if (!pdfFile && !previewImage) { // If Structure-Essay, either PDF or preview image required
+        setError("Please upload a PDF file or a preview image for the paper.");
+        return;
+      }
+    }
+
+    if (!instituteId) {
+      setError("Please select an institute.");
+      return;
+    }
+    if (!yearId) {
+      setError("Please select an academic year.");
+      return;
+    }
+    if (!academicLevelId) {
+      setError("Please select an academic level.");
+      return;
     }
     setError("");
 
     try {
-        setSubmitting(true);
-        const headers = getAuthHeaders();
-        let paperData;
+      setSubmitting(true);
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("deadline", deadline);
+      formData.append("timeLimit", timeLimit.toString());
+      formData.append("availability", availability);
+      formData.append("price", price.toString());
+      formData.append("paperType", paperType);
+      formData.append("institute", instituteId);
+      formData.append("year", yearId);
+      formData.append("academicLevel", academicLevelId); // Append academicLevel
 
-        if (paperType === "MCQ") {
-            paperData = {
-                title,
-                description,
-                deadline: deadline || undefined,
-                timeLimit: timeLimit > 0 ? timeLimit : undefined,
-                availability,
-                price,
-                paperType: "MCQ",
-                questions: questions.map(({ questionText, options, imageUrl, explanation }) => ({
-                    questionText,
-                    options,
-                    imageUrl,
-                    explanation: explanation && (explanation.text || explanation.imageUrl) ? explanation : undefined
-                })),
-            };
-        } else {
-            paperData = {
-                title,
-                description,
-                deadline: deadline || undefined,
-                timeLimit: timeLimit > 0 ? timeLimit : undefined,
-                availability,
-                price,
-                paperType: "Structure",
-                fileUrl: pdfUrl,
-            };
+      if (paperType === "MCQ") {
+        formData.append("questions", JSON.stringify(questions.map(({ open, ...rest }) => rest))); // Exclude 'open'
+      } else { // Structure-Essay
+        if (pdfFile) {
+          formData.append("file", pdfFile); // Use "file" for main file
+          formData.append("uploadType", "paper"); // Specify upload type for multer
         }
+        // For Structure-Essay, fileUrl will be set from req.file.path on backend
+      }
 
-        await axios.post(`${API_URL}/papers`, paperData, { headers });
+      if (previewImage) {
+        formData.append("previewImage", previewImage); // Use "previewImage" for preview image
+        formData.append("uploadType", "paper-preview"); // Specify upload type for multer
+      }
 
-        toast.success("Paper created successfully! Students can now access and attempt this paper.");
-        router.push("/teacher/papers");
+      await axios.post(`${API_URL}/papers`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      toast.success("Paper created successfully! Students can now access and attempt this paper.");
+      router.push("/teacher/papers");
 
     } catch (error) {
-        console.error("Error creating paper:", error);
-        if (axios.isAxiosError(error)) {
-            setError(error.response?.data?.message || "Failed to create paper");
-        } else {
-            setError("An unexpected error occurred");
-        }
+      console.error("Error creating paper:", error);
+      if (axios.isAxiosError(error)) {
+        setError(error.response?.data?.message || "Failed to create paper");
+      } else {
+        setError("An unexpected error occurred");
+      }
     } finally {
-        setSubmitting(false);
+      setSubmitting(false);
     }
   };
 
   return (
     <TeacherLayout>
-      <div ref={topRef}>
+      <div ref={topRef} className="theme-bg-secondary p-4 rounded-lg">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -381,8 +510,8 @@ export default function CreatePaperPage() {
           </div>
 
           {/* Paper Details Form */}
-          <motion.div 
-            className="bg-card rounded-3xl shadow-xl border border-border p-8 mb-8"
+          <motion.div
+            className="rounded-3xl shadow-xl border border-border p-8 mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -394,17 +523,99 @@ export default function CreatePaperPage() {
               Paper Details
             </h2>
             <div className="mb-8">
-                <label className="font-semibold text-foreground mb-3 block text-lg">Paper Type</label>
-                <Select value={paperType} onValueChange={setPaperType}>
-                    <SelectTrigger className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl">
-                        <SelectValue placeholder="Select paper type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="MCQ">Multiple Choice Questions (MCQ)</SelectItem>
-                        <SelectItem value="Structure">Structured/Essay Paper (PDF Upload)</SelectItem>
-                    </SelectContent>
-                </Select>
+              <label className="font-semibold text-foreground mb-3 block text-lg">Paper Type</label>
+              <Select value={paperType} onValueChange={setPaperType}>
+                <SelectTrigger className="pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <SelectValue placeholder="Select paper type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                  <SelectItem value="MCQ" className="text-gray-900 dark:text-white">Multiple Choice Questions (MCQ)</SelectItem>
+                  <SelectItem value="Structure-Essay" className="text-gray-900 dark:text-white">Structure and Essay Paper (PDF Upload)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {/* Institute Selection */}
+              <div>
+                <label className="font-semibold text-foreground mb-3 block text-lg">
+                  Institute <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <School className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                  <Select
+                    value={instituteId}
+                    onValueChange={setInstituteId}
+                    disabled={dataLoading}
+                  >
+                    <SelectTrigger className="pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                      <SelectValue placeholder={dataLoading ? "Loading..." : "Select Institute"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                      {institutes.map(inst => (
+                        <SelectItem key={inst._id} value={inst._id} className="text-gray-900 dark:text-white">
+                          {inst.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Year Selection */}
+              <div>
+                <label className="font-semibold text-foreground mb-3 block text-lg">
+                  Academic Year <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                  <Select
+                    value={yearId}
+                    onValueChange={setYearId}
+                    disabled={dataLoading}
+                  >
+                    <SelectTrigger className="pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                      <SelectValue placeholder={dataLoading ? "Loading..." : "Select Year"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                      {years.map(yr => (
+                        <SelectItem key={yr._id} value={yr._id} className="text-gray-900 dark:text-white">
+                          {yr.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Academic Level Selection */}
+              <div>
+                <label className="font-semibold text-foreground mb-3 block text-lg">
+                  Academic Level <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                  <Select
+                    key={`academic-level-create-${academicLevelId}`}
+                    value={academicLevelId}
+                    onValueChange={setAcademicLevelId}
+                    disabled={dataLoading}
+                  >
+                    <SelectTrigger className="pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                      <SelectValue placeholder={dataLoading ? "Loading..." : "Select Level"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                      {academicLevels.map(level => (
+                        <SelectItem key={level._id} value={level._id} className="text-gray-900 dark:text-white">
+                          {level.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Title */}
               <div className="md:col-span-2">
@@ -413,7 +624,7 @@ export default function CreatePaperPage() {
                   placeholder="e.g., Mid-Term ICT Examination - Database Systems"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
+                  className="bg-background text-foreground border-border focus:border-primary rounded-lg"
                 />
               </div>
               {/* Description */}
@@ -423,8 +634,42 @@ export default function CreatePaperPage() {
                   placeholder="A brief summary of the paper's content and topics covered..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="min-h-[100px] text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
+                  className="min-h-[100px] bg-background text-foreground border-border focus:border-primary rounded-lg"
                 />
+              </div>
+
+              {/* Preview Image Upload */}
+              <div className="md:col-span-2">
+                <label className="font-semibold text-foreground mb-3 block text-lg">Preview Image (Optional)</label>
+                <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary transition-colors">
+                  {imagePreviewUrl ? (
+                    <div className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={imagePreviewUrl} alt="Preview" className="mx-auto max-h-48 object-contain rounded-lg shadow-md" />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 shadow-lg"
+                        onClick={removePreviewImage}
+                      >
+                        <X size={16} />
+                      </Button>
+                      <p className="font-medium text-foreground mt-3">{previewImage?.name || "Image uploaded"}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <Upload size={48} className="mx-auto text-muted-foreground" />
+                      <p className="text-foreground font-medium">Upload a preview image for the paper</p>
+                      <p className="text-sm text-muted-foreground">Supported: .jpg, .jpeg, .png, .gif, .webp (Max 5MB)</p>
+                      <Input
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        onChange={handlePreviewImageUpload}
+                        className="max-w-xs mx-auto bg-card text-foreground border-border"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
               {/* Deadline */}
               <div>
@@ -435,7 +680,7 @@ export default function CreatePaperPage() {
                   type="datetime-local"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
-                  className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
+                  className="bg-background text-foreground border-border focus:border-primary rounded-lg"
                 />
               </div>
               {/* Time Limit */}
@@ -447,7 +692,7 @@ export default function CreatePaperPage() {
                   type="number"
                   value={timeLimit}
                   onChange={(e) => setTimeLimit(Number(e.target.value))}
-                  className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
+                  className="bg-background text-foreground border-border focus:border-primary rounded-lg"
                   min="0"
                 />
               </div>
@@ -460,12 +705,13 @@ export default function CreatePaperPage() {
                   value={availability}
                   onValueChange={(value) => setAvailability(value)}
                 >
-                  <SelectTrigger className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl">
+                  <SelectTrigger className="pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                     <SelectValue placeholder="Select availability" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Free for all</SelectItem>
-                    <SelectItem value="physical">Free for physical only</SelectItem>
+                  <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                    <SelectItem value="all" className="text-gray-900 dark:text-white">All Students</SelectItem>
+                    <SelectItem value="physical" className="text-gray-900 dark:text-white">Physical Class Only</SelectItem>
+                    <SelectItem value="paid" className="text-gray-900 dark:text-white">Paid Only</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -480,7 +726,7 @@ export default function CreatePaperPage() {
                   onChange={(e) => setPrice(Number(e.target.value))}
                   placeholder="Enter price (e.g., 1500)"
                   min="0"
-                  className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
+                  className="bg-background text-foreground border-border focus:border-primary rounded-lg"
                 />
               </div>
             </div>
@@ -489,8 +735,8 @@ export default function CreatePaperPage() {
           {paperType === "MCQ" && (
             <>
               {/* Questions Builder */}
-              <motion.div 
-                className="bg-card rounded-3xl shadow-xl border border-border p-8"
+              <motion.div
+                className="rounded-3xl shadow-xl p-8"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -517,8 +763,8 @@ export default function CreatePaperPage() {
 
                 <div className="flex items-center justify-between mb-8">
                   <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-                      <ListOrdered size={20} className="text-green-500" />
+                    <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                      <ListOrdered size={20} className="text-blue-500" />
                     </div>
                     Questions Builder
                     <span className="text-lg font-normal text-muted-foreground">({questions.length} questions)</span>
@@ -530,7 +776,7 @@ export default function CreatePaperPage() {
                         Scroll to Top
                       </Button>
                     )}
-                    <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
+                    <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
                       <Plus size={18} className="mr-2" />
                       Add Question
                     </Button>
@@ -538,8 +784,8 @@ export default function CreatePaperPage() {
                 </div>
 
                 {questions.length === 0 ? (
-                  <motion.div 
-                    className="text-center py-16 border-2 border-dashed border-border rounded-2xl bg-background"
+                  <motion.div
+                    className="text-center py-16 border-2 border-dashed border-border rounded-2xl bg-background dark:bg-blue-950/40"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                   >
@@ -557,7 +803,7 @@ export default function CreatePaperPage() {
                   <div className="space-y-6">
                     <AnimatePresence>
                       {questions.map((q, qIndex) => (
-                        <motion.div 
+                        <motion.div
                           key={qIndex}
                           data-question-index={qIndex}
                           className="border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
@@ -566,7 +812,7 @@ export default function CreatePaperPage() {
                           exit={{ opacity: 0, y: -20 }}
                           transition={{ delay: qIndex * 0.1 }}
                         >
-                          <div 
+                          <div
                             className="bg-muted/50 p-6 flex items-center justify-between cursor-pointer hover:bg-muted transition-colors"
                             onClick={() => toggleQuestion(qIndex)}
                           >
@@ -608,8 +854,8 @@ export default function CreatePaperPage() {
 
                           <AnimatePresence>
                             {q.open && (
-                              <motion.div 
-                                className="p-8 space-y-8 bg-card"
+                              <motion.div
+                                className="p-8 space-y-8 bg-card dark:bg-blue-950/40"
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: "auto", opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
@@ -636,10 +882,10 @@ export default function CreatePaperPage() {
                                     {q.imageUrl ? (
                                       <div className="relative">
                                         <div className="bg-white dark:bg-gray-900 rounded-lg p-4 flex items-center justify-center">
-                                          <img 
-                                            src={`${API_BASE_URL}${q.imageUrl}`} 
-                                            alt="Question preview" 
-                                            className="rounded-lg max-h-64 max-w-full object-contain shadow-lg" 
+                                          <img
+                                            src={`${API_BASE_URL}${q.imageUrl}`}
+                                            alt="Question preview"
+                                            className="rounded-lg max-h-64 max-w-full object-contain shadow-lg"
                                           />
                                         </div>
                                         <Button
@@ -712,13 +958,12 @@ export default function CreatePaperPage() {
                                   </div>
                                   <div className="space-y-3">
                                     {q.options.map((opt, oIndex) => (
-                                      <motion.div 
+                                      <motion.div
                                         key={oIndex}
-                                        className={`relative border-2 rounded-xl transition-all ${
-                                          opt.isCorrect
-                                            ? "border-green-500 bg-green-50 dark:bg-green-950/20 shadow-md"
-                                            : "border-border bg-background hover:border-primary/50"
-                                        }`}
+                                        className={`relative rounded-xl transition-all ${opt.isCorrect
+                                          ? "border-2 border-green-500 bg-green-50 dark:bg-green-950/20 shadow-md"
+                                          : "border dark:border-2 border-gray-300 dark:border-border bg-background hover:border-primary/50"
+                                          }`}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: oIndex * 0.1 }}
@@ -732,13 +977,39 @@ export default function CreatePaperPage() {
                                         )}
 
                                         <div className="flex items-start gap-3 p-4">
+                                          {/* Action Buttons */}
+                                          <div className="flex flex-col gap-2">
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => setCorrectOption(qIndex, oIndex)}
+                                              className={`h-9 px-3 transition-all ${opt.isCorrect
+                                                ? "bg-green-500 text-white hover:bg-green-600"
+                                                : "hover:bg-green-500/10 hover:text-green-600"
+                                                }`}
+                                              title="Mark as correct answer"
+                                            >
+                                              <Check size={16} />
+                                            </Button>
+                                            {q.options.length > 2 && (
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => removeOption(qIndex, oIndex)}
+                                                className="h-9 px-3 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+                                                title="Remove option"
+                                              >
+                                                <Trash2 size={16} />
+                                              </Button>
+                                            )}
+                                          </div>
+
                                           {/* Option Letter */}
-                                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0 ${
-                                            opt.isCorrect
-                                              ? "bg-green-500 text-white"
-                                              : "bg-muted text-muted-foreground"
-                                          }`}>
-                                            {String.fromCharCode(65 + oIndex)}
+                                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0 ${opt.isCorrect
+                                            ? "bg-green-500 text-white"
+                                            : "bg-muted text-muted-foreground"
+                                            }`}>
+                                            {oIndex + 1}
                                           </div>
 
                                           {/* Content Area */}
@@ -747,7 +1018,7 @@ export default function CreatePaperPage() {
                                             {!opt.imageUrl && (
                                               <div>
                                                 <Input
-                                                  placeholder={`Enter text for option ${String.fromCharCode(65 + oIndex)}`}
+                                                  placeholder={`Enter text for option ${oIndex + 1}`}
                                                   value={opt.optionText}
                                                   onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
                                                   className="text-base h-11 bg-card text-foreground border-border focus:border-primary"
@@ -761,10 +1032,10 @@ export default function CreatePaperPage() {
                                                 {opt.imageUrl ? (
                                                   <div className="relative bg-muted/30 p-4">
                                                     <div className="flex items-center justify-center bg-white dark:bg-gray-900 rounded-lg p-3">
-                                                      <img 
-                                                        src={`${API_BASE_URL}${opt.imageUrl}`} 
-                                                        alt={`Option ${String.fromCharCode(65 + oIndex)} preview`}
-                                                        className="rounded-md max-h-32 max-w-full object-contain shadow-md" 
+                                                      <img
+                                                        src={`${API_BASE_URL}${opt.imageUrl}`}
+                                                        alt={`Option ${oIndex + 1} preview`}
+                                                        className="rounded-md max-h-32 max-w-full object-contain shadow-md"
                                                       />
                                                     </div>
                                                     <Button
@@ -825,34 +1096,6 @@ export default function CreatePaperPage() {
                                               </div>
                                             )}
                                           </div>
-
-                                          {/* Action Buttons */}
-                                          <div className="flex flex-col gap-2">
-                                            <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              onClick={() => setCorrectOption(qIndex, oIndex)}
-                                              className={`h-9 px-3 transition-all ${
-                                                opt.isCorrect
-                                                  ? "bg-green-500 text-white hover:bg-green-600"
-                                                  : "hover:bg-green-500/10 hover:text-green-600"
-                                              }`}
-                                              title="Mark as correct answer"
-                                            >
-                                              <Check size={16} />
-                                            </Button>
-                                            {q.options.length > 2 && (
-                                              <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => removeOption(qIndex, oIndex)}
-                                                className="h-9 px-3 text-red-500 hover:bg-red-500/10 hover:text-red-600"
-                                                title="Remove option"
-                                              >
-                                                <Trash2 size={16} />
-                                              </Button>
-                                            )}
-                                          </div>
                                         </div>
                                       </motion.div>
                                     ))}
@@ -870,7 +1113,7 @@ export default function CreatePaperPage() {
                                       <p className="text-sm text-muted-foreground">Optional: Help students understand how to get the correct answer</p>
                                     </div>
                                   </div>
-                                  
+
                                   {/* Explanation Text */}
                                   <div className="mb-6">
                                     <label className="font-medium text-foreground mb-2 block">Explanation Text</label>
@@ -892,10 +1135,10 @@ export default function CreatePaperPage() {
                                       {q.explanation?.imageUrl ? (
                                         <div className="relative">
                                           <div className="bg-white dark:bg-gray-900 rounded-lg p-4 flex items-center justify-center">
-                                            <img 
-                                              src={`${API_BASE_URL}${q.explanation.imageUrl}`} 
-                                              alt="Explanation preview" 
-                                              className="rounded-lg max-h-56 max-w-full object-contain shadow-lg" 
+                                            <img
+                                              src={`${API_BASE_URL}${q.explanation.imageUrl}`}
+                                              alt="Explanation preview"
+                                              className="rounded-lg max-h-56 max-w-full object-contain shadow-lg"
                                             />
                                           </div>
                                           <Button
@@ -943,19 +1186,19 @@ export default function CreatePaperPage() {
                         </motion.div>
                       ))}
                     </AnimatePresence>
-                    
+
                     {/* Add Question Button at Bottom */}
                     {questions.length > 0 && (
-                      <motion.div 
+                      <motion.div
                         className="text-center pt-6"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.3 }}
                       >
-                        <Button 
-                          onClick={addQuestion} 
-                          size="lg" 
-                          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
+                        <Button
+                          onClick={addQuestion}
+                          size="lg"
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
                         >
                           <Plus size={18} className="mr-2" />
                           Add Another Question
@@ -968,51 +1211,51 @@ export default function CreatePaperPage() {
             </>
           )}
 
-          {paperType === "Structure" && (
+          {paperType === "Structure-Essay" && (
             <motion.div
-                className="bg-card rounded-3xl shadow-xl border border-border p-8"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+              className="rounded-3xl shadow-xl border border-border p-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
             >
-                <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
-                    <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
-                        <Upload size={20} className="text-purple-500" />
-                    </div>
-                    Upload Paper PDF
-                </h2>
-                <div className="border-border border-dashed rounded-xl p-6 hover:border-primary transition-colors bg-background">
-                    {pdfUrl ? (
-                        <div className="relative">
-                            <p className="text-lg font-semibold text-green-600">PDF uploaded successfully!</p>
-                            <p className="text-muted-foreground">{pdfFile?.name}</p>
-                            <Button
-                                variant="destructive"
-                                size="icon"
-                                className="absolute top-2 right-2"
-                                onClick={() => {
-                                    setPdfFile(null);
-                                    setPdfUrl("");
-                                }}
-                            >
-                                <X size={16} />
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="text-center">
-                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <Upload size={24} className="text-primary" />
-                            </div>
-                            <Input
-                                type="file"
-                                accept="application/pdf"
-                                onChange={(e) => handlePdfUpload(e.target.files)}
-                                className="max-w-xs mx-auto bg-card text-foreground border-border"
-                            />
-                            <p className="text-sm text-muted-foreground mt-2">Upload the paper in PDF format.</p>
-                        </div>
-                    )}
+              <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+                <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                  <Upload size={20} className="text-purple-500" />
                 </div>
+                Upload Paper PDF
+              </h2>
+              <div className="border-border border-dashed rounded-xl p-6 hover:border-primary transition-colors bg-background">
+                {pdfUrl ? (
+                  <div className="relative">
+                    <p className="text-lg font-semibold text-green-600">PDF uploaded successfully!</p>
+                    <p className="text-muted-foreground">{pdfFile?.name}</p>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={() => {
+                        setPdfFile(null);
+                        setPdfUrl("");
+                      }}
+                    >
+                      <X size={16} />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Upload size={24} className="text-primary" />
+                    </div>
+                    <Input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => handlePdfUpload(e.target.files)}
+                      className="max-w-xs mx-auto bg-card text-foreground border-border"
+                    />
+                    <p className="text-sm text-muted-foreground mt-2">Upload the paper in PDF format.</p>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
 
@@ -1037,7 +1280,7 @@ export default function CreatePaperPage() {
           </AnimatePresence>
 
           {/* Submit Button */}
-          <motion.div 
+          <motion.div
             className="mt-12 flex justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1045,7 +1288,7 @@ export default function CreatePaperPage() {
           >
             <Button
               onClick={handleSubmit}
-              disabled={submitting || (paperType === 'MCQ' && questions.length === 0) || (paperType === 'Structure' && !pdfUrl)}
+              disabled={submitting || (paperType === 'MCQ' && questions.length === 0) || (paperType === 'Structure-Essay' && !pdfUrl)}
               size="lg"
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-12 py-4 rounded-2xl font-semibold text-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all"
             >

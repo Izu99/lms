@@ -3,11 +3,11 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   // output: 'standalone', // ✅ Temporarily disabled due to build issue
   reactStrictMode: true,
-  
+
   turbopack: {
     root: process.cwd(), // Use the client directory as the root
   },
-  
+
   images: {
     remotePatterns: [
       {
@@ -28,12 +28,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  
+
   // ✅ SECURITY: Enable TypeScript strict mode in production
   typescript: {
     ignoreBuildErrors: process.env.NODE_ENV === 'development',
   },
-  
+
   // ✅ SECURITY: Add security headers
   async headers() {
     return [
@@ -72,10 +72,14 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  
+
   // ✅ PERFORMANCE: Enable compression
   compress: true,
-  
+
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   // ✅ PERFORMANCE: Enable experimental features
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts'],

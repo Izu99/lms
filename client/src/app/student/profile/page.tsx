@@ -140,7 +140,7 @@ export default function StudentProfilePage() {
         phoneNumber: profileData.phoneNumber,
         username: profileData.username, // Include username for validation
       };
-      const response = await api.put(`/auth/users/${profileData._id}`, payload);
+      const response = await api.put<{ user: typeof profileData }>(`/auth/users/${profileData._id}`, payload);
       setProfileData(response.data.user);
       toast.success("Personal details updated successfully!");
     } catch (err) {
@@ -169,7 +169,7 @@ export default function StudentProfilePage() {
         institute: profileData.institute?._id || profileData.institute,
         year: profileData.year?._id || profileData.year,
       };
-      const response = await api.put(`/auth/users/${profileData._id}`, payload);
+      const response = await api.put<{ user: typeof profileData }>(`/auth/users/${profileData._id}`, payload);
       setProfileData(response.data.user);
       toast.success("Academic information updated successfully!");
     } catch (err) {
@@ -196,7 +196,7 @@ export default function StudentProfilePage() {
         whatsappNumber: profileData.whatsappNumber,
         telegram: profileData.telegram,
       };
-      const response = await api.put(`/auth/users/${profileData._id}`, payload);
+      const response = await api.put<{ user: typeof profileData }>(`/auth/users/${profileData._id}`, payload);
       setProfileData(response.data.user);
       toast.success("Contact details updated successfully!");
     } catch (err) {
@@ -310,36 +310,32 @@ export default function StudentProfilePage() {
           <div className="flex border-b border-gray-700 overflow-x-auto">
             <button
               onClick={() => setActiveTab("personal")}
-              className={`tab-button px-6 py-4 text-sm font-medium text-gray-400 whitespace-nowrap ${
-                activeTab === "personal" ? "active" : ""
-              }`}
+              className={`tab-button px-6 py-4 text-sm font-medium text-gray-400 whitespace-nowrap ${activeTab === "personal" ? "active" : ""
+                }`}
               data-tab="personal"
             >
               Personal Details
             </button>
             <button
               onClick={() => setActiveTab("academic")}
-              className={`tab-button px-6 py-4 text-sm font-medium text-gray-400 whitespace-nowrap ${
-                activeTab === "academic" ? "active" : ""
-              }`}
+              className={`tab-button px-6 py-4 text-sm font-medium text-gray-400 whitespace-nowrap ${activeTab === "academic" ? "active" : ""
+                }`}
               data-tab="academic"
             >
               Academic Information
             </button>
             <button
               onClick={() => setActiveTab("contact")}
-              className={`tab-button px-6 py-4 text-sm font-medium text-gray-400 whitespace-nowrap ${
-                activeTab === "contact" ? "active" : ""
-              }`}
+              className={`tab-button px-6 py-4 text-sm font-medium text-gray-400 whitespace-nowrap ${activeTab === "contact" ? "active" : ""
+                }`}
               data-tab="contact"
             >
               Contact & Social
             </button>
             <button
               onClick={() => setActiveTab("security")}
-              className={`tab-button px-6 py-4 text-sm font-medium text-gray-400 whitespace-nowrap ${
-                activeTab === "security" ? "active" : ""
-              }`}
+              className={`tab-button px-6 py-4 text-sm font-medium text-gray-400 whitespace-nowrap ${activeTab === "security" ? "active" : ""
+                }`}
               data-tab="security"
             >
               Security
@@ -498,7 +494,7 @@ export default function StudentProfilePage() {
           {/* Security Tab */}
           <div id="security" className={`tab-content ${activeTab === "security" ? "active" : ""}`}>
             <h2 className="text-xl font-semibold text-white mb-6">Security Settings</h2>
-            
+
             <div className="card rounded-lg p-6 mb-6 border border-blue-500/30">
               <div className="flex items-start gap-4">
                 <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
@@ -537,7 +533,7 @@ export default function StudentProfilePage() {
                   <Input type="password" name="confirmNewPassword" value={passwordFields.confirmNewPassword} onChange={handlePasswordChange} id="confirmConfirmPassword" placeholder="Confirm new password" className="input-field w-full px-4 py-3 rounded-lg text-white" required />
                 </div>
               </div>
-              
+
               <div className="flex justify-end gap-3 mt-6">
                 <Button type="submit" className="btn-primary px-6 py-2.5 rounded-lg text-white font-medium" disabled={isSaving}>
                   {isSaving ? "Saving..." : "Change Password"}

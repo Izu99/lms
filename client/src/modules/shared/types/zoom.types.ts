@@ -20,5 +20,7 @@ export interface ZoomLinkData {
     _id: string;
     name: string;
   };
+  academicLevel: string; // Add academicLevel property
+  availability: 'all' | 'physical' | 'paid';
   createdAt: string;
 }

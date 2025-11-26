@@ -54,9 +54,11 @@ export interface VideoBase extends BaseEntity {
 export interface PaperBase extends BaseEntity {
   title: string;
   description?: string;
-  teacherId: string;
   deadline?: Date;
   timeLimit?: number;
-  availability: 'all' | 'physical';
   totalQuestions: number;
+  teacherId: string;
+  availability: 'all' | 'physical' | 'paid';
+  createdAt: Date;
+  updatedAt: Date;
 }

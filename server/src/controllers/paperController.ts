@@ -20,6 +20,10 @@ const extractImageUrlsFromPaper = (paper: IPaper): string[] => {
   if (paper.fileUrl) {
     imageUrls.push(paper.fileUrl);
   }
+  // Add paper-level previewImageUrl if it exists
+  if (paper.previewImageUrl) {
+    imageUrls.push(paper.previewImageUrl);
+  }
 
   // Extract image URLs from questions, options, and explanations
   if (paper.questions && paper.questions.length > 0) {
@@ -47,16 +51,28 @@ const extractImageUrlsFromPaper = (paper: IPaper): string[] => {
 export const createPaper = async (req: Request, res: Response) => {
   try {
     const requestingUser = (req as any).user;
-    
+
     if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied. Only teachers can create papers.' });
     }
 
-    const { title, description, questions, deadline, timeLimit, availability, price, paperType, fileUrl } = req.body;
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const mainFile = files?.file ? files.file[0] : undefined;
+    const previewImageFile = files?.previewImage ? files.previewImage[0] : undefined;
+
+    const { title, description, deadline, timeLimit, availability, price, paperType, institute, year, academicLevel } = req.body;
+    let { questions } = req.body;
+
+    if (typeof questions === 'string') {
+      questions = JSON.parse(questions);
+    }
 
     if (!title) {
       return res.status(400).json({ message: 'Title is required' });
     }
+
+    const fileUrl = mainFile ? `/uploads/${mainFile.path.split('uploads/')[1]}` : undefined;
+    const previewImageUrl = previewImageFile ? `/uploads/${previewImageFile.path.split('uploads/')[1]}` : undefined;
 
     if (paperType === 'MCQ') {
       if (!Array.isArray(questions) || questions.length === 0) {
@@ -67,21 +83,21 @@ export const createPaper = async (req: Request, res: Response) => {
       for (let i = 0; i < questions.length; i++) {
         const question = questions[i];
         if (!question.questionText || !question.options || question.options.length < 2) {
-          return res.status(400).json({ 
-            message: `Question ${i + 1} must have question text and at least 2 options` 
+          return res.status(400).json({
+            message: `Question ${i + 1} must have question text and at least 2 options`
           });
         }
 
         const correctAnswers = question.options.filter((opt: any) => opt.isCorrect);
         if (correctAnswers.length !== 1) {
-          return res.status(400).json({ 
-            message: `Question ${i + 1} must have exactly one correct answer` 
+          return res.status(400).json({
+            message: `Question ${i + 1} must have exactly one correct answer`
           });
         }
       }
-    } else if (paperType === 'Structure') {
-      if (!fileUrl) {
-        return res.status(400).json({ message: 'A PDF file is required for a structure paper' });
+    } else if (paperType === 'Structure-Essay') {
+      if (!fileUrl) { // Check for main file upload
+        return res.status(400).json({ message: 'A PDF file is required for a Structure and Essay paper' });
       }
     } else {
       return res.status(400).json({ message: 'Invalid paper type' });
@@ -91,6 +107,9 @@ export const createPaper = async (req: Request, res: Response) => {
       title,
       description,
       teacherId: requestingUser.id,
+      institute,
+      year,
+      academicLevel, // Add academicLevel
       questions: paperType === 'MCQ' ? questions.map((q: any, index: number) => ({
         ...q,
         order: index + 1
@@ -100,13 +119,14 @@ export const createPaper = async (req: Request, res: Response) => {
       availability,
       ...(price && { price: price }),
       paperType,
-      ...(fileUrl && { fileUrl }),
+      fileUrl, // Include fileUrl
+      previewImageUrl, // Include previewImageUrl
     });
 
     await paper.save();
 
-    res.status(201).json({ 
-      message: 'Paper created successfully', 
+    res.status(201).json({
+      message: 'Paper created successfully',
       paper: {
         _id: paper._id,
         title: paper.title,
@@ -125,21 +145,30 @@ export const createPaper = async (req: Request, res: Response) => {
 };
 
 // Get all papers (Students see available papers, Teachers see their papers)
+// Get all papers (Students see available papers, Teachers see their papers)
 export const getAllPapers = async (req: Request, res: Response) => {
   try {
     const requestingUser = (req as any).user;
+    const { institute, year, academicLevel } = req.query;
     let papers;
 
     if (requestingUser.role === 'teacher' || requestingUser.role === 'admin') {
+      const filter: any = {};
+      if (institute && institute !== 'all') filter.institute = institute;
+      if (year && year !== 'all') filter.year = year;
+      if (academicLevel && academicLevel !== 'all') filter.academicLevel = academicLevel;
+
       // Teachers and Admins see all papers with attempt counts
-      papers = await Paper.find()
+      papers = await Paper.find(filter)
         .select('-questions.options.isCorrect') // Hide correct answers
+        .populate('institute', 'name location')
+        .populate('year', 'year name')
         .sort({ createdAt: -1 });
-      
+
       // Add attempt count for each paper
       const papersWithAttemptCount = await Promise.all(
         papers.map(async (paper) => {
-          const submissionCount = await StudentAttempt.countDocuments({ 
+          const submissionCount = await StudentAttempt.countDocuments({
             paperId: paper._id,
             status: 'submitted'
           });
@@ -152,20 +181,29 @@ export const getAllPapers = async (req: Request, res: Response) => {
       papers = papersWithAttemptCount;
     } else {
       // Students see available papers (not expired and not attempted)
+      // Note: Students usually don't use these filters on the main list, but we can support them if needed.
+      // For now, keeping student logic as is regarding filters, or applying them if passed.
+
+      const filter: any = {};
+      if (institute && institute !== 'all') filter.institute = institute;
+      if (year && year !== 'all') filter.year = year;
+      if (academicLevel && academicLevel !== 'all') filter.academicLevel = academicLevel;
+
       const currentDate = new Date();
-      
+
       // Get paper IDs that student has already attempted
       const attemptedPapers = await StudentAttempt.find({
         studentId: requestingUser.id
       }).distinct('paperId');
-      
+
       papers = await Paper.find({
+        ...filter,
         deadline: { $gte: currentDate },
         _id: { $nin: attemptedPapers }
       }).select('-questions.options.isCorrect -teacherId')
         .sort({ createdAt: -1 });
     }
-    
+
     res.json({ papers, total: papers.length });
 
   } catch (error) {
@@ -206,6 +244,9 @@ export const getPaperById = async (req: Request, res: Response) => {
       hasAccess = true;
     } else if (paper.availability === 'physical' && studentType === 'Physical') {
       hasAccess = true;
+    } else if (paper.availability === 'paid') {
+      // paymentRequired = true; // Uncomment when payment is implemented
+      hasAccess = false; // Deny access for now if paid only
     } else {
       // Temporarily bypass payment requirement
       hasAccess = true;
@@ -227,9 +268,17 @@ export const getPaperById = async (req: Request, res: Response) => {
     }
 
     // If student has access, proceed with existing student logic
-    const isPaperExpired = paper.deadline ? (new Date() > paper.deadline) : false;
     const hasAttempted = await StudentAttempt.exists({ paperId: id, studentId: requestingUser.id });
-    
+
+    // New, clearer condition for when a student should be able to see the answers
+    const canViewAnswers = hasAttempted && (
+      (paper.deadline && new Date() > paper.deadline) || // Paper is expired
+      !paper.deadline                                    // OR paper has no deadline
+    );
+
+    // Determine if the answers should be revealed in the response
+    const shouldRevealAnswers = (showAnswers === 'true' && hasAttempted) || canViewAnswers;
+
 
 
     // Construct studentPaper
@@ -251,17 +300,12 @@ export const getPaperById = async (req: Request, res: Response) => {
           _id: opt._id,
           optionText: opt.optionText,
           imageUrl: opt.imageUrl, // Always include imageUrl for options
-          // Include isCorrect if:
-          // 1. Viewing answers page AND student has attempted, OR
-          // 2. Paper is expired AND student has attempted
-          ...((showAnswers && hasAttempted) || (isPaperExpired && hasAttempted) ? { isCorrect: opt.isCorrect } : {})
+          ...(shouldRevealAnswers && { isCorrect: opt.isCorrect })
         })),
-        // Include explanation (විවරණ) if:
-        // 1. Viewing answers page AND student has attempted, OR  
-        // 2. Paper is expired AND student has attempted
-        ...((showAnswers && hasAttempted) || (isPaperExpired && hasAttempted)) && q.explanation && (q.explanation.text || q.explanation.imageUrl) ? { 
-          explanation: q.explanation 
-        } : {}
+        // Include explanation if answers are being revealed
+        ...(shouldRevealAnswers && q.explanation && (q.explanation.text || q.explanation.imageUrl) ? {
+          explanation: q.explanation
+        } : {})
       }))
     };
 
@@ -354,14 +398,14 @@ export const submitPaper = async (req: Request, res: Response) => {
         totalQuestions: paper.totalQuestions,
         percentage,
       };
-    } else if (paper.paperType === 'Structure') {
+    } else if (paper.paperType === 'Structure-Essay') {
       if (!answerFileUrl) {
-        return res.status(400).json({ message: 'An answer file is required for structure papers' });
+        return res.status(400).json({ message: 'An answer file is required for Structure and Essay papers' });
       }
       attemptData = {
         ...attemptData,
         answerFileUrl,
-        totalQuestions: 0, // No questions for structure papers
+        totalQuestions: 0, // No questions for Structure and Essay papers
       };
     }
 
@@ -394,9 +438,9 @@ export const getStudentResults = async (req: Request, res: Response) => {
       studentId: requestingUser.id,
       status: 'submitted'
     })
-    .populate('paperId', 'title description deadline paperType') // Populate paperType as well
-    .sort({ submittedAt: -1 })
-    .lean(); // Use .lean() for performance when modifying results
+      .populate('paperId', 'title description deadline paperType') // Populate paperType as well
+      .sort({ submittedAt: -1 })
+      .lean(); // Use .lean() for performance when modifying results
 
     // Extract unique paper IDs from the results
     const uniquePaperIds = [...new Set(results.filter(r => r.paperId).map(r => r.paperId._id.toString()))];
@@ -415,12 +459,12 @@ export const getStudentResults = async (req: Request, res: Response) => {
     const enrichedResults = results
       .filter(result => result.paperId !== null) // Add this filter
       .map(result => ({
-      ...result,
-      paperId: {
-        ...result.paperId,
-        averagePercentage: paperAverages[result.paperId._id.toString()] || 0
-      }
-    }));
+        ...result,
+        paperId: {
+          ...result.paperId,
+          averagePercentage: paperAverages[result.paperId._id.toString()] || 0
+        }
+      }));
 
     res.json({ results: enrichedResults });
 
@@ -451,18 +495,18 @@ export const getPaperResults = async (req: Request, res: Response) => {
 
     // Check if teacher owns this paper
     if (paper.teacherId.toString() !== requestingUser.id.toString()) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         message: 'You can only view results for your own papers'
       });
     }
 
-    const results = await StudentAttempt.find({ 
+    const results = await StudentAttempt.find({
       paperId: id,
       status: 'submitted'
     })
-    .populate('studentId', 'username firstName lastName')
-    .populate('paperId', 'paperType totalQuestions') // Populate paperType and totalQuestions
-    .sort({ percentage: -1, submittedAt: 1 });
+      .populate('studentId', 'username firstName lastName')
+      .populate('paperId', 'paperType totalQuestions') // Populate paperType and totalQuestions
+      .sort({ percentage: -1, submittedAt: 1 });
 
     const stats = {
       totalSubmissions: results.length,
@@ -471,7 +515,7 @@ export const getPaperResults = async (req: Request, res: Response) => {
       lowestScore: results.length ? Math.min(...results.map(r => r.percentage)) : 0
     };
 
-    res.json({ 
+    res.json({
       paper: {
         title: paper.title,
         totalQuestions: paper.totalQuestions,
@@ -492,7 +536,7 @@ export const updatePaper = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const requestingUser = (req as any).user;
-    
+
     if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied. Only teachers can update papers.' });
     }
@@ -507,8 +551,16 @@ export const updatePaper = async (req: Request, res: Response) => {
     }
 
     // Check if teacher owns this paper
-    if (paper.teacherId.toString() !== requestingUser.id.toString()) {
+    if (paper.teacherId.toString() !== requestingUser.id.toString() && requestingUser.role !== 'admin') {
       return res.status(403).json({ message: 'You can only update your own papers' });
+    }
+
+    // Check if there are any student attempts for this paper
+    const attemptCount = await StudentAttempt.countDocuments({ paperId: id });
+    if (attemptCount > 0) {
+      return res.status(403).json({
+        message: `This paper cannot be edited because it already has ${attemptCount} student submission(s).`
+      });
     }
 
 
@@ -520,7 +572,16 @@ export const updatePaper = async (req: Request, res: Response) => {
     }
     const oldImageUrls = extractImageUrlsFromPaper(oldPaper);
 
-    const { title, description, questions, deadline, timeLimit, availability, price, paperType, fileUrl } = req.body;
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const mainFile = files?.file ? files.file[0] : undefined;
+    const previewImageFile = files?.previewImage ? files.previewImage[0] : undefined;
+
+    const { title, description, deadline, timeLimit, availability, price, paperType, institute, year, academicLevel } = req.body;
+    let { questions } = req.body;
+
+    if (typeof questions === 'string') {
+      questions = JSON.parse(questions);
+    }
 
     // Validate questions if provided (keep existing validation)
     if (questions) {
@@ -528,27 +589,31 @@ export const updatePaper = async (req: Request, res: Response) => {
         const question = questions[i];
         // Ensure that questionText or an imageUrl is provided for options
         if (!question.questionText && !question.imageUrl && question.options) {
-            // Check if options have either text or image
-            const optionsAreValid = question.options.every((opt: any) => opt.optionText || opt.imageUrl);
-            if (!optionsAreValid) {
-                return res.status(400).json({
-                    message: `Question ${i + 1} must have question text or image, and all options must have text or image.`
-                });
-            }
+          // Check if options have either text or image
+          const optionsAreValid = question.options.every((opt: any) => opt.optionText || opt.imageUrl);
+          if (!optionsAreValid) {
+            return res.status(400).json({
+              message: `Question ${i + 1} must have question text or image, and all options must have text or image.`
+            });
+          }
         }
         if (!question.options || question.options.length < 2) {
-          return res.status(400).json({ 
-            message: `Question ${i + 1} must have at least 2 options` 
+          return res.status(400).json({
+            message: `Question ${i + 1} must have at least 2 options`
           });
         }
         const correctAnswers = question.options.filter((opt: any) => opt.isCorrect);
         if (correctAnswers.length !== 1) {
-          return res.status(400).json({ 
-            message: `Question ${i + 1} must have exactly one correct answer` 
+          return res.status(400).json({
+            message: `Question ${i + 1} must have exactly one correct answer`
           });
         }
       }
     }
+
+    // Determine new fileUrl and previewImageUrl
+    const newFileUrl = mainFile ? `/uploads/${mainFile.path.split('uploads/')[1]}` : undefined;
+    const newPreviewImageUrl = previewImageFile ? `/uploads/${previewImageFile.path.split('uploads/')[1]}` : undefined;
 
     // Prepare update data
     const updateData: any = {
@@ -558,6 +623,12 @@ export const updatePaper = async (req: Request, res: Response) => {
       timeLimit,
       availability,
       price,
+      institute,
+      year,
+      academicLevel, // Add academicLevel
+      // Only update fileUrl/previewImageUrl if a new file was uploaded or it's explicitly set to null
+      ...(newFileUrl !== undefined && { fileUrl: newFileUrl }),
+      ...(newPreviewImageUrl !== undefined && { previewImageUrl: newPreviewImageUrl }),
     };
 
     if (paperType === 'MCQ') {
@@ -565,14 +636,23 @@ export const updatePaper = async (req: Request, res: Response) => {
         ...q,
         order: index + 1
       }));
-      updateData.fileUrl = undefined; // Ensure fileUrl is cleared for MCQ papers
-    } else if (paperType === 'Structure') {
-      updateData.fileUrl = fileUrl;
+      // If paperType is MCQ, ensure fileUrl is cleared (as it's only for Structure-Essay)
+      // Only clear if no new file was uploaded, otherwise newFileUrl takes precedence
+      if (newFileUrl === undefined && oldPaper.fileUrl) {
+        updateData.fileUrl = null;
+      }
+    } else if (paperType === 'Structure-Essay') {
+      // For Structure-Essay, fileUrl is required. If no new file, retain old.
+      if (newFileUrl === undefined && oldPaper.fileUrl) {
+        updateData.fileUrl = oldPaper.fileUrl;
+      } else if (newFileUrl === undefined && !oldPaper.fileUrl) {
+        return res.status(400).json({ message: 'A PDF file is required for a Structure and Essay paper' });
+      }
       updateData.questions = []; // Ensure questions are cleared for Structure papers
     }
 
     // 2. Perform the update
-    const updatedPaper = await Paper.findByIdAndUpdate(id, updateData, { 
+    const updatedPaper = await Paper.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true // Ensure Mongoose validators run on update
     });
@@ -587,21 +667,19 @@ export const updatePaper = async (req: Request, res: Response) => {
     // 4. Compare and Delete: Delete images that are no longer referenced
     const imagesToKeep = new Set(newImageUrls);
     for (const oldImageUrl of oldImageUrls) {
-      // Check if the old image URL is a paper-level fileUrl for structure papers
-      // If the paperType changed from Structure to MCQ, and oldImageURL was the fileUrl, delete it.
-      if (oldPaper.paperType === 'Structure' && oldPaper.fileUrl === oldImageUrl && updatedPaper.paperType === 'MCQ') {
-        await deleteFile(oldImageUrl);
-        continue;
-      }
-      // Delete if the old image URL is not in the new set of image URLs
-      if (!imagesToKeep.has(oldImageUrl)) {
+      // Only delete if the old URL is not in the new set of URLs
+      // and it's not the newly uploaded main file or preview image
+      const isNewMainFile = newFileUrl && oldImageUrl === oldPaper.fileUrl && newFileUrl !== oldPaper.fileUrl;
+      const isNewPreviewImage = newPreviewImageUrl && oldImageUrl === oldPaper.previewImageUrl && newPreviewImageUrl !== oldPaper.previewImageUrl;
+
+      if (!imagesToKeep.has(oldImageUrl) || isNewMainFile || isNewPreviewImage) {
         await deleteFile(oldImageUrl);
       }
     }
 
-    res.json({ 
-      message: 'Paper updated successfully', 
-      paper: updatedPaper 
+    res.json({
+      message: 'Paper updated successfully',
+      paper: updatedPaper
     });
 
   } catch (error) {
@@ -615,7 +693,7 @@ export const deletePaper = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const requestingUser = (req as any).user;
-    
+
     if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied. Only teachers can delete papers.' });
     }
@@ -647,8 +725,8 @@ export const deletePaper = async (req: Request, res: Response) => {
       await deleteFile(imageUrl);
     }
 
-    res.json({ 
-      message: 'Paper deleted successfully' 
+    res.json({
+      message: 'Paper deleted successfully'
     });
 
   } catch (error) {
@@ -716,13 +794,88 @@ export const getStudentAttemptForPaper = async (req: Request, res: Response) => 
 };
 
 export const uploadPaperPdf = (req: Request, res: Response) => {
-    if (!req.file) {
-        return res.status(400).json({ message: 'No file uploaded.' });
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded.' });
+  }
+  res.status(200).json({
+    message: 'File uploaded successfully',
+    fileUrl: `/uploads/${req.file.filename}`
+  });
+};
+
+// Get a single student attempt by its ID
+export const getAttemptById = async (req: Request, res: Response) => {
+  try {
+    const { attemptId } = req.params;
+    const requestingUser = (req as any).user;
+
+    if (!mongoose.Types.ObjectId.isValid(attemptId)) {
+      return res.status(400).json({ message: 'Invalid attempt ID' });
     }
+
+    const attempt = await StudentAttempt.findById(attemptId).populate('paperId', 'title description');
+
+    if (!attempt) {
+      return res.status(404).json({ message: 'Attempt not found' });
+    }
+
+    // Security check: Allow access only to the student who owns the attempt or a teacher/admin
+    if (
+      requestingUser.role !== 'teacher' &&
+      requestingUser.role !== 'admin' &&
+      attempt.studentId.toString() !== requestingUser.id.toString()
+    ) {
+      return res.status(403).json({ message: 'Access denied. You can only view your own attempts.' });
+    }
+
+    res.json({ attempt });
+
+  } catch (error) {
+    console.error('Get attempt by ID error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Uploads a teacher's reviewed PDF for a student attempt
+export const uploadTeacherReviewFile = async (req: Request, res: Response) => {
+  try {
+    const { attemptId } = req.params;
+    const requestingUser = (req as any).user;
+
+    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Only teachers and admins can upload review files.' });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(attemptId)) {
+      return res.status(400).json({ message: 'Invalid attempt ID' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded.' });
+    }
+
+    const attempt = await StudentAttempt.findById(attemptId);
+    if (!attempt) {
+      return res.status(404).json({ message: 'Student attempt not found.' });
+    }
+
+    // If a previous review file exists, delete it first
+    if (attempt.teacherReviewFileUrl) {
+      await deleteFile(attempt.teacherReviewFileUrl);
+    }
+
+    attempt.teacherReviewFileUrl = `/uploads/${req.file.filename}`;
+    await attempt.save();
+
     res.status(200).json({
-        message: 'File uploaded successfully',
-        fileUrl: `/uploads/${req.file.filename}`
+      message: 'Review file uploaded successfully',
+      teacherReviewFileUrl: attempt.teacherReviewFileUrl
     });
+
+  } catch (error) {
+    console.error('Upload teacher review file error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 };
 
 export const downloadStudentAttemptFile = async (req: Request, res: Response) => {
@@ -748,10 +901,10 @@ export const downloadStudentAttemptFile = async (req: Request, res: Response) =>
     }
 
     // Ensure the answerFileUrl is correctly formatted (e.g., /uploads/filename.pdf)
-    const relativeFilePath = attempt.answerFileUrl.startsWith('/uploads/') 
-                           ? attempt.answerFileUrl.substring('/uploads/'.length) 
-                           : attempt.answerFileUrl;
-                           
+    const relativeFilePath = attempt.answerFileUrl.startsWith('/uploads/')
+      ? attempt.answerFileUrl.substring('/uploads/'.length)
+      : attempt.answerFileUrl;
+
     const filePath = path.join(UPLOADS_DIR, relativeFilePath);
 
     res.download(filePath, (err) => {
@@ -782,9 +935,9 @@ export const updateStudentAttemptMarks = async (req: Request, res: Response) => 
     if (!mongoose.Types.ObjectId.isValid(attemptId)) {
       return res.status(400).json({ message: 'Invalid attempt ID' });
     }
-    
+
     if (typeof score !== 'number' || score < 0) {
-        return res.status(400).json({ message: 'Score must be a non-negative number.' });
+      return res.status(400).json({ message: 'Score must be a non-negative number.' });
     }
 
     const attempt = await StudentAttempt.findById(attemptId).populate('paperId');
@@ -800,23 +953,23 @@ export const updateStudentAttemptMarks = async (req: Request, res: Response) => 
 
     // Update score and calculate percentage
     attempt.score = score;
-    // For structure papers, totalQuestions might be 0, so calculate percentage based on score if possible, or set to 0.
+    // For Structure and Essay papers, totalQuestions might be 0, so calculate percentage based on score if possible, or set to 0.
     if (paper.totalQuestions && paper.totalQuestions > 0) {
-        attempt.percentage = Math.round((score / paper.totalQuestions) * 100);
+      attempt.percentage = Math.round((score / paper.totalQuestions) * 100);
     } else {
-        // For structure papers, the 'score' received from the frontend is directly the percentage.
-        attempt.percentage = score;
+      // For Structure and Essay papers, the 'score' received from the frontend is directly the percentage.
+      attempt.percentage = score;
     }
-    
+
     await attempt.save();
 
-    res.json({ 
-        message: 'Student attempt marks updated successfully', 
-        attempt: {
-            _id: attempt._id,
-            score: attempt.score,
-            percentage: attempt.percentage
-        }
+    res.json({
+      message: 'Student attempt marks updated successfully',
+      attempt: {
+        _id: attempt._id,
+        score: attempt.score,
+        percentage: attempt.percentage
+      }
     });
 
   } catch (error) {

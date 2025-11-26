@@ -45,45 +45,66 @@
 
 :root {
   --radius: 0.625rem;
-  
+
   /* ezyICT Brand Colors - Easy to change! */
-  --brand-primary: #2563eb; /* Blue from logo */
-  --brand-primary-light: #93c5fd; /* Light blue */
-  --brand-primary-dark: #1e40af; /* Dark blue */
-  --brand-accent: #60a5fa; /* Accent blue */
-  
+  --brand-primary: #2563eb;
+  /* Blue from logo */
+  --brand-primary-light: #93c5fd;
+  /* Light blue */
+  --brand-primary-dark: #1e40af;
+  /* Dark blue */
+  --brand-accent: #60a5fa;
+  /* Accent blue */
+
   /* Theme Colors - Light Mode (Default) */
-  --theme-bg-primary: #ffffff; /* Main background */
-  --theme-bg-secondary: #f7f8f9; /* Secondary background */
-  --theme-bg-tertiary: #f3f4f6; /* Tertiary background */
-  --theme-text-primary: #111827; /* Main text */
-  --theme-text-secondary: #6b7280; /* Secondary text */
-  --theme-text-tertiary: #9ca3af; /* Tertiary text */
-  --theme-border: #e5e7eb; /* Borders */
-  --theme-border-light: #f3f4f6; /* Light borders */
-  --theme-shadow: rgba(0, 0, 0, 0.1); /* Shadows */
-  --theme-shadow-lg: rgba(0, 0, 0, 0.15); /* Large shadows */
-  
+  --theme-bg-primary: #ffffff;
+  /* Main background */
+  --theme-bg-secondary: #f7f8f9;
+  /* Secondary background */
+  --theme-bg-tertiary: #f3f4f6;
+  /* Tertiary background */
+  --theme-text-primary: #111827;
+  /* Main text */
+  --theme-text-secondary: #6b7280;
+  /* Secondary text */
+  --theme-text-tertiary: #9ca3af;
+  /* Tertiary text */
+  --theme-border: #e5e7eb;
+  /* Borders - lighter and more subtle */
+  --theme-border-light: #f3f4f6;
+  /* Light borders */
+  --theme-shadow: rgba(0, 0, 0, 0.05);
+  /* Lighter shadows */
+  --theme-shadow-lg: rgba(0, 0, 0, 0.1);
+  /* Large shadows */
+
   /* Sidebar Colors - Light Mode */
   --sidebar-bg: #ffffff;
   --sidebar-text: #111827;
   --sidebar-text-secondary: #6b7280;
   --sidebar-border: #e5e7eb;
   --sidebar-hover: #f3f4f6;
-  
+
   /* Sidebar Menu Icon Colors - Change these to update all icons! */
-  --sidebar-icon-dashboard: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Purple gradient */
-  --sidebar-icon-videos: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); /* Pink gradient */
-  --sidebar-icon-papers: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); /* Blue gradient */
-  --sidebar-icon-students: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); /* Green gradient */
-  --sidebar-icon-analytics: linear-gradient(135deg, #fa709a 0%, #fee140 100%); /* Orange gradient */
-  --sidebar-icon-settings: linear-gradient(135deg, #30cfd0 0%, #330867 100%); /* Teal gradient */
-  --sidebar-icon-logout: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); /* Red gradient */
-  
+  --sidebar-icon-dashboard: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* Purple gradient */
+  --sidebar-icon-videos: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  /* Pink gradient */
+  --sidebar-icon-papers: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  /* Blue gradient */
+  --sidebar-icon-students: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  /* Green gradient */
+  --sidebar-icon-analytics: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  /* Orange gradient */
+  --sidebar-icon-settings: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+  /* Teal gradient */
+  --sidebar-icon-logout: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  /* Red gradient */
+
   /* Sidebar Icon Background (when active) */
   --sidebar-icon-bg-active: var(--brand-primary);
   --sidebar-icon-bg-hover: #f3f4f6;
-  
+
   /* Card Colors */
   --card-bg: #ffffff;
   --card-border: #e5e7eb;
@@ -91,41 +112,59 @@
   --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 
   /* Student Table Row Background */
-  --student-table-row-bg: rgb(249 250 251); /* bg-gray-50 */
+  --student-table-row-bg: rgb(249 250 251);
+  /* bg-gray-50 */
 }
 
 /* Dark Theme */
 .dark {
   /* Theme Colors - Dark Mode */
-  --theme-bg-primary: #0f172a; /* Main background - Dark blue-gray */
-  --theme-bg-secondary: #141d2e; /* Secondary background */
-  --theme-bg-tertiary: #334155; /* Tertiary background */
-  --theme-text-primary: #f1f5f9; /* Main text */
-  --theme-text-secondary: #cbd5e1; /* Secondary text */
-  --theme-text-tertiary: #94a3b8; /* Tertiary text */
-  --theme-border: #334155; /* Borders */
-  --theme-border-light: #475569; /* Light borders */
-  --theme-shadow: rgba(0, 0, 0, 0.3); /* Shadows */
-  --theme-shadow-lg: rgba(0, 0, 0, 0.5); /* Large shadows */
-  
+  --theme-bg-primary: #0f172a;
+  /* Main background - Dark blue-gray */
+  --theme-bg-secondary: #141d2e;
+  /* Secondary background */
+  --theme-bg-tertiary: #334155;
+  /* Tertiary background */
+  --theme-text-primary: #f1f5f9;
+  /* Main text */
+  --theme-text-secondary: #cbd5e1;
+  /* Secondary text */
+  --theme-text-tertiary: #94a3b8;
+  /* Tertiary text */
+  --theme-border: #334155;
+  /* Borders */
+  --theme-border-light: #475569;
+  /* Light borders */
+  --theme-shadow: rgba(0, 0, 0, 0.3);
+  /* Shadows */
+  --theme-shadow-lg: rgba(0, 0, 0, 0.5);
+  /* Large shadows */
+
   /* Sidebar Colors - Dark Mode */
   --sidebar-bg: #1e293b;
   --sidebar-text: #f1f5f9;
   --sidebar-text-secondary: #cbd5e1;
   --sidebar-border: #334155;
   --sidebar-hover: #334155;
-  
+
   /* Sidebar Icons - Dark Mode (Same colorful gradients) */
-  --sidebar-icon-dashboard: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Purple gradient */
-  --sidebar-icon-videos: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); /* Pink gradient */
-  --sidebar-icon-papers: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); /* Blue gradient */
-  --sidebar-icon-students: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); /* Green gradient */
-  --sidebar-icon-analytics: linear-gradient(135deg, #fa709a 0%, #fee140 100%); /* Orange gradient */
-  --sidebar-icon-settings: linear-gradient(135deg, #30cfd0 0%, #330867 100%); /* Teal gradient */
-  --sidebar-icon-logout: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); /* Red gradient */
-  
+  --sidebar-icon-dashboard: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* Purple gradient */
+  --sidebar-icon-videos: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  /* Pink gradient */
+  --sidebar-icon-papers: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  /* Blue gradient */
+  --sidebar-icon-students: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  /* Green gradient */
+  --sidebar-icon-analytics: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  /* Orange gradient */
+  --sidebar-icon-settings: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+  /* Teal gradient */
+  --sidebar-icon-logout: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  /* Red gradient */
+
   --sidebar-icon-bg-hover: #334155;
-  
+
   /* Card Colors - Dark Mode */
   --card-bg: #1e293b;
   --card-border: #334155;
@@ -133,8 +172,9 @@
   --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 
   /* Student Table Row Background - Dark Mode */
-  --student-table-row-bg: rgb(27, 39, 50); /* bg-gray-800 */
-  
+  --student-table-row-bg: rgb(27, 39, 50);
+  /* bg-gray-800 */
+
   /* Base Colors */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -211,8 +251,10 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    background-color: #0f172a; /* Always ensure a dark background to prevent white flash */
+    background-color: #0f172a;
+    /* Always ensure a dark background to prevent white flash */
     @apply text-foreground;
   }
 }
@@ -244,20 +286,28 @@
   background: var(--sidebar-icon-papers);
 }
 
+.sidebar-icon-tutes {
+  background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%);
+  /* Teal to Cyan gradient */
+}
+
 .sidebar-icon-students {
   background: var(--sidebar-icon-students);
 }
 
 .sidebar-icon-zoom {
-  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); /* Distinct blue gradient for Zoom */
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  /* Distinct blue gradient for Zoom */
 }
 
 .sidebar-icon-course-packages {
-  background: linear-gradient(135deg, #fbc02d 0%, #f57c00 100%); /* Yellow/Orange gradient for Course Packages */
+  background: linear-gradient(135deg, #fbc02d 0%, #f57c00 100%);
+  /* Yellow/Orange gradient for Course Packages */
 }
 
 .sidebar-icon-institute-year {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); /* Blue-green gradient */
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  /* Blue-green gradient */
 }
 
 .sidebar-icon-analytics {
@@ -377,12 +427,12 @@ button.sidebar-icon-logout:hover {
 
 .theme-card {
   background-color: var(--card-bg);
-  border-color: var(--card-border);
-  box-shadow: var(--card-shadow);
+  border: 1px solid var(--theme-border);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 .theme-card:hover {
-  box-shadow: var(--card-shadow-hover);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Sidebar Theme Classes */
@@ -398,6 +448,7 @@ button.sidebar-icon-logout:hover {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -408,6 +459,7 @@ button.sidebar-icon-logout:hover {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -418,6 +470,7 @@ button.sidebar-icon-logout:hover {
     opacity: 0;
     transform: translateX(20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -425,9 +478,12 @@ button.sidebar-icon-logout:hover {
 }
 
 @keyframes pulse-slow {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -486,6 +542,10 @@ button.sidebar-icon-logout:hover {
 .bg-student-table-row {
   background-color: var(--student-table-row-bg);
 }
+
+
+
+
 
 .video-upload-popup-background {
   background-color: rgba(0, 0, 0, 0.5);

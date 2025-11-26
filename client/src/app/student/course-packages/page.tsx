@@ -1,18 +1,36 @@
 "use client";
 
 import { StudentLayout } from "@/components/student/StudentLayout";
-import { useStudentCoursePackages } from "@/modules/student/hooks/useStudentCoursePackages"; // Will create this hook
+import { useStudentCoursePackages } from "@/modules/student/hooks/useStudentCoursePackages";
 import { CoursePackageData } from "@/modules/shared/types/course-package.types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/constants";
+import CommonFilter from "@/components/common/CommonFilter";
+import { StudentGridSkeleton } from "@/components/student/skeletons/StudentGridSkeleton";
+import { useStudentFilters } from "@/modules/student/hooks/useStudentFilters";
+import { useState } from "react";
 
 export default function StudentCoursePackagesPage() {
   const { coursePackages, isLoading, error, refetch } = useStudentCoursePackages();
   const router = useRouter();
 
+  // Filter states
+  const [selectedInstitute, setSelectedInstitute] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [selectedAcademicLevel, setSelectedAcademicLevel] = useState<string>("all");
+  const { institutes, years, academicLevels, isLoadingInstitutes, isLoadingYears, isLoadingAcademicLevels } = useStudentFilters();
 
+
+
+  if (isLoading) {
+    return (
+      <StudentLayout>
+        <StudentGridSkeleton />
+      </StudentLayout>
+    );
+  }
 
   if (error) {
     return (
@@ -26,6 +44,22 @@ export default function StudentCoursePackagesPage() {
     <StudentLayout>
       <h1 className="text-3xl font-bold theme-text-primary mb-6">Available Course Packages</h1>
       <p className="theme-text-secondary mb-6">Explore and enroll in bundled video and paper packages to enhance your learning journey.</p>
+
+      {/* Filter Component */}
+      <CommonFilter
+        institutes={institutes}
+        years={years}
+        academicLevels={academicLevels}
+        selectedInstitute={selectedInstitute}
+        selectedYear={selectedYear}
+        selectedAcademicLevel={selectedAcademicLevel}
+        onInstituteChange={setSelectedInstitute}
+        onYearChange={setSelectedYear}
+        onAcademicLevelChange={setSelectedAcademicLevel}
+        isLoadingInstitutes={isLoadingInstitutes}
+        isLoadingYears={isLoadingYears}
+        isLoadingAcademicLevels={isLoadingAcademicLevels}
+      />
 
       {coursePackages.length === 0 ? (
         <div className="theme-card p-8 text-center">
@@ -56,7 +90,7 @@ export default function StudentCoursePackagesPage() {
                     <h3 className="text-xl font-bold theme-text-primary mb-2">{pkg.title}</h3>
                     {/* Limited Description */}
                     <p className="theme-text-secondary text-sm mb-3 line-clamp-2">{pkg.description || "No description provided."}</p>
-                    
+
                     {/* Price and Availability on one line */}
                     <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mb-3">
                       <span className="text-xl font-bold text-green-600 dark:text-green-400">LKR {pkg.price.toFixed(2)}</span>
@@ -66,17 +100,17 @@ export default function StudentCoursePackagesPage() {
                         <span className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded-full">Free for Physical</span>
                       )}
                     </div>
-                    
+
                     {/* Institute & Year */}
                     <div className="text-sm theme-text-secondary mb-3">
                       {typeof pkg.institute === 'object' && pkg.institute.name &&
-                       typeof pkg.year === 'object' && pkg.year.name ? (
+                        typeof pkg.year === 'object' && pkg.year.name ? (
                         <span>For {pkg.institute.name} - {pkg.year.name}</span>
                       ) : (
                         <span>General Package</span>
                       )}
                     </div>
-                    
+
                     {/* Includes on one line */}
                     <div className="text-sm font-medium theme-text-primary mb-4">
                       Includes: <span className="text-blue-300">{pkg.videos.length} Videos</span>, <span className="text-orange-300">{pkg.papers.length} Papers</span>

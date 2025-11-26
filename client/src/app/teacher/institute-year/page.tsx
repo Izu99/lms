@@ -11,7 +11,8 @@ import {
   Settings,
   MapPin,
   Users,
-  GraduationCap
+  GraduationCap,
+  Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,10 +38,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { isAxiosError } from '@/lib/utils/error';
+import { ListSkeleton } from "@/components/teacher/skeletons/ListSkeleton";
 
 export default function SettingsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Form states
   const [showInstituteForm, setShowInstituteForm] = useState(false);
   const [showYearForm, setShowYearForm] = useState(false);
@@ -64,7 +66,7 @@ export default function SettingsPage() {
       } else {
         await TeacherInstituteService.createInstitute(instituteData);
       }
-      
+
       refetchInstitutes();
       setShowInstituteForm(false);
       setEditingInstitute(null);
@@ -111,7 +113,7 @@ export default function SettingsPage() {
       } else {
         await TeacherYearService.createYear(yearData);
       }
-      
+
       refetchYears();
       setShowYearForm(false);
       setEditingYear(null);
@@ -160,7 +162,7 @@ export default function SettingsPage() {
     setShowYearForm(true);
   };
 
-  const filteredInstitutes = institutes.filter(instituteItem => 
+  const filteredInstitutes = institutes.filter(instituteItem =>
     instituteItem.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     instituteItem.location.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -172,7 +174,7 @@ export default function SettingsPage() {
 
   const renderInstitutesContent = () => {
     if (isLoadingInstitutes) {
-      return <LoadingComponent />;
+      return <ListSkeleton />;
     }
 
     if (errorInstitutes) {
@@ -211,17 +213,17 @@ export default function SettingsPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => openInstituteForm(instituteItem)}
                 className="hover:bg-blue-50 dark:hover:bg-blue-900/20"
               >
                 <Edit size={16} />
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => handleDeleteInstitute(instituteItem._id)}
                 className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
@@ -236,7 +238,7 @@ export default function SettingsPage() {
 
   const renderYearsContent = () => {
     if (isLoadingYears) {
-      return <LoadingComponent />;
+      return <ListSkeleton />;
     }
 
     if (errorYears) {
@@ -272,17 +274,17 @@ export default function SettingsPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => openYearForm(yearItem)}
                 className="hover:bg-green-50 dark:hover:bg-green-900/20"
               >
                 <Edit size={16} />
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => handleDeleteYear(yearItem._id)}
                 className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
               >
@@ -312,12 +314,14 @@ export default function SettingsPage() {
 
           {/* Search Bar */}
           <div className="bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--theme-border)] p-4">
-            <div className="relative max-w-md">
-              <Input
+            <div className="flex items-center gap-3">
+              <Search className="w-5 h-5 text-muted-foreground" />
+              <input
+                type="text"
                 placeholder="Search institutes or years..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-4"
+                className="flex-1 outline-none text-sm bg-transparent text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
@@ -396,7 +400,7 @@ export default function SettingsPage() {
                 </Button>
               </div>
             </div>
-            
+
             <div className="p-6">
               {renderInstitutesContent()}
             </div>
@@ -421,7 +425,7 @@ export default function SettingsPage() {
                 </Button>
               </div>
             </div>
-            
+
             <div className="p-6">
               {renderYearsContent()}
             </div>
@@ -432,8 +436,8 @@ export default function SettingsPage() {
         <div className="mt-8 bg-[var(--card-bg)] rounded-lg shadow-sm border border-[var(--theme-border)] p-6">
           <h3 className="text-lg font-semibold text-[var(--theme-text-primary)] mb-4">Quick Actions</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => openInstituteForm()}
               className="flex items-center gap-2 p-4 h-auto border-dashed border-2 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
@@ -443,9 +447,9 @@ export default function SettingsPage() {
                 <p className="text-sm text-[var(--theme-text-tertiary)]">Create a new institute group</p>
               </div>
             </Button>
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               onClick={() => openYearForm()}
               className="flex items-center gap-2 p-4 h-auto border-dashed border-2 hover:border-green-300 dark:hover:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
             >
@@ -455,9 +459,9 @@ export default function SettingsPage() {
                 <p className="text-sm text-[var(--theme-text-tertiary)]">Create a new year group</p>
               </div>
             </Button>
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               onClick={() => window.location.href = "/videos"}
               className="flex items-center gap-2 p-4 h-auto border-dashed border-2 hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20"
             >

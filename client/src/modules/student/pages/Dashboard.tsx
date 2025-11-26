@@ -4,6 +4,7 @@ import { useStudentDashboard } from "../hooks/useDashboard";
 import { DashboardStats } from "../components/DashboardStats";
 import { useAuth } from "../../shared/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import { StudentDashboardSkeleton } from "@/components/student/skeletons/StudentDashboardSkeleton";
 
 export function StudentDashboard() {
   const { user } = useAuth();
@@ -39,11 +40,11 @@ export function StudentDashboard() {
     );
   }
 
-  if (!data) {
+  if (isLoading || !data) {
     return (
       <div className="min-h-screen theme-bg-secondary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <p>No data available</p>
+          <StudentDashboardSkeleton />
         </div>
       </div>
     );
@@ -106,11 +107,10 @@ export function StudentDashboard() {
                     return (
                       <div key={paper._id} className="flex items-center justify-between p-2 rounded bg-orange-50 dark:bg-orange-900/20">
                         <span className="text-xs theme-text-primary truncate flex-1">{paper.title}</span>
-                        <span className={`text-xs font-medium px-2 py-1 rounded ${
-                          daysLeft <= 1 ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' :
-                          daysLeft <= 3 ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300' :
-                          'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
-                        }`}>
+                        <span className={`text-xs font-medium px-2 py-1 rounded ${daysLeft <= 1 ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300' :
+                            daysLeft <= 3 ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300' :
+                              'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300'
+                          }`}>
                           {daysLeft <= 0 ? 'Today!' : `${daysLeft}d left`}
                         </span>
                       </div>
@@ -160,8 +160,8 @@ export function StudentDashboard() {
             </div>
             <div className="space-y-3">
               {data.recentVideos && data.recentVideos.length > 0 ? data.recentVideos.slice(0, 5).map((video) => (
-                <div 
-                  key={video._id} 
+                <div
+                  key={video._id}
                   className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                   onClick={() => router.push(`/student/videos/${video._id}`)}
                 >
@@ -194,8 +194,8 @@ export function StudentDashboard() {
             </div>
             <div className="space-y-3">
               {data.availablePapers && data.availablePapers.length > 0 ? data.availablePapers.slice(0, 5).map((paper) => (
-                <div 
-                  key={paper._id} 
+                <div
+                  key={paper._id}
                   className="flex flex-col gap-2 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                   onClick={() => router.push(`/student/papers/${paper._id}`)}
                 >
@@ -227,14 +227,13 @@ export function StudentDashboard() {
             <div className="space-y-3">
               {data.recentActivity && data.recentActivity.length > 0 ? data.recentActivity.slice(0, 5).map((activity, index) => (
                 <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    activity.type === 'paper_completed' ? 'bg-green-100 dark:bg-green-900/50' :
-                    activity.type === 'video_watched' ? 'bg-blue-100 dark:bg-blue-900/50' :
-                    'bg-orange-100 dark:bg-orange-900/50'
-                  }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${activity.type === 'paper_completed' ? 'bg-green-100 dark:bg-green-900/50' :
+                      activity.type === 'video_watched' ? 'bg-blue-100 dark:bg-blue-900/50' :
+                        'bg-orange-100 dark:bg-orange-900/50'
+                    }`}>
                     <span className="text-sm">
                       {activity.type === 'paper_completed' ? '✓' :
-                       activity.type === 'video_watched' ? '▶' : '📝'}
+                        activity.type === 'video_watched' ? '▶' : '📝'}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">

@@ -10,7 +10,11 @@ interface UseTeacherVideosReturn {
   refetch: () => void;
 }
 
-export const useTeacherVideos = (): UseTeacherVideosReturn => {
+export const useTeacherVideos = (
+  instituteId?: string,
+  yearId?: string,
+  academicLevelId?: string
+): UseTeacherVideosReturn => {
   const [videos, setVideos] = useState<VideoData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +23,7 @@ export const useTeacherVideos = (): UseTeacherVideosReturn => {
     try {
       setIsLoading(true);
       setError(null);
-      const videoData = await TeacherVideoService.getVideos();
+      const videoData = await TeacherVideoService.getVideos(instituteId, yearId, academicLevelId);
       setVideos(videoData);
     } catch (err: unknown) {
       let errorMessage = 'Failed to fetch videos';
@@ -39,7 +43,7 @@ export const useTeacherVideos = (): UseTeacherVideosReturn => {
     } else {
       setIsLoading(false); // Assume not loading on server
     }
-  }, []);
+  }, [instituteId, yearId, academicLevelId]); // Add dependencies
 
   return {
     videos,

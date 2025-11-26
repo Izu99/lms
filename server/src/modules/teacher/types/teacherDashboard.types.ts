@@ -3,10 +3,14 @@ import { PaperBase, UserBase, BaseEntity } from '../../shared/types/common.types
 export interface TeacherDashboardStats {
   totalVideos: number;
   totalPapers: number;
+  totalTutes: number;
+  totalCoursePackages: number;
   totalStudents: number;
   totalViews: number;
+  totalSubmissions: number;
   averageEngagement: number;
   activeStudents: number;
+  inactiveStudents: number;
 }
 
 export interface TeacherVideoSummary extends BaseEntity {

@@ -12,11 +12,11 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { useRouter, usePathname } from "next/navigation";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
 import { toast } from "sonner";
+import { FileUpload } from "@/components/ui/file-upload";
 
 interface Paper {
   _id: string;
@@ -26,7 +26,7 @@ interface Paper {
   deadline: string;
 }
 
-export default function StructurePaperPage() {
+export default function StructureEssayPaperPage() {
   const router = useRouter();
   const pathname = usePathname();
   const paperId = pathname.split('/').pop();
@@ -40,10 +40,10 @@ export default function StructurePaperPage() {
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
-    return { 
+    return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
-    }; 
+    };
   };
 
   useEffect(() => {
@@ -66,11 +66,7 @@ export default function StructurePaperPage() {
     }
   }, [paperId]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setAnswerFile(e.target.files[0]);
-    }
-  };
+
 
   const handleSubmit = async () => {
     if (!answerFile) {
@@ -85,8 +81,8 @@ export default function StructurePaperPage() {
     try {
       const token = localStorage.getItem('token');
       const headers = {
-          "Content-Type": "multipart/form-data",
-          "Authorization": `Bearer ${token}`
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}`
       };
 
       // First, upload the answer file
@@ -180,21 +176,35 @@ export default function StructurePaperPage() {
 
         <div className="theme-card p-6">
           <h2 className="text-xl font-semibold theme-text-primary mb-4">Upload Your Answer</h2>
-          <div className="flex items-center space-x-4">
-            <Input type="file" accept="application/pdf" onChange={handleFileChange} />
-            <Button onClick={handleSubmit} disabled={submitting || !answerFile}>
-              {submitting ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <Send className="mr-2" />
-                  Submit Answer
-                </>
-              )}
-            </Button>
+          <div className="space-y-4">
+            <FileUpload
+              onFileSelect={(file) => setAnswerFile(file)}
+              accept="application/pdf"
+              maxSizeMB={10}
+              label="Upload Answer PDF"
+              description="Drag & drop your answer PDF here"
+              disabled={submitting}
+            />
+
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting || !answerFile}
+                className="w-full sm:w-auto"
+              >
+                {submitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2" />
+                    Submit Answer
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </motion.div>

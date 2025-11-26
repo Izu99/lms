@@ -3,6 +3,13 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   FileText,
   Plus,
   Trash2,
@@ -19,13 +26,16 @@ import {
   BookOpen,
   Upload,
   X,
-  ArrowUp
+  ArrowUp,
+  Loader2,
+  School,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
 import { InfoDialog } from "@/components/InfoDialog";
 import { toast } from "sonner";
@@ -33,7 +43,7 @@ import { toast } from "sonner";
 interface Option {
   optionText: string;
   isCorrect: boolean;
-  imageUrl?: string; // Add this line
+  imageUrl?: string;
 }
 
 interface Explanation {
@@ -61,21 +71,61 @@ export default function EditPaperPage() {
   const router = useRouter();
   const params = useParams();
   const paperId = params.id;
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
   const [timeLimit, setTimeLimit] = useState(60);
+  const [availability, setAvailability] = useState('all');
+  const [price, setPrice] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [loadingPaper, setLoadingPaper] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [infoDialogContent, setInfoDialogContent] = useState({ title: "", description: "" });
   const [showScrollToTop, setShowScrollToTop] = useState(false);
-  const [uploadingImages, setUploadingImages] = useState<{[key: string]: boolean}>({});
-  
+  const [uploadingImages, setUploadingImages] = useState<{ [key: string]: boolean }>({});
+  const [paperType, setPaperType] = useState("MCQ");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfUrl, setPdfUrl] = useState("");
+  const [previewImage, setPreviewImage] = useState<File | null>(null); // New state for new preview image file
+  const [currentPreviewImageUrl, setCurrentPreviewImageUrl] = useState(""); // New state for existing preview image URL
+  const [institutes, setInstitutes] = useState<{ _id: string, name: string }[]>([]);
+  const [years, setYears] = useState<{ _id: string, year: string, name: string }[]>([]);
+  const [instituteId, setInstituteId] = useState("");
+  const [yearId, setYearId] = useState("");
+  const [academicLevelId, setAcademicLevelId] = useState(""); // Add academicLevelId state
+  // Hardcoded academic levels
+  const academicLevels = [
+    { _id: "OL", name: "Ordinary Level" },
+    { _id: "AL", name: "Advanced Level" }
+  ];
+  const [dataLoading, setDataLoading] = useState(true);
+
   const questionsRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const headers = { 'Authorization': `Bearer ${token}` };
+        const [instituteRes, yearRes] = await Promise.all([
+          axios.get(`${API_URL}/institutes`, { headers }),
+          axios.get(`${API_URL}/years`, { headers })
+        ]);
+        setInstitutes(instituteRes.data.institutes || []);
+        setYears(yearRes.data.years || []);
+      } catch (error) {
+        console.error("Error fetching dropdown data:", error);
+        toast.error("Failed to load institutes and years.");
+      } finally {
+        setDataLoading(false);
+      }
+    };
+    fetchDropdownData();
+  }, []);
 
   useEffect(() => {
     if (paperId) {
@@ -85,9 +135,9 @@ export default function EditPaperPage() {
 
   const fetchPaperData = async () => {
     try {
-      setLoadingPaper(true);
+      setLoading(true);
       const token = localStorage.getItem('token');
-      const headers = { 
+      const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       };
@@ -98,6 +148,14 @@ export default function EditPaperPage() {
       setDescription(paper.description || "");
       setDeadline(paper.deadline ? new Date(paper.deadline).toISOString().slice(0, 16) : "");
       setTimeLimit(paper.timeLimit);
+      setAvailability(paper.availability || 'all');
+      setPrice(paper.price || 0);
+      setPaperType(paper.paperType || 'MCQ');
+      setPdfUrl(paper.fileUrl || '');
+      setCurrentPreviewImageUrl(paper.previewImageUrl || ''); // Set existing preview image URL
+      setInstituteId(paper.institute?._id || paper.institute || "");
+      setYearId(paper.year?._id || paper.year || "");
+      setAcademicLevelId(paper.academicLevel || ""); // Populate academicLevelId
       setQuestions(paper.questions?.map((q: PaperQuestion) => ({
         ...q,
         open: true,
@@ -106,8 +164,9 @@ export default function EditPaperPage() {
     } catch (err) {
       console.error("Error fetching paper:", err);
       setError("Failed to load paper data.");
+      toast.error("Failed to load paper data.");
     } finally {
-      setLoadingPaper(false);
+      setLoading(false);
     }
   };
 
@@ -121,10 +180,10 @@ export default function EditPaperPage() {
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
-    return { 
+    return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
-    }; 
+    };
   };
 
   const scrollToTop = () => {
@@ -145,9 +204,9 @@ export default function EditPaperPage() {
       imageUrl: "",
       explanation: { text: "", imageUrl: "" }
     };
-    
+
     setQuestions([...questions, newQuestion]);
-    
+
     setTimeout(() => {
       const questionElements = document.querySelectorAll('[data-question-index]');
       const lastQuestion = questionElements[questionElements.length - 1];
@@ -157,7 +216,20 @@ export default function EditPaperPage() {
 
   const handleImageUpload = async (qIndex: number, files: FileList | null, type: 'question' | 'explanation' | 'option', oIndex?: number) => {
     if (!files || files.length === 0) return;
+
     const file = files[0];
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size too large. Maximum size is 5MB.');
+      return;
+    }
+
     const formData = new FormData();
     formData.append("image", file);
 
@@ -166,53 +238,100 @@ export default function EditPaperPage() {
 
     try {
       const token = localStorage.getItem('token');
-      const headers = { 
+      const headers = {
         "Content-Type": "multipart/form-data",
         "Authorization": `Bearer ${token}`
       };
-      
-      const endpoint = type === 'explanation' 
-        ? `${API_URL}/images/upload/explanation`
-        : `${API_URL}/images/upload/paper-options`;
-        
-      const response = await axios.post(endpoint, formData, { headers });
-      
+
+      let endpoint: string;
+      if (type === 'question') {
+        endpoint = `${API_URL}/images/upload/question`;
+      } else if (type === 'explanation') {
+        endpoint = `${API_URL}/images/upload/explanation`;
+      } else if (type === 'option') {
+        endpoint = `${API_URL}/images/upload/paper-options`;
+      } else {
+        endpoint = `${API_URL}/images/upload/paper-content`;
+        console.warn(`Unknown upload type encountered: ${type}. Defaulting to paper-content.`);
+      }
+
+      const response = await axios.post(endpoint, formData, {
+        headers,
+        timeout: 30000
+      });
+
+      if (!response.data.imageUrl) {
+        throw new Error('No image URL returned from server');
+      }
+
       const newQuestions = [...questions];
       if (type === 'explanation') {
         if (!newQuestions[qIndex].explanation) {
           newQuestions[qIndex].explanation = {};
         }
         newQuestions[qIndex].explanation!.imageUrl = response.data.imageUrl;
+        toast.success('Explanation image uploaded successfully!');
       } else if (type === 'question') {
         newQuestions[qIndex].imageUrl = response.data.imageUrl;
+        toast.success('Question image uploaded successfully!');
       } else if (type === 'option' && oIndex !== undefined) {
         newQuestions[qIndex].options[oIndex].imageUrl = response.data.imageUrl;
-        newQuestions[qIndex].options[oIndex].optionText = ""; // Clear text when image is uploaded
+        newQuestions[qIndex].options[oIndex].optionText = "";
+        toast.success(`Option ${String.fromCharCode(65 + oIndex)} image uploaded successfully!`);
       }
       setQuestions(newQuestions);
-      if (type === 'option' && oIndex !== undefined) {
-        toast.success(`Option ${oIndex + 1} image uploaded successfully!`);
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading image:", error);
-      setError(`Failed to upload ${type} image`);
+      const errorMsg = error.response?.data?.message || error.message || `Failed to upload ${type} image`;
+      toast.error(errorMsg);
+      setError(errorMsg);
     } finally {
       setUploadingImages(prev => ({ ...prev, [uploadKey]: false }));
     }
   };
 
-  const removeImage = (qIndex: number, type: 'question' | 'explanation' | 'option', oIndex?: number) => {
+  const removeImage = async (qIndex: number, type: 'question' | 'explanation' | 'option', oIndex?: number) => {
     const newQuestions = [...questions];
+    let imageUrlToRemove = '';
+
     if (type === 'explanation') {
       if (newQuestions[qIndex].explanation) {
-        newQuestions[qIndex].explanation!.imageUrl = "";
+        imageUrlToRemove = newQuestions[qIndex].explanation!.imageUrl || '';
       }
     } else if (type === 'question') {
-      newQuestions[qIndex].imageUrl = "";
+      imageUrlToRemove = newQuestions[qIndex].imageUrl || '';
     } else if (type === 'option' && oIndex !== undefined) {
-      newQuestions[qIndex].options[oIndex].imageUrl = "";
+      imageUrlToRemove = newQuestions[qIndex].options[oIndex].imageUrl || '';
     }
-    setQuestions(newQuestions);
+
+    if (!imageUrlToRemove) {
+      toast.error("No image URL found to remove.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/images/delete`,
+        { fileUrl: imageUrlToRemove },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+
+      if (type === 'explanation') {
+        if (newQuestions[qIndex].explanation) {
+          newQuestions[qIndex].explanation!.imageUrl = "";
+        }
+      } else if (type === 'question') {
+        newQuestions[qIndex].imageUrl = "";
+      } else if (type === 'option' && oIndex !== undefined) {
+        newQuestions[qIndex].options[oIndex].imageUrl = "";
+      }
+      setQuestions(newQuestions);
+      toast.success("Image removed successfully!");
+
+    } catch (error) {
+      console.error("Error deleting image:", error);
+      toast.error("Failed to remove image. Please try again.");
+    }
   };
 
   const removeQuestion = (index: number) => {
@@ -253,7 +372,7 @@ export default function EditPaperPage() {
   const handleOptionChange = (qIndex: number, oIndex: number, value: string) => {
     const newQuestions = [...questions];
     newQuestions[qIndex].options[oIndex].optionText = value;
-    if (value.trim() !== "") { // If text is entered, clear image
+    if (value.trim() !== "") {
       newQuestions[qIndex].options[oIndex].imageUrl = "";
     }
     setQuestions(newQuestions);
@@ -273,73 +392,179 @@ export default function EditPaperPage() {
     setQuestions(newQuestions);
   };
 
+  const handlePdfUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    setPdfFile(file);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const token = localStorage.getItem('token');
+      const headers = {
+        "Content-Type": "multipart/form-data",
+        "Authorization": `Bearer ${token}`
+      };
+
+      const response = await axios.post(`${API_URL}/papers/upload`, formData, { headers });
+      setPdfUrl(response.data.fileUrl);
+      toast.success("PDF uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading PDF:", error);
+      setError("Failed to upload PDF");
+      toast.error("Failed to upload PDF.");
+    }
+  };
+
+  const handlePreviewImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setPreviewImage(file);
+      // We don't set imagePreviewUrl here directly from URL.createObjectURL
+      // because we want to prioritize `currentPreviewImageUrl` or the newly uploaded `previewImage`
+      // which will be handled in the JSX.
+    }
+  };
+
+  const removePreviewImage = async () => {
+    if (currentPreviewImageUrl) {
+      if (!confirm("Are you sure you want to remove the current preview image?")) return;
+      try {
+        const token = localStorage.getItem('token');
+        await axios.post(`${API_URL}/images/delete`,
+          { fileUrl: currentPreviewImageUrl },
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        toast.success("Preview image removed successfully!");
+        setCurrentPreviewImageUrl(""); // Clear the current URL
+        setPreviewImage(null); // Also clear any pending new upload
+      } catch (error) {
+        console.error("Error deleting preview image:", error);
+        toast.error("Failed to remove preview image.");
+      }
+    } else {
+      setPreviewImage(null); // If there's just a new image, clear it
+    }
+  };
+
   const validateForm = () => {
     if (!title.trim()) return "Paper title is required.";
-    if (!deadline) return "Deadline is required.";
-    if (timeLimit <= 0) return "Time limit must be greater than 0.";
-    if (questions.length === 0) return "At least one question is required.";
+    if (paperType === "MCQ" && questions.length === 0) return "At least one question is required for an MCQ paper.";
 
-    for (let i = 0; i < questions.length; i++) {
-      const q = questions[i];
-      if (!q.questionText.trim()) return `Question ${i + 1} text is required.`;
-      if (q.options.length < 2) return `Question ${i + 1} must have at least two options.`;
-      if (q.options.some(opt => !opt.optionText.trim() && !opt.imageUrl)) {
-        return `All options for Question ${i + 1} must have either text or an image.`;
-      }
-      if (!q.options.some(opt => opt.isCorrect)) {
-        return `A correct answer must be selected for Question ${i + 1}.`;
+    if (paperType === "MCQ") {
+      for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
+        if (!q.questionText.trim()) return `Question ${i + 1} text is required.`;
+        if (q.options.length < 2) return `Question ${i + 1} must have at least two options.`;
+        if (q.options.some(opt => !opt.optionText.trim() && !opt.imageUrl)) {
+          return `All options for Question ${i + 1} must have either text or an image.`;
+        }
+        if (!q.options.some(opt => opt.isCorrect)) {
+          return `A correct answer must be selected for Question ${i + 1}.`;
+        }
       }
     }
     return "";
   };
 
   const handleSubmit = async () => {
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
+    if (paperType === "MCQ") {
+      const validationError = validateForm();
+      if (validationError) {
+        setError(validationError);
+        toast.error(validationError);
+        return;
+      }
+    } else { // "Structure"
+      if (!title.trim()) {
+        setError("Paper title is required.");
+        toast.error("Paper title is required.");
+        return;
+      }
+      if (!pdfFile && !currentPreviewImageUrl && !previewImage) { // If Structure-Essay, either PDF or preview image required
+        setError("Please upload a PDF file or a preview image for the paper.");
+        toast.error("Please upload a PDF file or a preview image for the paper.");
+        return;
+      }
+    }
+    if (!instituteId) {
+      setError("Please select an institute.");
+      toast.error("Please select an institute.");
+      return;
+    }
+    if (!yearId) {
+      setError("Please select an academic year.");
+      toast.error("Please select an academic year.");
+      return;
+    }
+    if (!academicLevelId) {
+      setError("Please select an academic level.");
+      toast.error("Please select an academic level.");
       return;
     }
     setError("");
 
     try {
       setSubmitting(true);
-      const headers = getAuthHeaders();
-      const paperData = {
-        title,
-        description,
-        deadline,
-        timeLimit,
-        questions: questions.map(({ questionText, options, imageUrl, explanation }) => ({
-          questionText,
-          options,
-          imageUrl,
-          explanation: explanation && (explanation.text || explanation.imageUrl) ? explanation : undefined
-        })),
-      };
+      const token = localStorage.getItem('token');
+      const formData = new FormData();
 
-      await axios.put(`${API_URL}/papers/${paperId}`, paperData, { headers });
-      
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("deadline", deadline);
+      formData.append("timeLimit", timeLimit.toString());
+      formData.append("availability", availability);
+      formData.append("price", price.toString());
+      formData.append("paperType", paperType);
+      formData.append("institute", instituteId);
+      formData.append("year", yearId);
+      formData.append("academicLevel", academicLevelId); // Append academicLevel
+
+      if (paperType === "MCQ") {
+        formData.append("questions", JSON.stringify(questions.map(({ open, ...rest }) => rest))); // Exclude 'open'
+      } else { // Structure-Essay
+        if (pdfFile) {
+          formData.append("file", pdfFile); // Use "file" for main file
+          formData.append("uploadType", "paper"); // Specify upload type for multer
+        }
+      }
+
+      if (previewImage) {
+        formData.append("previewImage", previewImage); // Use "previewImage" for preview image
+        formData.append("uploadType", "paper-preview"); // Specify upload type for multer
+      }
+
+      await axios.put(`${API_URL}/papers/${paperId}`, formData, { // Changed to formData
+        headers: {
+          "Content-Type": "multipart/form-data", // Important for FormData
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       toast.success("Paper updated successfully!");
+      router.push("/teacher/papers");
 
     } catch (error) {
       console.error("Error updating paper:", error);
-      if (axios.isAxiosError(error)) {
-        setError(error.response?.data?.message || "Failed to update paper");
-      } else {
-        setError("An unexpected error occurred");
-      }
+      const errorMsg = axios.isAxiosError(error)
+        ? error.response?.data?.message || "Failed to update paper"
+        : "An unexpected error occurred";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loadingPaper) {
+  if (loading) {
     return (
       <TeacherLayout>
         <div className="flex justify-center items-center h-screen">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading Paper...</p>
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground text-lg">Loading Paper...</p>
+            <p className="text-sm text-muted-foreground">Please wait while we fetch the details.</p>
           </div>
         </div>
       </TeacherLayout>
@@ -348,7 +573,7 @@ export default function EditPaperPage() {
 
   return (
     <TeacherLayout>
-      <div ref={topRef}>
+      <div ref={topRef} className="theme-bg-secondary p-4 rounded-lg">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -362,7 +587,7 @@ export default function EditPaperPage() {
               </div>
               <div>
                 <h1 className="text-4xl font-bold text-foreground">Edit Paper</h1>
-                <p className="text-muted-foreground text-lg">Modify your examination paper and update details</p>
+                <p className="text-muted-foreground text-lg">Refine and update your examination paper details</p>
               </div>
             </div>
             <Button variant="outline" size="lg" className="shadow-md" onClick={() => router.push("/teacher/papers")}>
@@ -372,8 +597,8 @@ export default function EditPaperPage() {
           </div>
 
           {/* Paper Details Form */}
-          <motion.div 
-            className="bg-card rounded-3xl shadow-xl border border-border p-8 mb-8"
+          <motion.div
+            className="rounded-3xl shadow-xl border border-border p-8 mb-8"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -384,6 +609,99 @@ export default function EditPaperPage() {
               </div>
               Paper Details
             </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {/* Institute Selection */}
+              <div>
+                <label className="font-semibold text-foreground mb-3 block text-lg">
+                  Institute <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <School className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                  <Select
+                    value={instituteId}
+                    onValueChange={setInstituteId}
+                    disabled={dataLoading}
+                  >
+                    <SelectTrigger className="pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                      <SelectValue placeholder={dataLoading ? "Loading..." : "Select Institute"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                      {institutes.map(inst => (
+                        <SelectItem key={inst._id} value={inst._id} className="text-gray-900 dark:text-white">
+                          {inst.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Year Selection */}
+              <div>
+                <label className="font-semibold text-foreground mb-3 block text-lg">
+                  Academic Year <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                  <Select
+                    value={yearId}
+                    onValueChange={setYearId}
+                    disabled={dataLoading}
+                  >
+                    <SelectTrigger className="pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                      <SelectValue placeholder={dataLoading ? "Loading..." : "Select Year"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                      {years.map(yr => (
+                        <SelectItem key={yr._id} value={yr._id} className="text-gray-900 dark:text-white">
+                          {yr.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Academic Level Selection */}
+              <div>
+                <label className="font-semibold text-foreground mb-3 block text-lg">
+                  Academic Level <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                  <Select
+                    key={`academic-level-edit-${academicLevelId}`}
+                    value={academicLevelId}
+                    onValueChange={setAcademicLevelId}
+                    disabled={dataLoading}
+                  >
+                    <SelectTrigger className="pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                      <SelectValue placeholder={dataLoading ? "Loading..." : "Select Level"} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                      {academicLevels.map(level => (
+                        <SelectItem key={level._id} value={level._id} className="text-gray-900 dark:text-white">
+                          {level.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <label className="font-semibold text-foreground mb-3 block text-lg">Paper Type</label>
+              <Select value={paperType} onValueChange={setPaperType}>
+                <SelectTrigger className="h-14 text-lg border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                  <SelectValue placeholder="Select paper type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                  <SelectItem value="MCQ" className="text-gray-900 dark:text-white">Multiple Choice Questions (MCQ)</SelectItem>
+                  <SelectItem value="Structure-Essay" className="text-gray-900 dark:text-white">Structure and Essay Paper (PDF Upload)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Title */}
               <div className="md:col-span-2">
@@ -404,6 +722,41 @@ export default function EditPaperPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   className="min-h-[100px] text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
                 />
+              </div>
+
+              {/* Preview Image Upload */}
+              <div className="md:col-span-2">
+                <label className="font-semibold text-foreground mb-3 block text-lg">Preview Image (Optional)</label>
+                <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary transition-colors">
+                  {(currentPreviewImageUrl || previewImage) ? (
+                    <div className="space-y-3">
+                      <div className="relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={previewImage ? URL.createObjectURL(previewImage) : `${API_BASE_URL}${currentPreviewImageUrl}`}
+                          alt="Preview"
+                          className="mx-auto max-h-48 object-contain rounded-lg shadow-md"
+                        />
+                        <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 shadow-lg" onClick={removePreviewImage}>
+                          <X size={16} />
+                        </Button>
+                      </div>
+                      <p className="font-medium text-foreground">{previewImage?.name || currentPreviewImageUrl.split('/').pop()}</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <Upload size={48} className="mx-auto text-muted-foreground" />
+                      <p className="text-foreground font-medium">Upload a preview image for the paper</p>
+                      <p className="text-sm text-muted-foreground">Supported: .jpg, .jpeg, .png, .gif, .webp (Max 5MB)</p>
+                      <Input
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        onChange={handlePreviewImageUpload}
+                        className="max-w-xs mx-auto"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
               {/* Deadline */}
               <div>
@@ -427,374 +780,570 @@ export default function EditPaperPage() {
                   value={timeLimit}
                   onChange={(e) => setTimeLimit(Number(e.target.value))}
                   className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
-                  min="1"
+                  min="0"
+                />
+              </div>
+              {/* Availability */}
+              <div>
+                <label className="font-semibold text-foreground mb-3 flex items-center gap-2 text-lg">
+                  <FileText size={20} className="text-primary" /> Availability
+                </label>
+                <Select
+                  value={availability}
+                  onValueChange={(value) => setAvailability(value)}
+                >
+                  <SelectTrigger className="pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <SelectValue placeholder="Select availability" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                    <SelectItem value="all" className="text-gray-900 dark:text-white">All Students</SelectItem>
+                    <SelectItem value="physical" className="text-gray-900 dark:text-white">Physical Class Only</SelectItem>
+                    <SelectItem value="paid" className="text-gray-900 dark:text-white">Paid Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* Price */}
+              <div>
+                <label className="font-semibold text-foreground mb-3 flex items-center gap-2 text-lg">
+                  <FileText size={20} className="text-primary" /> Price (LKR)
+                </label>
+                <Input
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(Number(e.target.value))}
+                  placeholder="Enter price (e.g., 1500)"
+                  min="0"
+                  className="h-14 text-lg bg-background text-foreground border-border focus:border-primary rounded-xl"
                 />
               </div>
             </div>
           </motion.div>
 
-          {/* Questions Builder */}
-          <motion.div 
-            className="bg-card rounded-3xl shadow-xl border border-border p-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            ref={questionsRef}
-          >
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-                <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-                  <ListOrdered size={20} className="text-green-500" />
-                </div>
-                Questions Builder
-                <span className="text-lg font-normal text-muted-foreground">({questions.length} questions)</span>
-              </h2>
-              <div className="flex gap-3">
-                {questions.length > 0 && (
-                  <Button onClick={scrollToTop} variant="outline" size="lg" className="border-muted text-muted-foreground">
-                    <ArrowUp size={18} className="mr-2" />
-                    Scroll to Top
-                  </Button>
-                )}
-                <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
-                  <Plus size={18} className="mr-2" />
-                  Add Question
-                </Button>
-              </div>
-            </div>
-
-            {questions.length === 0 ? (
-              <motion.div 
-                className="text-center py-16 border-2 border-dashed border-border rounded-2xl bg-background"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+          {paperType === "MCQ" && (
+            <>
+              {/* Questions Builder */}
+              <motion.div
+                className="rounded-3xl shadow-xl p-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                ref={questionsRef}
               >
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ListOrdered size={32} className="text-muted-foreground" />
+                {/* Info Banner */}
+                <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <ImageIcon size={18} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">Answer Format Guide</h3>
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        Each answer option can be <strong>either text OR an image</strong> (not both). This is perfect for:
+                      </p>
+                      <ul className="text-sm text-blue-700 dark:text-blue-300 mt-2 space-y-1 ml-4">
+                        <li>• <strong>Text answers:</strong> Regular MCQ questions with written options</li>
+                        <li>• <strong>ICT related answers:</strong></li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">No questions added yet</h3>
-                <p className="text-muted-foreground mb-6">Click &quot;Add Question&quot; to start building your paper with detailed explanations</p>
-                <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600">
-                  <Plus size={18} className="mr-2" />
-                  Add Your First Question
-                </Button>
-              </motion.div>
-            ) : (
-              <div className="space-y-6">
-                <AnimatePresence>
-                  {questions.map((q, qIndex) => (
-                    <motion.div 
-                      key={qIndex}
-                      data-question-index={qIndex}
-                      className="border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: qIndex * 0.1 }}
-                    >
-                      <div 
-                        className="bg-muted/50 p-6 flex items-center justify-between cursor-pointer hover:bg-muted transition-colors"
-                        onClick={() => toggleQuestion(qIndex)}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold text-lg">
-                            {qIndex + 1}
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-foreground text-lg">
-                              Question {qIndex + 1}
-                            </h3>
-                            <p className="text-muted-foreground text-sm">
-                              {q.questionText ? q.questionText.substring(0, 50) + (q.questionText.length > 50 ? '...' : '') : 'Click to add question text'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <span>{q.options.length} options</span>
-                            {q.explanation?.text && <BookOpen size={16} className="text-green-500" />}
-                            {q.explanation?.imageUrl && <ImageIcon size={16} className="text-blue-500" />}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeQuestion(qIndex);
-                            }}
-                            className="text-red-500 hover:bg-red-500/10 hover:text-red-600"
-                          >
-                            <Trash2 size={18} />
-                          </Button>
-                          <div className="text-muted-foreground">
-                            {q.open ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
-                          </div>
-                        </div>
-                      </div>
 
-                      <AnimatePresence>
-                        {q.open && (
-                          <motion.div 
-                            className="p-8 space-y-8 bg-card"
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            {/* Question Text */}
-                            <div>
-                              <label className="font-semibold text-foreground mb-3 block text-lg">Question Text</label>
-                              <Textarea
-                                placeholder={`Enter the question text for question ${qIndex + 1}...`}
-                                value={q.questionText}
-                                onChange={(e) => handleQuestionChange(qIndex, e.target.value)}
-                                className="text-lg min-h-[120px] bg-background text-foreground border-border focus:border-primary rounded-xl"
-                              />
-                            </div>
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                      <ListOrdered size={20} className="text-blue-500" />
+                    </div>
+                    Questions Builder
+                    <span className="text-lg font-normal text-muted-foreground">({questions.length} questions)</span>
+                  </h2>
+                  <div className="flex gap-3">
+                    {questions.length > 0 && (
+                      <Button onClick={scrollToTop} variant="outline" size="lg" className="border-muted text-muted-foreground">
+                        <ArrowUp size={18} className="mr-2" />
+                        Scroll to Top
+                      </Button>
+                    )}
+                    <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">
+                      <Plus size={18} className="mr-2" />
+                      Add Question
+                    </Button>
+                  </div>
+                </div>
 
-                            {/* Question Image Upload */}
-                            <div>
-                              <label className="font-semibold text-foreground mb-3 block text-lg flex items-center gap-2">
-                                <ImageIcon size={20} className="text-primary" />
-                                Question Image (Optional)
-                              </label>
-                              <div className="border-border border-dashed rounded-xl p-6 hover:border-primary transition-colors bg-background">
-                                {q.imageUrl ? (
-                                  <div className="relative">
-                                    <img 
-                                      src={`${API_BASE_URL}/api/uploads${q.imageUrl}`} 
-                                      alt="Question preview" 
-                                      className="rounded-lg max-h-48 mx-auto shadow-md" 
-                                    />
-                                    <Button
-                                      variant="destructive"
-                                      size="icon"
-                                      className="absolute top-2 right-2"
-                                      onClick={() => removeImage(qIndex, 'question')}
-                                    >
-                                      <X size={16} />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <div className="text-center">
-                                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                                      {uploadingImages[`${qIndex}-question`] ? (
-                                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                      ) : (
-                                        <Upload size={24} className="text-primary" />
-                                      )}
-                                    </div>
-                                    <Input
-                                      type="file"
-                                      accept="image/*"
-                                      onChange={(e) => handleImageUpload(qIndex, e.target.files, 'question')}
-                                      className="max-w-xs mx-auto bg-card text-foreground border-border"
-                                      disabled={uploadingImages[`${qIndex}-question`]}
-                                    />
-                                    <p className="text-sm text-muted-foreground mt-2">Upload an image to accompany this question</p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Options */}
-                            <div>
-                              <div className="flex items-center justify-between mb-4">
-                                <label className="font-semibold text-foreground text-lg">Answer Options</label>
-                                <Button
-                                  onClick={() => addOption(qIndex)}
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={q.options.length >= 6}
-                                  className="border-muted text-muted-foreground"
-                                >
-                                  <Plus size={16} className="mr-1" />
-                                  Add Option
-                                </Button>
-                              </div>
-                              <div className="space-y-4">
-                                {q.options.map((opt, oIndex) => (
-                                  <motion.div 
-                                    key={oIndex}
-                                    className="flex items-center gap-4 p-4 border border-border rounded-xl hover:border-primary transition-colors bg-background"
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: oIndex * 0.1 }}
-                                  >
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setCorrectOption(qIndex, oIndex)}
-                                      className={`rounded-full w-12 h-12 flex-shrink-0 transition-all ${
-                                        opt.isCorrect
-                                          ? "bg-green-500 text-white shadow-lg scale-110"
-                                          : "bg-card text-muted-foreground hover:bg-green-500/10"
-                                      }`}
-                                      title={opt.isCorrect ? "Correct Answer" : "Click to mark as correct"}
-                                    >
-                                      <Check size={20} />
-                                    </Button>
-                                    <div className="flex-1 space-y-2">
-                                      <div className="flex items-center gap-2">
-                                        <Input
-                                          placeholder={`Option ${oIndex + 1}`}
-                                          value={opt.optionText}
-                                          onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
-                                          className="flex-1 text-lg h-12 bg-card text-foreground border-border focus:border-primary rounded-lg"
-                                          disabled={!!opt.imageUrl} // Disable if image is present
-                                        />
-                                      </div>
-                                      {/* Option Image Upload */}
-                                      <div className="border-border border-dashed rounded-lg p-2 hover:border-primary transition-colors bg-background">
-                                        {opt.imageUrl ? (
-                                          <div className="relative w-24 h-24 mx-auto">
-                                            <img 
-                                              src={`${API_BASE_URL}/api/uploads${opt.imageUrl}`} 
-                                              alt="Option preview" 
-                                              className="rounded-md w-full h-full object-contain shadow-sm" 
-                                            />
-                                            {console.log("Option Image src:", `${API_BASE_URL}/api/uploads${opt.imageUrl}`)}
-                                            <Button
-                                              variant="destructive"
-                                              size="icon"
-                                              className="absolute top-1 right-1 h-7 w-7"
-                                              onClick={() => removeImage(qIndex, 'option', oIndex)}
-                                            >
-                                              <X size={14} />
-                                            </Button>
-                                          </div>
-                                        ) : (
-                                          <div className="text-center">
-                                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-1">
-                                              {uploadingImages[`${qIndex}-option-${oIndex}`] ? (
-                                                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                              ) : (
-                                                <Upload size={16} className="text-primary" />
-                                              )}
-                                            </div>
-                                            <Input
-                                              type="file"
-                                              accept="image/*"
-                                              onChange={(e) => handleImageUpload(qIndex, e.target.files, 'option', oIndex)}
-                                              className="max-w-[150px] text-xs mx-auto bg-card text-foreground border-border h-8"
-                                              disabled={!!opt.optionText} // Disable if text is present
-                                            />
-                                            <p className="text-xs text-muted-foreground mt-1">Image for option</p>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    {q.options.length > 2 && (
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => removeOption(qIndex, oIndex)}
-                                        className="text-red-500 hover:bg-red-500/10 hover:text-red-600"
-                                      >
-                                        <Trash2 size={16} />
-                                      </Button>
-                                    )}
-                                  </motion.div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Detailed Explanation (විවරණ) */}
-                            <div className="border-t border-border pt-8">
-                              <div className="flex items-center gap-3 mb-4">
-                                <div className="w-8 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center">
-                                  <BookOpen size={20} className="text-amber-500" />
-                                </div>
-                                <div>
-                                  <h3 className="font-semibold text-foreground text-lg">Detailed Explanation (විවරණ)</h3>
-                                  <p className="text-sm text-muted-foreground">Optional: Help students understand how to get the correct answer</p>
-                                </div>
-                              </div>
-                              
-                              {/* Explanation Text */}
-                              <div className="mb-6">
-                                <label className="font-medium text-foreground mb-2 block">Explanation Text</label>
-                                <Textarea
-                                  placeholder="Explain the reasoning behind the correct answer, provide step-by-step solution, or give additional context..."
-                                  value={q.explanation?.text || ""}
-                                  onChange={(e) => handleExplanationChange(qIndex, e.target.value)}
-                                  className="min-h-[100px] bg-background text-foreground border-border focus:border-amber-500 rounded-xl"
-                                />
-                              </div>
-
-                              {/* Explanation Image */}
-                              <div>
-                                <label className="font-medium text-foreground mb-2 block flex items-center gap-2">
-                                  <ImageIcon size={16} className="text-amber-500" />
-                                  Explanation Image (Optional)
-                                </label>
-                                <div className="border-border border-dashed rounded-xl p-4 hover:border-amber-500 transition-colors bg-amber-500/10">
-                                  {q.explanation?.imageUrl ? (
-                                    <div className="relative">
-                                      <img 
-                                        src={`${API_BASE_URL}/api/uploads${q.explanation.imageUrl}`} 
-                                        alt="Explanation preview" 
-                                        className="rounded-lg max-h-40 mx-auto shadow-md" 
-                                      />
-                                      <Button
-                                        variant="destructive"
-                                        size="icon"
-                                        className="absolute top-2 right-2"
-                                        onClick={() => removeImage(qIndex, 'explanation')}
-                                      >
-                                        <X size={16} />
-                                      </Button>
-                                    </div>
-                                  ) : (
-                                    <div className="text-center">
-                                      <div className="w-10 h-10 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        {uploadingImages[`${qIndex}-explanation`] ? (
-                                          <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                                        ) : (
-                                          <Upload size={20} className="text-amber-500" />
-                                        )}
-                                      </div>
-                                      <Input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => handleImageUpload(qIndex, e.target.files, 'explanation')}
-                                        className="max-w-xs mx-auto bg-card text-foreground border-border"
-                                        disabled={uploadingImages[`${qIndex}-explanation`]}
-                                      />
-                                      <p className="text-xs text-muted-foreground mt-1">Upload diagrams, charts, or visual aids</p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                
-                {/* Add Question Button at Bottom */}
-                {questions.length > 0 && (
-                  <motion.div 
-                    className="text-center pt-6"
+                {questions.length === 0 ? (
+                  <motion.div
+                    className="text-center py-16 border-2 border-dashed border-border rounded-2xl bg-background dark:bg-blue-950/40"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
                   >
-                    <Button 
-                      onClick={addQuestion} 
-                      size="lg" 
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
-                    >
+                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                      <ListOrdered size={32} className="text-muted-foreground" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground mb-2">No questions added yet</h3>
+                    <p className="text-muted-foreground mb-6">Click &quot;Add Question&quot; to start building your paper with detailed explanations</p>
+                    <Button onClick={addQuestion} size="lg" className="bg-gradient-to-r from-blue-600 to-indigo-600">
                       <Plus size={18} className="mr-2" />
-                      Add Another Question
+                      Add Your First Question
                     </Button>
                   </motion.div>
+                ) : (
+                  <div className="space-y-6">
+                    <AnimatePresence>
+                      {questions.map((q, qIndex) => (
+                        <motion.div
+                          key={qIndex}
+                          data-question-index={qIndex}
+                          className="border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ delay: qIndex * 0.1 }}
+                        >
+                          <div
+                            className="bg-muted/50 p-6 flex items-center justify-between cursor-pointer hover:bg-muted transition-colors"
+                            onClick={() => toggleQuestion(qIndex)}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center font-bold text-lg">
+                                {qIndex + 1}
+                              </div>
+                              <div>
+                                <h3 className="font-bold text-foreground text-lg">
+                                  Question {qIndex + 1}
+                                </h3>
+                                <p className="text-muted-foreground text-sm">
+                                  {q.questionText ? q.questionText.substring(0, 50) + (q.questionText.length > 50 ? '...' : '') : 'Click to add question text'}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <span>{q.options.length} options</span>
+                                {q.explanation?.text && <BookOpen size={16} className="text-green-500" />}
+                                {q.explanation?.imageUrl && <ImageIcon size={16} className="text-blue-500" />}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeQuestion(qIndex);
+                                }}
+                                className="text-red-500 hover:bg-red-500/10 hover:text-red-600"
+                              >
+                                <Trash2 size={18} />
+                              </Button>
+                              <div className="text-muted-foreground">
+                                {q.open ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+                              </div>
+                            </div>
+                          </div>
+
+                          <AnimatePresence>
+                            {q.open && (
+                              <motion.div
+                                className="p-8 space-y-8 bg-card dark:bg-blue-950/40"
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                              >
+                                {/* Question Text */}
+                                <div>
+                                  <label className="font-semibold text-foreground mb-3 block text-lg">Question Text</label>
+                                  <Textarea
+                                    placeholder={`Enter the question text for question ${qIndex + 1}...`}
+                                    value={q.questionText}
+                                    onChange={(e) => handleQuestionChange(qIndex, e.target.value)}
+                                    className="text-lg min-h-[120px] bg-background text-foreground border-border focus:border-primary rounded-xl"
+                                  />
+                                </div>
+
+                                {/* Question Image Upload */}
+                                <div>
+                                  <label className="font-semibold text-foreground mb-3 block text-lg flex items-center gap-2">
+                                    <ImageIcon size={20} className="text-primary" />
+                                    Question Image (Optional)
+                                  </label>
+                                  <div className="border-2 border-dashed border-border rounded-xl p-6 hover:border-primary transition-colors bg-background">
+                                    {q.imageUrl ? (
+                                      <div className="relative">
+                                        <div className="bg-white dark:bg-gray-900 rounded-lg p-4 flex items-center justify-center">
+                                          <img
+                                            src={`${API_BASE_URL}${q.imageUrl}`}
+                                            alt="Question preview"
+                                            className="rounded-lg max-h-64 max-w-full object-contain shadow-lg"
+                                          />
+                                        </div>
+                                        <Button
+                                          variant="destructive"
+                                          size="icon"
+                                          className="absolute top-2 right-2 shadow-lg"
+                                          onClick={() => removeImage(qIndex, 'question')}
+                                        >
+                                          <X size={16} />
+                                        </Button>
+                                        <div className="mt-3 text-center text-sm font-medium text-green-600 dark:text-green-400">
+                                          ✓ Image loaded successfully
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="text-center">
+                                        <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                          {uploadingImages[`${qIndex}-question`] ? (
+                                            <div className="w-7 h-7 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+                                          ) : (
+                                            <Upload size={28} className="text-primary" />
+                                          )}
+                                        </div>
+                                        <p className="text-base font-medium text-foreground mb-3">
+                                          Upload Question Image
+                                        </p>
+                                        <Input
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={(e) => handleImageUpload(qIndex, e.target.files, 'question')}
+                                          className="max-w-xs mx-auto bg-card text-foreground border-border h-11"
+                                          disabled={uploadingImages[`${qIndex}-question`]}
+                                        />
+                                        <p className="text-sm text-muted-foreground mt-3">
+                                          Add diagrams, charts, or visual context for this question
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Options - NEW DESIGN */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-4">
+                                    <div>
+                                      <label className="font-semibold text-foreground text-lg">Answer Options</label>
+                                      <div className="flex items-center gap-2 mt-2">
+                                        <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded-md text-xs">
+                                          <FileText size={12} />
+                                          Text
+                                        </div>
+                                        <span className="text-muted-foreground text-xs font-bold">OR</span>
+                                        <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 rounded-md text-xs">
+                                          <ImageIcon size={12} />
+                                          Image
+                                        </div>
+                                        <span className="text-muted-foreground text-xs ml-1">(not both)</span>
+                                      </div>
+                                    </div>
+                                    <Button
+                                      onClick={() => addOption(qIndex)}
+                                      variant="outline"
+                                      size="sm"
+                                      disabled={q.options.length >= 6}
+                                      className="border-muted text-muted-foreground"
+                                    >
+                                      <Plus size={16} className="mr-1" />
+                                      Add Option
+                                    </Button>
+                                  </div>
+                                  <div className="space-y-3">
+                                    {q.options.map((opt, oIndex) => (
+                                      <motion.div
+                                        key={oIndex}
+                                        className={`relative rounded-xl transition-all ${opt.isCorrect
+                                          ? "border-2 border-green-500 bg-green-50 dark:bg-green-950/20 shadow-md"
+                                          : "border dark:border-2 border-gray-300 dark:border-border bg-background hover:border-primary/50"
+                                          }`}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: oIndex * 0.1 }}
+                                      >
+                                        {/* Correct Answer Badge */}
+                                        {opt.isCorrect && (
+                                          <div className="absolute -top-3 left-4 px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full shadow-lg flex items-center gap-1">
+                                            <Check size={12} />
+                                            Correct Answer
+                                          </div>
+                                        )}
+
+                                        <div className="flex items-start gap-3 p-4">
+                                          {/* Action Buttons */}
+                                          <div className="flex flex-col gap-2">
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => setCorrectOption(qIndex, oIndex)}
+                                              className={`h-9 px-3 transition-all ${opt.isCorrect
+                                                ? "bg-green-500 text-white hover:bg-green-600"
+                                                : "hover:bg-green-500/10 hover:text-green-600"
+                                                }`}
+                                              title="Mark as correct answer"
+                                            >
+                                              <Check size={16} />
+                                            </Button>
+                                            {q.options.length > 2 && (
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => removeOption(qIndex, oIndex)}
+                                                className="h-9 px-3 text-red-500 hover:bg-red-500/10 hover:text-red-600"
+                                                title="Remove option"
+                                              >
+                                                <Trash2 size={16} />
+                                              </Button>
+                                            )}
+                                          </div>
+
+                                          {/* Option Letter */}
+                                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0 ${opt.isCorrect
+                                            ? "bg-green-500 text-white"
+                                            : "bg-muted text-muted-foreground"
+                                            }`}>
+                                            {oIndex + 1}
+                                          </div>
+
+                                          {/* Content Area */}
+                                          <div className="flex-1 space-y-3">
+                                            {/* Text Input */}
+                                            {!opt.imageUrl && (
+                                              <div>
+                                                <Input
+                                                  placeholder={`Enter text for option ${oIndex + 1}`}
+                                                  value={opt.optionText}
+                                                  onChange={(e) => handleOptionChange(qIndex, oIndex, e.target.value)}
+                                                  className="text-base h-11 bg-card text-foreground border-border focus:border-primary"
+                                                />
+                                              </div>
+                                            )}
+
+                                            {/* Image Upload Area */}
+                                            {!opt.optionText && (
+                                              <div className="border-2 border-dashed border-border rounded-lg overflow-hidden">
+                                                {opt.imageUrl ? (
+                                                  <div className="relative bg-muted/30 p-4">
+                                                    <div className="flex items-center justify-center bg-white dark:bg-gray-900 rounded-lg p-3">
+                                                      <img
+                                                        src={`${API_BASE_URL}${opt.imageUrl}`}
+                                                        alt={`Option ${oIndex + 1} preview`}
+                                                        className="rounded-md max-h-32 max-w-full object-contain shadow-md"
+                                                      />
+                                                    </div>
+                                                    <Button
+                                                      variant="destructive"
+                                                      size="sm"
+                                                      className="absolute top-2 right-2 h-8 w-8 p-0 shadow-lg"
+                                                      onClick={() => removeImage(qIndex, 'option', oIndex)}
+                                                    >
+                                                      <X size={14} />
+                                                    </Button>
+                                                    <div className="mt-3 flex items-center justify-center gap-2 text-xs font-medium text-green-600 dark:text-green-400">
+                                                      <ImageIcon size={14} />
+                                                      Image uploaded successfully
+                                                    </div>
+                                                  </div>
+                                                ) : (
+                                                  <div className="p-6 text-center bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer">
+                                                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                      {uploadingImages[`${qIndex}-option-${oIndex}`] ? (
+                                                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                                      ) : (
+                                                        <ImageIcon size={24} className="text-primary" />
+                                                      )}
+                                                    </div>
+                                                    <p className="text-sm font-medium text-foreground mb-2">
+                                                      Upload Image Answer
+                                                    </p>
+                                                    <Input
+                                                      type="file"
+                                                      accept="image/*"
+                                                      onChange={(e) => handleImageUpload(qIndex, e.target.files, 'option', oIndex)}
+                                                      className="max-w-[220px] text-sm mx-auto h-10 bg-card cursor-pointer"
+                                                      disabled={uploadingImages[`${qIndex}-option-${oIndex}`]}
+                                                    />
+                                                    <p className="text-xs text-muted-foreground mt-3">
+                                                      For diagrams, charts, symbols, or visual answers
+                                                    </p>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
+
+                                            {/* Type Indicator */}
+                                            {(opt.optionText || opt.imageUrl) && (
+                                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                {opt.optionText && (
+                                                  <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded-full">
+                                                    <FileText size={12} />
+                                                    Text answer
+                                                  </div>
+                                                )}
+                                                {opt.imageUrl && (
+                                                  <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 rounded-full">
+                                                    <ImageIcon size={12} />
+                                                    Image answer
+                                                  </div>
+                                                )}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </motion.div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Detailed Explanation (විවරණ) */}
+                                <div className="border-t border-border pt-8">
+                                  <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-8 h-8 bg-amber-500/10 rounded-lg flex items-center justify-center">
+                                      <BookOpen size={20} className="text-amber-500" />
+                                    </div>
+                                    <div>
+                                      <h3 className="font-semibold text-foreground text-lg">Detailed Explanation (විවරණ)</h3>
+                                      <p className="text-sm text-muted-foreground">Optional: Help students understand how to get the correct answer</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Explanation Text */}
+                                  <div className="mb-6">
+                                    <label className="font-medium text-foreground mb-2 block">Explanation Text</label>
+                                    <Textarea
+                                      placeholder="Explain the reasoning behind the correct answer, provide step-by-step solution, or give additional context..."
+                                      value={q.explanation?.text || ""}
+                                      onChange={(e) => handleExplanationChange(qIndex, e.target.value)}
+                                      className="min-h-[100px] bg-background text-foreground border-border focus:border-amber-500 rounded-xl"
+                                    />
+                                  </div>
+
+                                  {/* Explanation Image */}
+                                  <div>
+                                    <label className="font-medium text-foreground mb-2 block flex items-center gap-2">
+                                      <ImageIcon size={16} className="text-amber-500" />
+                                      Explanation Image (Optional)
+                                    </label>
+                                    <div className="border-2 border-dashed border-amber-500/30 rounded-xl p-5 hover:border-amber-500 transition-colors bg-amber-500/5">
+                                      {q.explanation?.imageUrl ? (
+                                        <div className="relative">
+                                          <div className="bg-white dark:bg-gray-900 rounded-lg p-4 flex items-center justify-center">
+                                            <img
+                                              src={`${API_BASE_URL}${q.explanation.imageUrl}`}
+                                              alt="Explanation preview"
+                                              className="rounded-lg max-h-56 max-w-full object-contain shadow-lg"
+                                            />
+                                          </div>
+                                          <Button
+                                            variant="destructive"
+                                            size="icon"
+                                            className="absolute top-2 right-2 shadow-lg"
+                                            onClick={() => removeImage(qIndex, 'explanation')}
+                                          >
+                                            <X size={16} />
+                                          </Button>
+                                          <div className="mt-3 text-center text-sm font-medium text-amber-600 dark:text-amber-400">
+                                            ✓ Explanation image loaded
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div className="text-center">
+                                          <div className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            {uploadingImages[`${qIndex}-explanation`] ? (
+                                              <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                              <Upload size={24} className="text-amber-500" />
+                                            )}
+                                          </div>
+                                          <p className="text-sm font-medium text-foreground mb-2">
+                                            Upload Visual Explanation
+                                          </p>
+                                          <Input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => handleImageUpload(qIndex, e.target.files, 'explanation')}
+                                            className="max-w-xs mx-auto bg-card text-foreground border-border h-10"
+                                            disabled={uploadingImages[`${qIndex}-explanation`]}
+                                          />
+                                          <p className="text-xs text-muted-foreground mt-2">
+                                            Add step-by-step diagrams, worked solutions, or visual aids
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+
+                    {questions.length > 0 && (
+                      <motion.div
+                        className="text-center pt-6"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3 }}
+                      >
+                        <Button
+                          onClick={addQuestion}
+                          size="lg"
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg"
+                        >
+                          <Plus size={18} className="mr-2" />
+                          Add Another Question
+                        </Button>
+                      </motion.div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            </>
+          )}
+
+          {paperType === "Structure-Essay" && (
+            <motion.div
+              className="rounded-3xl shadow-xl border border-border p-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
+                <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                  <Upload size={20} className="text-purple-500" />
+                </div>
+                Upload Paper PDF
+              </h2>
+              <div className="border-border border-dashed rounded-xl p-6 hover:border-primary transition-colors bg-background">
+                {pdfUrl ? (
+                  <div className="relative">
+                    <p className="text-lg font-semibold text-green-600">PDF available!</p>
+                    <a href={`${API_BASE_URL}${pdfUrl}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">View Uploaded PDF</a>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2"
+                      onClick={() => {
+                        setPdfFile(null);
+                        setPdfUrl("");
+                      }}
+                    >
+                      <X size={16} />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Upload size={24} className="text-primary" />
+                    </div>
+                    <Input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => handlePdfUpload(e.target.files)}
+                      className="max-w-xs mx-auto bg-card text-foreground border-border"
+                    />
+                    <p className="text-sm text-muted-foreground mt-2">Upload the paper in PDF format.</p>
+                  </div>
                 )}
               </div>
-            )}
-          </motion.div>
+            </motion.div>
+          )}
 
           {/* Error Display */}
           <AnimatePresence>
@@ -808,7 +1357,7 @@ export default function EditPaperPage() {
                 <div className="flex items-center gap-3">
                   <AlertCircle className="text-red-600" size={24} />
                   <div>
-                    <h3 className="font-semibold text-red-800">Validation Error</h3>
+                    <h3 className="font-semibold text-red-800">Error</h3>
                     <p className="text-red-700">{error}</p>
                   </div>
                 </div>
@@ -817,7 +1366,7 @@ export default function EditPaperPage() {
           </AnimatePresence>
 
           {/* Submit Button */}
-          <motion.div 
+          <motion.div
             className="mt-12 flex justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -825,13 +1374,13 @@ export default function EditPaperPage() {
           >
             <Button
               onClick={handleSubmit}
-              disabled={submitting || questions.length === 0}
+              disabled={submitting}
               size="lg"
               className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-12 py-4 rounded-2xl font-semibold text-xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all"
             >
               {submitting ? (
                 <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <Loader2 className="w-6 h-6 animate-spin" />
                   Updating Paper...
                 </div>
               ) : (

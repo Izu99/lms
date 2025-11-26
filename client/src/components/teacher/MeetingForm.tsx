@@ -28,51 +28,62 @@ interface ZoomFormProps {
   onCancel?: () => void; // Optional cancel callback for edit mode
 }
 
-export function ZoomForm({ onSuccess, initialData, onCancel }: ZoomFormProps) {
+export function MeetingForm({ onSuccess, initialData, onCancel }: ZoomFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [zoomLink, setZoomLink] = useState("");
   const [youtubeLink, setYoutubeLink] = useState("");
   const [institute, setInstitute] = useState("");
   const [year, setYear] = useState("");
+  const [academicLevel, setAcademicLevel] = useState(""); // Add academicLevel state
+  const [availability, setAvailability] = useState<'all' | 'physical' | 'paid'>('all'); // Add availability state
   const [isLoading, setIsLoading] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false); // State for confirmation dialog
-  const [actionType, setActionType] = useState<'create' | 'update' | null>(null); // Type of action
-  const [dataToConfirm, setDataToConfirm] = useState<{ meeting: MeetingDetails; institute: string; year: string } | null>(null); // Data for confirmation
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [actionType, setActionType] = useState<'create' | 'update' | null>(null);
+  const [dataToConfirm, setDataToConfirm] = useState<{ meeting: MeetingDetails; institute: string; year: string; academicLevel: string; availability: 'all' | 'physical' | 'paid' } | null>(null); // Update dataToConfirm type
 
   const { institutes } = useTeacherInstitutes();
   const { years } = useTeacherYears();
+  // Hardcoded academic levels for now, or fetch if available
+  const academicLevels = [
+    { _id: "OL", name: "Ordinary Level" },
+    { _id: "AL", name: "Advanced Level" }
+  ];
 
   useEffect(() => {
     if (initialData) {
-      setTitle(initialData.meeting?.title || initialData.title || "");
-      setDescription(initialData.meeting?.description || initialData.description || "");
-      setZoomLink(initialData.meeting?.zoomLink || initialData.zoomLink || "");
-      setYoutubeLink(initialData.meeting?.youtubeLink || initialData.youtubeLink || "");
+      setTitle(initialData.meeting?.title || "");
+      setDescription(initialData.meeting?.description || "");
+      setZoomLink(initialData.meeting?.zoomLink || "");
+      setYoutubeLink(initialData.meeting?.youtubeLink || "");
       setInstitute(initialData.institute?._id || "");
       setYear(initialData.year?._id || "");
+      setAcademicLevel(initialData.academicLevel || ""); // Set academicLevel
+      setAvailability(initialData.availability || 'all'); // Set availability
     } else {
-      // Clear form when initialData is null (e.g., after successful creation or cancellation)
       setTitle("");
       setDescription("");
       setZoomLink("");
       setYoutubeLink("");
       setInstitute("");
       setYear("");
+      setAcademicLevel("");
+      setAvailability('all');
     }
   }, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !zoomLink || !institute || !year) {
-      toast.error("Title, Meeting link, institute, and year are required");
+    if (!title || !zoomLink || !institute || !year || !academicLevel) { // Validate academicLevel
+      toast.error("Title, Meeting link, institute, year, and academic level are required");
       return;
     }
-    // Set data for confirmation and open dialog
     setDataToConfirm({
       meeting: { title, description, zoomLink, youtubeLink },
       institute,
       year,
+      academicLevel, // Include academicLevel
+      availability, // Include availability
     });
     setActionType(initialData ? 'update' : 'create');
     setConfirmDialogOpen(true);
@@ -82,25 +93,23 @@ export function ZoomForm({ onSuccess, initialData, onCancel }: ZoomFormProps) {
     if (!dataToConfirm || !actionType) return;
 
     setIsLoading(true);
-    setConfirmDialogOpen(false); // Close dialog
+    setConfirmDialogOpen(false);
 
     try {
       if (actionType === 'update' && initialData) {
-        // Update existing Meeting link
         await ZoomService.updateZoomLink(initialData._id, {
           meeting: dataToConfirm.meeting,
           institute: dataToConfirm.institute,
           year: dataToConfirm.year,
+          academicLevel: dataToConfirm.academicLevel, // Include academicLevel
+          availability: dataToConfirm.availability, // Include availability
         });
         toast.success("Meeting link updated successfully");
       } else if (actionType === 'create') {
-        // Create new Meeting link
-        await ZoomService.createZoomLink(dataToConfirm.meeting, dataToConfirm.institute, dataToConfirm.year);
+        await ZoomService.createZoomLink(dataToConfirm.meeting, dataToConfirm.institute, dataToConfirm.year, dataToConfirm.academicLevel, dataToConfirm.availability); // Include availability
         toast.success("Meeting link saved successfully");
       }
       onSuccess();
-      // If editing, form is cleared by parent setting initialData to null
-      // If creating, form is cleared here
       if (!initialData) {
         setTitle("");
         setDescription("");
@@ -108,6 +117,7 @@ export function ZoomForm({ onSuccess, initialData, onCancel }: ZoomFormProps) {
         setYoutubeLink("");
         setInstitute("");
         setYear("");
+        setAcademicLevel("");
       }
     } catch (error: unknown) {
       let errorMessage = actionType === 'update' ? "Failed to update Meeting link" : "Failed to save Meeting link";
@@ -151,29 +161,51 @@ export function ZoomForm({ onSuccess, initialData, onCancel }: ZoomFormProps) {
         onChange={(e) => setYoutubeLink(e.target.value)}
         disabled={isLoading}
       />
-      <div className="grid grid-cols-2 gap-4">
-        <Select onValueChange={setInstitute} value={institute}>
-          <SelectTrigger>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Select onValueChange={setInstitute} value={institute} key={`institute-${initialData?._id || 'new'}`}>
+          <SelectTrigger className="border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
             <SelectValue placeholder="Select Institute" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
             {institutes.map((inst) => (
-              <SelectItem key={inst._id} value={inst._id}>
+              <SelectItem key={inst._id} value={inst._id} className="text-gray-900 dark:text-white">
                 {inst.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Select onValueChange={setYear} value={year}>
-          <SelectTrigger>
+        <Select onValueChange={setYear} value={year} key={`year-${initialData?._id || 'new'}`}>
+          <SelectTrigger className="border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
             <SelectValue placeholder="Select Year" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
             {years.map((yr) => (
-              <SelectItem key={yr._id} value={yr._id}>
+              <SelectItem key={yr._id} value={yr._id} className="text-gray-900 dark:text-white">
                 {yr.name}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+        <Select onValueChange={setAcademicLevel} value={academicLevel} key={`level-${initialData?._id || 'new'}`}>
+          <SelectTrigger className="border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            <SelectValue placeholder="Select Level" />
+          </SelectTrigger>
+          <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+            {academicLevels.map((level) => (
+              <SelectItem key={level._id} value={level._id} className="text-gray-900 dark:text-white">
+                {level.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select onValueChange={(val: 'all' | 'physical' | 'paid') => setAvailability(val)} value={availability} key={`availability-${initialData?._id || 'new'}`}>
+          <SelectTrigger className="border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            <SelectValue placeholder="Select Availability" />
+          </SelectTrigger>
+          <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+            <SelectItem value="all" className="text-gray-900 dark:text-white">All Students</SelectItem>
+            <SelectItem value="physical" className="text-gray-900 dark:text-white">Physical Class Only</SelectItem>
+            <SelectItem value="paid" className="text-gray-900 dark:text-white">Paid Only</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -188,7 +220,6 @@ export function ZoomForm({ onSuccess, initialData, onCancel }: ZoomFormProps) {
         )}
       </div>
 
-      {/* Confirmation Dialog for Create/Update */}
       <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

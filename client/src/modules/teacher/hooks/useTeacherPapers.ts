@@ -12,7 +12,11 @@ interface UseTeacherPapersReturn {
   refetch: () => void;
 }
 
-export const useTeacherPapers = (): UseTeacherPapersReturn => {
+export const useTeacherPapers = (
+  instituteId?: string,
+  yearId?: string,
+  academicLevelId?: string
+): UseTeacherPapersReturn => {
   const [papers, setPapers] = useState<PaperData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +25,7 @@ export const useTeacherPapers = (): UseTeacherPapersReturn => {
     try {
       setIsLoading(true);
       setError(null);
-      const paperData = await TeacherPaperService.getPapers();
+      const paperData = await TeacherPaperService.getPapers(instituteId, yearId, academicLevelId);
       setPapers(paperData);
     } catch (err: unknown) {
       let errorMessage = 'Failed to fetch papers';
@@ -37,7 +41,7 @@ export const useTeacherPapers = (): UseTeacherPapersReturn => {
 
   useEffect(() => {
     fetchPapers();
-  }, []);
+  }, [instituteId, yearId, academicLevelId]); // Add dependencies
 
   return {
     papers,

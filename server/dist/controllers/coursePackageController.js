@@ -4,11 +4,13 @@ exports.deleteCoursePackage = exports.updateCoursePackage = exports.createCourse
 const CoursePackage_1 = require("../models/CoursePackage");
 const Video_1 = require("../models/Video");
 const Paper_1 = require("../models/Paper");
+const Tute_1 = require("../models/Tute"); // Import Tute model
 // Helper function to populate common fields
 const populateCoursePackage = (query) => {
     return query
         .populate('videos', 'title description')
         .populate('papers', 'title description')
+        .populate('tutes', 'title description')
         .populate('institute', 'name')
         .populate('year', 'name')
         .populate('createdBy', 'username');
@@ -16,10 +18,20 @@ const populateCoursePackage = (query) => {
 // @desc    Get all course packages
 // @route   GET /api/course-packages
 // @access  Private (Teachers and Students)
+// @desc    Get all course packages
+// @route   GET /api/course-packages
+// @access  Private (Teachers and Students)
 const getCoursePackages = async (req, res) => {
     try {
         const user = req.user;
+        const { institute, year, academicLevel } = req.query;
         let query = {};
+        if (institute && institute !== 'all')
+            query.institute = institute;
+        if (year && year !== 'all')
+            query.year = year;
+        if (academicLevel && academicLevel !== 'all')
+            query.academicLevel = academicLevel;
         // No specific filtering for students for now, show all packages
         // if (user.role === 'student') {
         //   query = {
@@ -72,12 +84,14 @@ exports.getCoursePackageById = getCoursePackageById;
 // @access  Private (Teachers only)
 const createCoursePackage = async (req, res) => {
     try {
-        const { title, description, price, videos, papers, availability, institute, year, } = req.body;
+        const { title, description, price, videos, papers, tutes, // Add tutes
+        availability, institute, year, academicLevel, // Add academicLevel
+         } = req.body;
         const backgroundImage = req.file ? req.file.path : undefined;
-        if (!title || price === undefined || !Array.isArray(videos) || !Array.isArray(papers) || !availability) {
-            return res.status(400).json({ message: 'Title, price, videos (array), papers (array), and availability are required' });
+        if (!title || price === undefined || !Array.isArray(videos) || !Array.isArray(papers) || !Array.isArray(tutes) || !availability) {
+            return res.status(400).json({ message: 'Title, price, videos (array), papers (array), tutes (array), and availability are required' });
         }
-        // Validate video and paper IDs
+        // Validate video, paper, and tute IDs
         const existingVideos = await Video_1.Video.find({ _id: { $in: videos } });
         if (existingVideos.length !== videos.length) {
             return res.status(400).json({ message: 'One or more video IDs are invalid' });
@@ -85,6 +99,10 @@ const createCoursePackage = async (req, res) => {
         const existingPapers = await Paper_1.Paper.find({ _id: { $in: papers } });
         if (existingPapers.length !== papers.length) {
             return res.status(400).json({ message: 'One or more paper IDs are invalid' });
+        }
+        const existingTutes = await Tute_1.Tute.find({ _id: { $in: tutes } });
+        if (existingTutes.length !== tutes.length) {
+            return res.status(400).json({ message: 'One or more tute IDs are invalid' });
         }
         const createdBy = req.user.id;
         const newCoursePackage = new CoursePackage_1.CoursePackage({
@@ -94,9 +112,11 @@ const createCoursePackage = async (req, res) => {
             backgroundImage,
             videos,
             papers,
+            tutes, // Include tutes
             availability,
             institute: institute || undefined,
             year: year || undefined,
+            academicLevel: academicLevel || undefined, // Add academicLevel
             createdBy,
         });
         await newCoursePackage.save();
@@ -115,7 +135,9 @@ exports.createCoursePackage = createCoursePackage;
 const updateCoursePackage = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, price, videos, papers, availability, institute, year, } = req.body;
+        const { title, description, price, videos, papers, tutes, // Add tutes
+        availability, institute, year, academicLevel, // Add academicLevel
+         } = req.body;
         const backgroundImage = req.file ? req.file.path : undefined;
         const coursePackage = await CoursePackage_1.CoursePackage.findById(id);
         if (!coursePackage) {
@@ -126,7 +148,7 @@ const updateCoursePackage = async (req, res) => {
         if (coursePackage.createdBy.toString() !== user.id && user.role !== 'admin') {
             return res.status(403).json({ message: 'Not authorized to update this course package' });
         }
-        // Validate video and paper IDs if provided
+        // Validate video, paper, and tute IDs if provided
         if (videos) {
             const existingVideos = await Video_1.Video.find({ _id: { $in: videos } });
             if (existingVideos.length !== videos.length) {
@@ -139,6 +161,12 @@ const updateCoursePackage = async (req, res) => {
                 return res.status(400).json({ message: 'One or more paper IDs are invalid' });
             }
         }
+        if (tutes) { // Validate tute IDs if provided
+            const existingTutes = await Tute_1.Tute.find({ _id: { $in: tutes } });
+            if (existingTutes.length !== tutes.length) {
+                return res.status(400).json({ message: 'One or more tute IDs are invalid' });
+            }
+        }
         coursePackage.title = title || coursePackage.title;
         coursePackage.description = description || coursePackage.description;
         coursePackage.price = price !== undefined ? price : coursePackage.price;
@@ -147,9 +175,11 @@ const updateCoursePackage = async (req, res) => {
         }
         coursePackage.videos = videos || coursePackage.videos;
         coursePackage.papers = papers || coursePackage.papers;
+        coursePackage.tutes = tutes || coursePackage.tutes; // Update tutes
         coursePackage.availability = availability || coursePackage.availability;
         coursePackage.institute = institute || undefined;
         coursePackage.year = year || undefined;
+        coursePackage.academicLevel = academicLevel || undefined; // Add academicLevel
         await coursePackage.save();
         const populatedPackage = await populateCoursePackage(CoursePackage_1.CoursePackage.findById(coursePackage._id));
         res.json({ message: 'Course package updated successfully', coursePackage: populatedPackage });

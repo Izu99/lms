@@ -2,10 +2,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Upload, Video, File, School, Calendar } from "lucide-react";
+import { X, Upload, Video, File, School, Calendar, GraduationCap } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import axios from "axios";
-import { API_URL } from "@/lib/constants";
+import { API_URL, API_BASE_URL } from "@/lib/constants";
 import { InfoDialog } from "@/components/InfoDialog";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
@@ -38,13 +38,22 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
     description: "",
     instituteId: "",
     yearId: "",
+    academicLevelId: "", // Add academicLevelId
     availability: "all",
     price: 0,
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState(""); // New state for existing video URL
+  const [previewImage, setPreviewImage] = useState<File | null>(null);
+  const [currentPreviewImageUrl, setCurrentPreviewImageUrl] = useState("");
+  const [loading, setLoading] = useState(false); // Re-added loading state
   const [institutes, setInstitutes] = useState<InstituteData[]>([]);
   const [years, setYears] = useState<YearData[]>([]);
+  // Hardcoded academic levels
+  const academicLevels = [
+    { _id: "OL", name: "Ordinary Level" },
+    { _id: "AL", name: "Advanced Level" }
+  ];
   const [dataLoading, setDataLoading] = useState(true);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [infoDialogContent, setInfoDialogContent] = useState({ title: "", description: "" });
@@ -54,17 +63,44 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
   }, []);
 
   useEffect(() => {
-    if (video && !dataLoading) {
+    if (video) { // Always try to set form data if video prop is present
+      console.log('🎥 VideoForm - Loading video data:', video);
+      console.log('📍 Institute ID:', video.institute ? video.institute._id : 'NOT SET');
+      console.log('📅 Year ID:', video.year ? video.year._id : 'NOT SET');
+      console.log('🎓 Academic Level:', video.academicLevel || 'NOT SET');
+
       setFormData({
-        title: video.title,
+        title: video.title || "",
         description: video.description || "",
         instituteId: video.institute ? video.institute._id : "",
         yearId: video.year ? video.year._id : "",
-        availability: video.availability || "all", // Assuming 'all' as default if not present
-        price: video.price || 0, // Assuming 0 as default if not present
+        academicLevelId: video.academicLevel || "", // Populate academicLevelId
+        availability: video.availability || "all",
+        price: video.price || 0,
       });
+
+      console.log('✅ FormData set to:', {
+        instituteId: video.institute ? video.institute._id : "",
+        yearId: video.year ? video.year._id : "",
+        academicLevelId: video.academicLevel || "",
+      });
+
+      setCurrentPreviewImageUrl(video.previewImageUrl || ""); // Always set from video.previewImageUrl, fallback to ""
+      setCurrentVideoUrl(video.videoUrl || ""); // Always set from video.videoUrl, fallback to ""
+    } else { // If video prop is null/undefined, clear form
+      setFormData({
+        title: "",
+        description: "",
+        instituteId: "",
+        yearId: "",
+        academicLevelId: "",
+        availability: "all",
+        price: 0,
+      });
+      setCurrentPreviewImageUrl("");
+      setCurrentVideoUrl("");
     }
-  }, [video, dataLoading]);
+  }, [video]); // Depend only on video prop for form initialization, not dataLoading
 
   const getAuthHeaders = () => {
     const token = Cookies.get('token');
@@ -78,9 +114,15 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
         axios.get(`${API_URL}/institutes`, { headers: getAuthHeaders() }),
         axios.get(`${API_URL}/years`, { headers: getAuthHeaders() })
       ]);
-      
-      setInstitutes(classRes.data.institutes || []);
-      setYears(yearRes.data.years || []);
+
+      const classResData = classRes.data.institutes || [];
+      const yearResData = yearRes.data.years || [];
+
+      setInstitutes(classResData);
+      setYears(yearResData);
+
+      console.log('📚 Loaded institutes:', classResData.length);
+      console.log('📅 Loaded years:', yearResData.length);
     } catch (error) {
       console.error("Error fetching institutes and years:", error);
       setInfoDialogContent({ title: "Error", description: "Error loading institutes and years. Please try again." });
@@ -117,6 +159,13 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
         return;
       }
 
+      if (!formData.academicLevelId) { // Validate academicLevelId
+        setInfoDialogContent({ title: "Validation Error", description: "Please select an academic level" });
+        setIsInfoOpen(true);
+        setLoading(false);
+        return;
+      }
+
       if (!video && !videoFile) {
         setInfoDialogContent({ title: "Validation Error", description: "Please select a video file" });
         setIsInfoOpen(true);
@@ -129,12 +178,26 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
       submitData.append('description', formData.description);
       submitData.append('institute', formData.instituteId);
       submitData.append('year', formData.yearId);
+      submitData.append('academicLevel', formData.academicLevelId); // Append academicLevel
       submitData.append('availability', formData.availability);
       submitData.append('price', formData.price.toString());
-      
+
       // Only append video file if one is selected
       if (videoFile) {
         submitData.append('video', videoFile);
+      } else if (video && !currentVideoUrl) {
+        // If it's an existing video, no new video file is selected, and currentVideoUrl is cleared,
+        // it means the user wants to remove the existing video.
+        submitData.append('removeVideo', 'true');
+      }
+
+      // Append preview image if selected
+      if (previewImage) {
+        submitData.append('previewImage', previewImage);
+      } else if (video && !currentPreviewImageUrl) {
+        // If it's an existing video, no new preview image is selected, and currentPreviewImageUrl is cleared,
+        // it means the user wants to remove the existing preview image.
+        submitData.append('removePreviewImage', 'true');
       }
 
       if (video) {
@@ -168,7 +231,7 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
         setIsInfoOpen(true);
         return;
       }
-      
+
       // Size limit removed - accept any video size
       setVideoFile(file);
     }
@@ -221,7 +284,7 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
           </div>
 
           {/* Class and Year Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Class Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -271,11 +334,14 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
                     <SelectValue placeholder={dataLoading ? "Loading years..." : "Select a year"} />
                   </SelectTrigger>
                   <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-                    {years.map(yearItem => (
-                      <SelectItem key={yearItem._id} value={yearItem._id} className="text-gray-900 dark:text-white">
-                        {yearItem.name} (A-Level Year {yearItem.year})
-                      </SelectItem>
-                    ))}
+                    {years.map(yearItem => {
+                      console.log('📅 Year option:', yearItem._id, '- Current value:', formData.yearId, '- Match:', yearItem._id === formData.yearId);
+                      return (
+                        <SelectItem key={yearItem._id} value={yearItem._id} className="text-gray-900 dark:text-white">
+                          {yearItem.name} (A-Level Year {yearItem.year})
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -284,6 +350,37 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
                   No years available. Please create a year first.
                 </p>
               )}
+            </div>
+
+            {/* Academic Level Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Academic Level *
+              </label>
+              <div className="relative">
+                <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
+                <Select
+                  key={`academic-level-${video?._id || 'new'}-${formData.academicLevelId}`}
+                  value={formData.academicLevelId}
+                  onValueChange={(value) => setFormData({ ...formData, academicLevelId: value })}
+                  disabled={dataLoading}
+                  required
+                >
+                  <SelectTrigger className="w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <SelectValue placeholder={dataLoading ? "Loading..." : "Select Level"} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                    {academicLevels.map(level => {
+                      console.log('🎓 Academic Level option:', level._id, '- Current value:', formData.academicLevelId, '- Match:', level._id === formData.academicLevelId);
+                      return (
+                        <SelectItem key={level._id} value={level._id} className="text-gray-900 dark:text-white">
+                          {level.name}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
@@ -302,10 +399,13 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
               </SelectTrigger>
               <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
                 <SelectItem value="all" className="text-gray-900 dark:text-white">
-                  Free for all
+                  All Students
                 </SelectItem>
                 <SelectItem value="physical" className="text-gray-900 dark:text-white">
-                  Free for physical only
+                  Physical Class Only
+                </SelectItem>
+                <SelectItem value="paid" className="text-gray-900 dark:text-white">
+                  Paid Only
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -365,45 +465,100 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
               Video File {!video && "*"}
             </label>
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 hover:border-blue-300 dark:hover:border-blue-600 transition-colors bg-gray-50 dark:bg-gray-900/30">
-              <input
-                type="file"
-                accept="video/*"
-                onChange={handleFileChange}
-                className="hidden"
-                id="video-upload"
-              />
-              <label
-                htmlFor="video-upload"
-                className="cursor-pointer flex flex-col items-center justify-center"
-              >
-                {videoFile ? (
-                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                    <File size={24} />
-                    <div className="text-center">
-                      <span className="font-medium block">{videoFile.name}</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {formatFileSize(videoFile.size)}
-                      </span>
-                    </div>
+              {videoFile || currentVideoUrl ? (
+                <div className="relative">
+                  <p className="text-lg font-semibold text-green-600">Video available!</p>
+                  <a href={`${API_BASE_URL}/api/uploads/${videoFile?.name || currentVideoUrl}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                    View Uploaded Video ({videoFile?.name || currentVideoUrl.split('/').pop()})
+                  </a>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8 p-0 shadow-lg"
+                    onClick={() => {
+                      setVideoFile(null);
+                      setCurrentVideoUrl("");
+                    }}
+                  >
+                    <X size={16} />
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Upload size={24} className="text-primary" />
                   </div>
-                ) : (
-                  <div className="text-center">
-                    <Upload className="mx-auto text-gray-400 dark:text-gray-500 mb-2" size={32} />
-                    <p className="text-gray-600 dark:text-gray-300">
-                      {video ? "Upload new video file (optional)" : "Click to upload video file"}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      MP4, WebM, or other video formats (no size limit)
-                    </p>
-                  </div>
-                )}
-              </label>
+                  <Input
+                    type="file"
+                    accept="video/*"
+                    onChange={handleFileChange}
+                    className="max-w-xs mx-auto bg-card text-foreground border-border"
+                  />
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {video ? "Upload new video file (optional)" : "Click to upload video file"}
+                  </p>
+                </div>
+              )}
             </div>
-            {video && !videoFile && (
+            {video && !videoFile && !currentVideoUrl && (
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                Current video will be kept if no new file is uploaded
+                No video file selected. Current video will be removed if you save.
               </p>
             )}
+            {video && videoFile && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                New video file selected. It will replace the current video.
+              </p>
+            )}
+            {video && currentVideoUrl && !videoFile && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                Current video will be kept if no new file is uploaded.
+              </p>
+            )}
+          </div>
+
+          {/* Preview Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Preview/Thumbnail Image (Optional)
+            </label>
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 hover:border-blue-300 dark:hover:border-blue-600 transition-colors bg-gray-50 dark:bg-gray-900/30">
+              {(currentPreviewImageUrl || previewImage) ? (
+                <div className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={previewImage ? URL.createObjectURL(previewImage) : `${API_BASE_URL}${currentPreviewImageUrl}`}
+                    alt="Preview"
+                    className="mx-auto max-h-48 object-contain rounded-lg shadow-md"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 shadow-lg"
+                    onClick={() => {
+                      setCurrentPreviewImageUrl("");
+                      setPreviewImage(null);
+                    }}
+                  >
+                    <X size={16} />
+                  </Button>
+                  <p className="font-medium text-foreground mt-3">{previewImage?.name || currentPreviewImageUrl.split('/').pop()}</p>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <Upload className="mx-auto text-gray-400 dark:text-gray-500 mb-2" size={32} />
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setPreviewImage(e.target.files?.[0] || null)}
+                    className="max-w-xs mx-auto bg-card text-foreground border-border"
+                  />
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Upload a thumbnail image for the video card
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Preview */}
@@ -451,9 +606,9 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
             <Button type="button" variant="outline" onClick={onClose} className="flex-1 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={loading || dataLoading || institutes.length === 0 || years.length === 0} 
+            <Button
+              type="submit"
+              disabled={loading || dataLoading || institutes.length === 0 || years.length === 0}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
             >
               {loading ? (

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { CoursePackage } from '../models/CoursePackage';
 import { Video } from '../models/Video';
 import { Paper } from '../models/Paper';
+import { Tute } from '../models/Tute'; // Import Tute model
 import { Types } from 'mongoose';
 
 // Helper function to populate common fields
@@ -9,6 +10,7 @@ const populateCoursePackage = (query: any) => {
   return query
     .populate('videos', 'title description')
     .populate('papers', 'title description')
+    .populate('tutes', 'title description')
     .populate('institute', 'name')
     .populate('year', 'name')
     .populate('createdBy', 'username');
@@ -17,10 +19,18 @@ const populateCoursePackage = (query: any) => {
 // @desc    Get all course packages
 // @route   GET /api/course-packages
 // @access  Private (Teachers and Students)
+// @desc    Get all course packages
+// @route   GET /api/course-packages
+// @access  Private (Teachers and Students)
 export const getCoursePackages = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
+    const { institute, year, academicLevel } = req.query;
     let query: any = {};
+
+    if (institute && institute !== 'all') query.institute = institute;
+    if (year && year !== 'all') query.year = year;
+    if (academicLevel && academicLevel !== 'all') query.academicLevel = academicLevel;
 
     // No specific filtering for students for now, show all packages
     // if (user.role === 'student') {
@@ -59,7 +69,7 @@ export const getCoursePackageById = async (req: Request, res: Response) => {
     //     coursePackage.freeForAllInstituteYear ||
     //     (coursePackage.freeForPhysicalStudents && user.studentType === 'Physical') ||
     //     (coursePackage.institute?.equals(user.institute) && coursePackage.year?.equals(user.year));
-      
+
     //   if (!isAuthorized) {
     //     return res.status(403).json({ message: 'Not authorized to view this course package' });
     //   }
@@ -83,18 +93,20 @@ export const createCoursePackage = async (req: Request, res: Response) => {
       price,
       videos,
       papers,
+      tutes, // Add tutes
       availability,
       institute,
       year,
+      academicLevel, // Add academicLevel
     } = req.body;
 
     const backgroundImage = req.file ? req.file.path : undefined;
 
-    if (!title || price === undefined || !Array.isArray(videos) || !Array.isArray(papers) || !availability) {
-      return res.status(400).json({ message: 'Title, price, videos (array), papers (array), and availability are required' });
+    if (!title || price === undefined || !Array.isArray(videos) || !Array.isArray(papers) || !Array.isArray(tutes) || !availability) {
+      return res.status(400).json({ message: 'Title, price, videos (array), papers (array), tutes (array), and availability are required' });
     }
 
-    // Validate video and paper IDs
+    // Validate video, paper, and tute IDs
     const existingVideos = await Video.find({ _id: { $in: videos } });
     if (existingVideos.length !== videos.length) {
       return res.status(400).json({ message: 'One or more video IDs are invalid' });
@@ -102,6 +114,10 @@ export const createCoursePackage = async (req: Request, res: Response) => {
     const existingPapers = await Paper.find({ _id: { $in: papers } });
     if (existingPapers.length !== papers.length) {
       return res.status(400).json({ message: 'One or more paper IDs are invalid' });
+    }
+    const existingTutes = await Tute.find({ _id: { $in: tutes } });
+    if (existingTutes.length !== tutes.length) {
+      return res.status(400).json({ message: 'One or more tute IDs are invalid' });
     }
 
     const createdBy = (req as any).user.id;
@@ -113,9 +129,11 @@ export const createCoursePackage = async (req: Request, res: Response) => {
       backgroundImage,
       videos,
       papers,
+      tutes, // Include tutes
       availability,
       institute: institute || undefined,
       year: year || undefined,
+      academicLevel: academicLevel || undefined, // Add academicLevel
       createdBy,
     });
 
@@ -140,9 +158,11 @@ export const updateCoursePackage = async (req: Request, res: Response) => {
       price,
       videos,
       papers,
+      tutes, // Add tutes
       availability,
       institute,
       year,
+      academicLevel, // Add academicLevel
     } = req.body;
 
     const backgroundImage = req.file ? req.file.path : undefined;
@@ -159,7 +179,7 @@ export const updateCoursePackage = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Not authorized to update this course package' });
     }
 
-    // Validate video and paper IDs if provided
+    // Validate video, paper, and tute IDs if provided
     if (videos) {
       const existingVideos = await Video.find({ _id: { $in: videos } });
       if (existingVideos.length !== videos.length) {
@@ -172,6 +192,12 @@ export const updateCoursePackage = async (req: Request, res: Response) => {
         return res.status(400).json({ message: 'One or more paper IDs are invalid' });
       }
     }
+    if (tutes) { // Validate tute IDs if provided
+      const existingTutes = await Tute.find({ _id: { $in: tutes } });
+      if (existingTutes.length !== tutes.length) {
+        return res.status(400).json({ message: 'One or more tute IDs are invalid' });
+      }
+    }
 
     coursePackage.title = title || coursePackage.title;
     coursePackage.description = description || coursePackage.description;
@@ -181,9 +207,11 @@ export const updateCoursePackage = async (req: Request, res: Response) => {
     }
     coursePackage.videos = videos || coursePackage.videos;
     coursePackage.papers = papers || coursePackage.papers;
+    coursePackage.tutes = tutes || coursePackage.tutes; // Update tutes
     coursePackage.availability = availability || coursePackage.availability;
     coursePackage.institute = institute || undefined;
     coursePackage.year = year || undefined;
+    coursePackage.academicLevel = academicLevel || undefined; // Add academicLevel
 
     await coursePackage.save();
     const populatedPackage = await populateCoursePackage(CoursePackage.findById(coursePackage._id));

@@ -25,6 +25,9 @@ import Link from "next/link";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { InfoDialog } from "@/components/InfoDialog";
+import CommonFilter from "@/components/common/CommonFilter";
+import { StudentGridSkeleton } from "@/components/student/skeletons/StudentGridSkeleton";
+import { useStudentFilters } from "@/modules/student/hooks/useStudentFilters";
 
 interface Paper {
   _id: string;
@@ -37,8 +40,9 @@ interface Paper {
   attemptCount?: number;
   isCompleted?: boolean;
   percentage?: number;
-  paperType: 'MCQ' | 'Structure';
+  paperType: 'MCQ' | 'Structure-Essay';
   fileUrl?: string;
+  previewImageUrl?: string;
 }
 
 export default function StudentPapersPage() {
@@ -46,15 +50,21 @@ export default function StudentPapersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<'all' | 'mcq' | 'structure'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'mcq' | 'structure-essay'>('all');
   const [answeredPapers, setAnsweredPapers] = useState<string[]>([]);
+
+  // Filter states
+  const [selectedInstitute, setSelectedInstitute] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [selectedAcademicLevel, setSelectedAcademicLevel] = useState<string>("all");
+  const { institutes, years, academicLevels, isLoadingInstitutes, isLoadingYears, isLoadingAcademicLevels } = useStudentFilters();
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
-    return { 
+    return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
-    }; 
+    };
   };
 
   useEffect(() => {
@@ -101,28 +111,28 @@ export default function StudentPapersPage() {
     const now = new Date();
     const end = new Date(deadline);
     const diff = end.getTime() - now.getTime();
-    
+
     if (diff <= 0) return "Expired";
-    
+
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    
+
     if (days > 0) return `${days}d ${hours}h left`;
     return `${hours}h left`;
   };
 
   const filteredPapers = papers.filter(paper => {
     const matchesSearch = paper.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          paper.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      paper.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
     if (activeTab === 'all') {
       return matchesSearch;
     }
     if (activeTab === 'mcq') {
       return matchesSearch && paper.paperType === 'MCQ';
     }
-    if (activeTab === 'structure') {
-      return matchesSearch && paper.paperType === 'Structure';
+    if (activeTab === 'structure-essay') {
+      return matchesSearch && paper.paperType === 'Structure-Essay';
     }
     return false;
   });
@@ -130,12 +140,7 @@ export default function StudentPapersPage() {
   if (loading) {
     return (
       <StudentLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="theme-text-secondary">Loading papers...</p>
-          </div>
-        </div>
+        <StudentGridSkeleton />
       </StudentLayout>
     );
   }
@@ -144,7 +149,7 @@ export default function StudentPapersPage() {
     <StudentLayout>
       <div>
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
@@ -173,8 +178,24 @@ export default function StudentPapersPage() {
           </div>
         </motion.div>
 
+        {/* Filter Component */}
+        <CommonFilter
+          institutes={institutes}
+          years={years}
+          academicLevels={academicLevels}
+          selectedInstitute={selectedInstitute}
+          selectedYear={selectedYear}
+          selectedAcademicLevel={selectedAcademicLevel}
+          onInstituteChange={setSelectedInstitute}
+          onYearChange={setSelectedYear}
+          onAcademicLevelChange={setSelectedAcademicLevel}
+          isLoadingInstitutes={isLoadingInstitutes}
+          isLoadingYears={isLoadingYears}
+          isLoadingAcademicLevels={isLoadingAcademicLevels}
+        />
+
         {/* Search Bar */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -194,37 +215,37 @@ export default function StudentPapersPage() {
         </motion.div>
 
         {/* Tabs for Paper Types */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="mb-8 flex space-x-4"
         >
-          <Button 
+          <Button
             variant={activeTab === 'all' ? 'default' : 'outline'}
             onClick={() => setActiveTab('all')}
             className={`transition-all duration-300 ${activeTab === 'all' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
           >
             All Papers
           </Button>
-          <Button 
+          <Button
             variant={activeTab === 'mcq' ? 'default' : 'outline'}
             onClick={() => setActiveTab('mcq')}
             className={`transition-all duration-300 ${activeTab === 'mcq' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
           >
             MCQ Papers
           </Button>
-          <Button 
-            variant={activeTab === 'structure' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('structure')}
-            className={`transition-all duration-300 ${activeTab === 'structure' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+          <Button
+            variant={activeTab === 'structure-essay' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('structure-essay')}
+            className={`transition-all duration-300 ${activeTab === 'structure-essay' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
           >
-            Structure Papers
+            Structure and Essay Papers
           </Button>
         </motion.div>
 
         {/* Statistics Cards */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
@@ -289,7 +310,7 @@ export default function StudentPapersPage() {
 
         {/* Error Display */}
         {error && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4"
@@ -303,7 +324,7 @@ export default function StudentPapersPage() {
 
         {/* Papers Grid */}
         {filteredPapers.length === 0 ? (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="text-center py-16"
@@ -326,102 +347,107 @@ export default function StudentPapersPage() {
                 transition={{ delay: index * 0.1 }}
                 className="group"
               >
-                <div className="theme-card rounded-2xl shadow-lg theme-border p-6 h-full flex flex-col hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                  {/* Header with Status Badge */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className={`w-10 h-10 bg-gradient-to-r ${paper.paperType === 'Structure' ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-indigo-500'} rounded-lg flex items-center justify-center flex-shrink-0`}>
-                          <BookOpen className="text-white" size={20} />
-                        </div>
-                        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${paper.paperType === 'Structure' ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300'}`}>
-                          {paper.paperType}
-                        </span>
-                      </div>
-                      <h3 className="font-bold theme-text-primary text-lg leading-tight line-clamp-2">
-                        {paper.title}
-                      </h3>
+                <div className="theme-card rounded-2xl shadow-lg theme-border overflow-hidden h-full flex flex-col hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                  {/* Thumbnail/Preview Image */}
+                  {paper.previewImageUrl ? (
+                    <img
+                      src={`${API_BASE_URL}${paper.previewImageUrl}`}
+                      alt={paper.title}
+                      className="w-full h-48 object-cover border-b theme-border"
+                    />
+                  ) : (
+                    <div className={`w-full h-48 bg-gradient-to-br ${paper.paperType === 'Structure-Essay' ? 'from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900' : 'from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900'} flex items-center justify-center border-b theme-border`}>
+                      <FileText size={64} className="theme-text-tertiary" />
                     </div>
-                    
-                    <div className="ml-3 flex-shrink-0">
-                      {isExpired(paper.deadline) ? (
-                        <span className="px-3 py-1 bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 text-xs font-medium rounded-full whitespace-nowrap">
-                          Expired
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 text-xs font-medium rounded-full whitespace-nowrap">
-                          Available
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {paper.description && (
-                    <p className="theme-text-secondary text-sm mb-4 line-clamp-2 flex-grow">
-                      {paper.description}
-                    </p>
                   )}
 
-                  <div className="space-y-3 mb-6 mt-auto">
-                    <div className="flex items-center gap-2 text-sm theme-text-secondary">
-                      <Users size={16} className="text-blue-500" />
-                      <span>{paper.totalQuestions} Questions</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-sm theme-text-secondary">
-                      <Timer size={16} className="text-emerald-500" />
-                      <span>{paper.timeLimit} Minutes</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-sm theme-text-secondary">
-                      <Calendar size={16} className="text-orange-500" />
-                      <span>Due: {paper.deadline ? formatDate(paper.deadline) : 'Not set'}</span>
-                    </div>
-
-                    {!isExpired(paper.deadline) && paper.deadline && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Clock size={16} className="text-yellow-500" />
-                        <span className="font-medium text-yellow-700 dark:text-yellow-400">
-                          {getTimeRemaining(paper.deadline)}
-                        </span>
+                  <div className="p-6 flex flex-col flex-grow">
+                    {/* Header with Status Badge */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className={`w-10 h-10 bg-gradient-to-r ${paper.paperType === 'Structure-Essay' ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-indigo-500'} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                            <BookOpen className="text-white" size={20} />
+                          </div>
+                          <span className={`text-xs font-semibold px-3 py-1 rounded-full ${paper.paperType === 'Structure-Essay' ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300'}`}>
+                            {paper.paperType}
+                          </span>
+                        </div>
+                        <h3 className="font-bold theme-text-primary text-lg leading-tight line-clamp-2">
+                          {paper.title}
+                        </h3>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 mt-auto">
-                    {answeredPapers.includes(paper._id) ? (
-                      <Link href={`/student/papers/answers/${paper._id}`} className="w-full">
-                        <Button 
-                          className="w-full bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white"
-                        >
-                          <Trophy size={16} className="mr-2" />
-                          See Answer
-                        </Button>
-                      </Link>
-                    ) : isExpired(paper.deadline) ? (
-                      <Button variant="outline" disabled className="w-full bg-black text-white">
-                        Expired
-                      </Button>
-                    ) : paper.paperType === 'Structure' ? (
-                      <Link href={`/student/papers/structure/${paper._id}`} className="w-full">
-                          <Button 
-                              className="w-full bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white"
-                          >
-                              <Eye size={16} className="mr-2" />
-                              View Paper
-                          </Button>
-                      </Link>
-                    ) : (
-                      <Link href={`/student/papers/${paper._id}`} className="w-full">
-                        <Button 
-                          className="w-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
-                        >
-                          <Play size={16} className="mr-2" />
-                          Start Exam
-                        </Button>
-                      </Link>
+                      <div className="ml-3 flex-shrink-0">
+                        {isExpired(paper.deadline) ? (
+                          <span className="px-3 py-1 bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 text-xs font-medium rounded-full whitespace-nowrap">
+                            Expired
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 text-xs font-medium rounded-full whitespace-nowrap">
+                            Available
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {paper.description && (
+                      <p className="theme-text-secondary text-sm mb-4 line-clamp-2 flex-grow">
+                        {paper.description}
+                      </p>
                     )}
+
+                    {/* Paper Details */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="flex items-center gap-2 theme-text-secondary text-sm">
+                        <FileText size={16} className="text-blue-500" />
+                        <span>{paper.totalQuestions} Questions</span>
+                      </div>
+                      <div className="flex items-center gap-2 theme-text-secondary text-sm">
+                        <Timer size={16} className="text-green-500" />
+                        <span>{paper.timeLimit} min</span>
+                      </div>
+                      <div className="flex items-center gap-2 theme-text-secondary text-sm col-span-2">
+                        <Calendar size={16} className="text-orange-500" />
+                        <span>Due: {new Date(paper.deadline).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="mt-auto">
+                      {paper.isCompleted ? (
+                        <Link href={`/student/papers/${paper._id}/results`} className="w-full">
+                          <Button
+                            className="w-full bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 text-white"
+                          >
+                            <Trophy size={16} className="mr-2" />
+                            See Answer
+                          </Button>
+                        </Link>
+                      ) : isExpired(paper.deadline) ? (
+                        <Button variant="outline" disabled className="w-full bg-black text-white">
+                          Expired
+                        </Button>
+                      ) : paper.paperType === 'Structure-Essay' ? (
+                        <Link href={`/student/papers/structure-essay/${paper._id}`} className="w-full">
+                          <Button
+                            className="w-full bg-purple-500 hover:bg-purple-600 dark:bg-purple-600 dark:hover:bg-purple-700 text-white"
+                          >
+                            <Eye size={16} className="mr-2" />
+                            View Paper
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Link href={`/student/papers/${paper._id}`} className="w-full">
+                          <Button
+                            className="w-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+                          >
+                            <Play size={16} className="mr-2" />
+                            Start Exam
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -429,6 +455,6 @@ export default function StudentPapersPage() {
           </div>
         )}
       </div>
-    </StudentLayout>
+    </StudentLayout >
   );
 }

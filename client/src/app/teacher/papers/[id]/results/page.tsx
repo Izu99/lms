@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import {
   FileText,
@@ -13,6 +14,7 @@ import {
   Clock,
   Download, // Added Download icon
   Edit,     // Added Edit icon
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useParams, useRouter } from "next/navigation";
@@ -21,6 +23,7 @@ import { API_URL, API_BASE_URL } from "@/lib/constants";
 import Cookies from "js-cookie";
 import { StudentDetailsModal } from "@/components/teacher/modals/StudentDetailsModal";
 import { GradePaperModal } from "@/components/teacher/modals/GradePaperModal";
+import { ReviewUploadModal } from "@/components/teacher/modals/ReviewUploadModal";
 
 interface PaperInfo {
   title: string;
@@ -43,10 +46,11 @@ interface Result {
   percentage: number;
   submittedAt: string;
   timeSpent: number;
-  answerFileUrl?: string; // Added for structure papers
+  answerFileUrl?: string;
+  teacherReviewFileUrl?: string; // New: URL to the teacher's reviewed PDF // Added for structure papers
   paperId: { // Populated paperId details
     _id: string;
-    paperType: 'MCQ' | 'Structure';
+    paperType: 'MCQ' | 'Structure-Essay';
     totalQuestions: number;
   };
 }
@@ -73,6 +77,10 @@ export default function PaperResultsPage() {
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
   const [currentGradingAttemptId, setCurrentGradingAttemptId] = useState<string>('');
   const [initialGradingPercentage, setInitialGradingPercentage] = useState<number>(0);
+  // NEW STATE FOR REVIEW UPLOAD
+  const [isReviewUploadModalOpen, setIsReviewUploadModalOpen] = useState(false);
+  const [currentAttemptIdForReview, setCurrentAttemptIdForReview] = useState<string>('');
+  const [currentReviewFileUrl, setCurrentReviewFileUrl] = useState<string | undefined>(undefined);
 
 
   useEffect(() => {
@@ -160,6 +168,40 @@ export default function PaperResultsPage() {
       setError("Failed to save percentage. Please try again.");
     } finally {
       setLoading(false); // End loading
+    }
+  };
+
+  const handleUploadReviewFile = async (attemptId: string, file: File) => {
+    try {
+      setLoading(true);
+      const token = Cookies.get("token");
+      const formData = new FormData();
+      formData.append('file', file);
+
+      await axios.post(`${API_URL}/papers/attempts/${attemptId}/upload-review`, formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      toast.success("Review file uploaded successfully!");
+      // Refetch results to update the table with the new review file URL
+      const response = await axios.get(`${API_URL}/papers/${paperId}/results`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setResults(response.data.results);
+      setStats(response.data.stats); // Update stats in case it has changed
+
+      setIsReviewUploadModalOpen(false); // Close modal on success
+      setCurrentAttemptIdForReview('');
+      setCurrentReviewFileUrl(undefined);
+    } catch (err) {
+      console.error("Error uploading review file:", err);
+      setError("Failed to upload review file. Please try again.");
+      toast.error("Failed to upload review file.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -303,7 +345,7 @@ export default function PaperResultsPage() {
                         </td>
                         {/* Actions Column */}
                         <td className="p-4">
-                          {result.paperId.paperType === 'Structure' ? (
+                          {result.paperId.paperType === 'Structure-Essay' ? (
                             <div className="flex flex-wrap gap-2 items-center">
                               {result.answerFileUrl && (
                                 <Button
@@ -312,23 +354,56 @@ export default function PaperResultsPage() {
                                   onClick={() => handleDownloadAnswer(result.answerFileUrl!)}
                                 >
                                   <Download className="w-4 h-4 mr-2" />
-                                  Answer
+                                  Student Answer
                                 </Button>
                               )}
+
+                              {result.teacherReviewFileUrl && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => window.open(`${API_BASE_URL}${result.teacherReviewFileUrl!}`, '_blank')}
+                                >
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Teacher Review
+                                </Button>
+                              )}
+
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => {
+                                  setCurrentAttemptIdForReview(result._id);
+                                  setCurrentReviewFileUrl(result.teacherReviewFileUrl);
+                                  setIsReviewUploadModalOpen(true);
+                                }}
+                              >
+                                {result.teacherReviewFileUrl ? (
+                                  <>
+                                    <Edit className="w-4 h-4 mr-2" />
+                                    Update Review
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload className="w-4 h-4 mr-2" />
+                                    Upload Review
+                                  </>
+                                )}
+                              </Button>
 
                               {(result.score === 0 && result.percentage === 0) ? (
                                 <>
                                   <span className="text-sm text-yellow-600 dark:text-yellow-400 font-medium px-2 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/20">Not Graded Yet</span>
                                   <Button size="sm" variant="outline" onClick={() => handleOpenGradeModal(result._id, 0)}>
                                     <Edit className="w-4 h-4 mr-2" />
-                                    Add Percentage
+                                    Add Grade
                                   </Button>
                                 </>
                               ) : (
                                 <>
                                   <Button size="sm" variant="outline" onClick={() => handleOpenGradeModal(result._id, result.percentage)}>
                                     <Edit className="w-4 h-4 mr-2" />
-                                    Edit Percentage
+                                    Edit Grade
                                   </Button>
                                 </>
                               )}
@@ -369,6 +444,18 @@ export default function PaperResultsPage() {
         onSubmit={handleSavePercentage}
         attemptId={currentGradingAttemptId}
         initialPercentage={initialGradingPercentage}
+      />
+
+      <ReviewUploadModal
+        isOpen={isReviewUploadModalOpen}
+        onClose={() => {
+          setIsReviewUploadModalOpen(false);
+          setCurrentAttemptIdForReview('');
+          setCurrentReviewFileUrl(undefined);
+        }}
+        onSubmit={handleUploadReviewFile}
+        attemptId={currentAttemptIdForReview}
+        existingFileUrl={currentReviewFileUrl}
       />
     </TeacherLayout>
   );

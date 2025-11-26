@@ -16,5 +16,7 @@ const zoomLinkSchema = new mongoose_1.default.Schema({
     uploadedBy: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User', required: true },
     institute: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Institute', required: true },
     year: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Year', required: true },
+    academicLevel: { type: String, enum: ['OL', 'AL'] },
+    availability: { type: String, enum: ['all', 'physical', 'paid'], default: 'all' },
 }, { timestamps: true });
 exports.ZoomLink = mongoose_1.default.model('ZoomLink', zoomLinkSchema);

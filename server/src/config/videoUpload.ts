@@ -1,0 +1,73 @@
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
+
+const UPLOAD_DIR = 'uploads/videos';
+
+// Ensure upload directories exist
+const ensureDirectories = () => {
+  const dirs = [
+    path.join(UPLOAD_DIR, 'files'),
+    path.join(UPLOAD_DIR, 'images')
+  ];
+  
+  dirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  });
+};
+
+ensureDirectories();
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    let subDir = '';
+    if (file.fieldname === 'video') {
+      subDir = 'files';
+    } else if (file.fieldname === 'previewImage') {
+      subDir = 'images';
+    } else {
+      subDir = 'files';
+    }
+
+    const fullPath = path.join(UPLOAD_DIR, subDir);
+    cb(null, fullPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + crypto.randomBytes(6).toString('hex');
+    const ext = path.extname(file.originalname);
+    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+  }
+});
+
+const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  if (file.fieldname === 'video') {
+    // Video files
+    const allowedMimes = ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid video file type'));
+    }
+  } else if (file.fieldname === 'previewImage') {
+    // Image files
+    const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid image file type'));
+    }
+  } else {
+    cb(null, true);
+  }
+};
+
+export const uploadVideo = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 500 * 1024 * 1024, // 500MB for videos
+  }
+});

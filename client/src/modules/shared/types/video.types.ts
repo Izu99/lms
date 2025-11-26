@@ -18,9 +18,11 @@ export interface VideoData {
     year: number;
     name: string;
   };
+  academicLevel?: string; // Add academicLevel property
   createdAt: string;
   updatedAt: string;
   availability?: string;
   price?: number;
   views?: number;
+  previewImageUrl?: string;
 }

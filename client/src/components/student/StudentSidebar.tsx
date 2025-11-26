@@ -9,7 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
-  Package, // Add this
+  Package,
+  BookOpen, // Add this for Tutes
 } from "lucide-react";
 import {
   Sidebar,
@@ -51,6 +52,12 @@ const menuItems = [
     icon: FileText,
     href: "/student/papers",
     colorClass: "sidebar-icon-papers",
+  },
+  {
+    title: "Tutes",
+    icon: BookOpen,
+    href: "/student/tutes",
+    colorClass: "sidebar-icon-tutes",
   },
   {
     title: "Meeting",

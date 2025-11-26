@@ -34,6 +34,7 @@ const yearRoutes_1 = __importDefault(require("./routes/yearRoutes"));
 const youtubeRoutes_1 = __importDefault(require("./routes/youtubeRoutes"));
 const zoomRoutes_1 = __importDefault(require("./routes/zoomRoutes"));
 const coursePackageRoutes_1 = __importDefault(require("./routes/coursePackageRoutes")); // Import new course package routes
+const tuteRoutes_1 = __importDefault(require("./routes/tuteRoutes")); // Import tute routes
 // Import new modular routes
 const auth_1 = require("./modules/shared/middleware/auth");
 const routes_1 = __importDefault(require("./modules/student/routes"));
@@ -92,6 +93,7 @@ app.use('/api/institutes', instituteRoutes_1.default);
 app.use('/api/images', imageUploadRoutes_1.default);
 app.use('/api/papers', paperRoutes_1.default);
 app.use('/api/videos', videoRoutes_1.default);
+app.use('/api/tutes', tuteRoutes_1.default);
 app.use('/api/years', yearRoutes_1.default);
 app.use('/api/youtube', youtubeRoutes_1.default);
 app.use('/api/zoom', zoomRoutes_1.default);

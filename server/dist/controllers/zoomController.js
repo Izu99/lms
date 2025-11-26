@@ -3,10 +3,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateZoomLink = exports.deleteZoomLink = exports.createZoomLink = exports.getZoomLinks = void 0;
 const ZoomLink_1 = require("../models/ZoomLink");
 // Get all zoom links
+// Get all zoom links
 const getZoomLinks = async (req, res) => {
     try {
         const user = req.user;
+        const { institute, year, academicLevel } = req.query;
         let query = {};
+        if (institute && institute !== 'all')
+            query.institute = institute;
+        if (year && year !== 'all')
+            query.year = year;
+        if (academicLevel && academicLevel !== 'all')
+            query.academicLevel = academicLevel;
         // Removed student-specific filtering as per user request.
         // All authenticated users will now see all Zoom links.
         const zoomLinks = await ZoomLink_1.ZoomLink.find(query)
@@ -25,7 +33,7 @@ exports.getZoomLinks = getZoomLinks;
 // Create new zoom link
 const createZoomLink = async (req, res) => {
     try {
-        const { meeting, institute: instituteId, year: yearId } = req.body; // Expect meeting object
+        const { meeting, institute: instituteId, year: yearId, academicLevel, availability } = req.body; // Add academicLevel
         const { title, zoomLink } = meeting; // Extract from meeting
         if (!title || !zoomLink || !instituteId || !yearId) {
             return res.status(400).json({ message: 'Title, Zoom link, institute, and year are required' });
@@ -44,6 +52,8 @@ const createZoomLink = async (req, res) => {
             uploadedBy: userId,
             institute: instituteId,
             year: yearId,
+            academicLevel: academicLevel, // Add academicLevel
+            availability: availability || 'all',
         });
         await newZoomLink.save();
         await newZoomLink.populate('uploadedBy', 'username role');
@@ -76,7 +86,7 @@ exports.deleteZoomLink = deleteZoomLink;
 // Update zoom link
 const updateZoomLink = async (req, res) => {
     try {
-        const { meeting, institute, year } = req.body; // Expect meeting object
+        const { meeting, institute, year, academicLevel, availability } = req.body; // Add academicLevel
         const { id } = req.params;
         const zoomLink = await ZoomLink_1.ZoomLink.findById(id);
         if (!zoomLink) {
@@ -111,6 +121,12 @@ const updateZoomLink = async (req, res) => {
         }
         if (year !== undefined) {
             zoomLink.year = year;
+        }
+        if (academicLevel !== undefined) {
+            zoomLink.academicLevel = academicLevel; // Add academicLevel update
+        }
+        if (availability !== undefined) {
+            zoomLink.availability = availability;
         }
         await zoomLink.save();
         await zoomLink.populate('uploadedBy', 'username role');

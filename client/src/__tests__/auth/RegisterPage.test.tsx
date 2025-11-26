@@ -18,8 +18,14 @@ jest.mock('next/navigation', () => ({
 // Mock axios for API calls
 jest.mock('axios', () => ({
   post: jest.fn(),
+  get: jest.fn((url) => {
+    if (url.includes('/api/institutes')) {
+      return Promise.resolve({ data: { institutes: [{ _id: 'inst1', name: 'Test Institute', location: 'Test Location', isActive: true }] } });
+    }
+    return Promise.reject(new Error('not found'));
+  }),
   isAxiosError: jest.fn(),
-}))
+}));
 
 import axios from 'axios'
 const mockedAxios = axios as jest.Mocked<typeof axios>
@@ -51,7 +57,7 @@ describe('RegisterPage', () => {
     expect(screen.getByLabelText(/first name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/last name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/username/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^Password/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/confirm password/i)).toBeInTheDocument()
     
     // Check navigation
@@ -71,8 +77,9 @@ describe('RegisterPage', () => {
     await user.type(screen.getByLabelText(/first name/i), 'John')
     await user.type(screen.getByLabelText(/last name/i), 'Doe')
     await user.type(screen.getByLabelText(/username/i), 'johndoe')
-    await user.type(screen.getByLabelText(/^password$/i), 'password123')
-    await user.type(screen.getByLabelText(/confirm password/i), 'password123')
+    await user.type(screen.getByLabelText(/email/i), 'john.doe@example.com')
+    await user.type(screen.getByLabelText(/^Password/i), 'Password123!')
+    await user.type(screen.getByLabelText(/confirm password/i), 'Password123!')
     
     await user.click(screen.getByRole('button', { name: /continue/i }))
     
@@ -91,13 +98,16 @@ describe('RegisterPage', () => {
     await user.type(screen.getByLabelText(/first name/i), 'John')
     await user.type(screen.getByLabelText(/last name/i), 'Doe')
     await user.type(screen.getByLabelText(/username/i), 'johndoe')
-    await user.type(screen.getByLabelText(/^password$/i), 'password123')
+    await user.type(screen.getByLabelText(/email/i), 'john.doe@example.com')
+    await user.type(screen.getByLabelText(/^Password/i), 'Password123!')
     await user.type(screen.getByLabelText(/confirm password/i), 'differentpassword')
     
     await user.click(screen.getByRole('button', { name: /continue/i }))
     
     // Should show alert for password mismatch
-    expect(window.alert).toHaveBeenCalledWith('Passwords do not match')
+    await waitFor(() => {
+      expect(screen.getByText('Passwords do not match')).toBeInTheDocument()
+    })
   })
 
   it('navigates through all steps successfully', async () => {
@@ -108,8 +118,9 @@ describe('RegisterPage', () => {
     await user.type(screen.getByLabelText(/first name/i), 'John')
     await user.type(screen.getByLabelText(/last name/i), 'Doe')
     await user.type(screen.getByLabelText(/username/i), 'johndoe')
-    await user.type(screen.getByLabelText(/^password$/i), 'password123')
-    await user.type(screen.getByLabelText(/confirm password/i), 'password123')
+    await user.type(screen.getByLabelText(/email/i), 'john.doe@example.com')
+    await user.type(screen.getByLabelText(/^Password/i), 'Password123!')
+    await user.type(screen.getByLabelText(/confirm password/i), 'Password123!')
     await user.click(screen.getByRole('button', { name: /continue/i }))
     
     // Step 2: Contact Information
@@ -147,8 +158,9 @@ describe('RegisterPage', () => {
     await user.type(screen.getByLabelText(/first name/i), 'John')
     await user.type(screen.getByLabelText(/last name/i), 'Doe')
     await user.type(screen.getByLabelText(/username/i), 'johndoe')
-    await user.type(screen.getByLabelText(/^password$/i), 'password123')
-    await user.type(screen.getByLabelText(/confirm password/i), 'password123')
+    await user.type(screen.getByLabelText(/email/i), 'john.doe@example.com')
+    await user.type(screen.getByLabelText(/^Password/i), 'Password123!')
+    await user.type(screen.getByLabelText(/confirm password/i), 'Password123!')
     await user.click(screen.getByRole('button', { name: /continue/i }))
     
     await waitFor(() => {
@@ -173,8 +185,9 @@ describe('RegisterPage', () => {
     await user.type(screen.getByLabelText(/first name/i), 'John')
     await user.type(screen.getByLabelText(/last name/i), 'Doe')
     await user.type(screen.getByLabelText(/username/i), 'johndoe')
-    await user.type(screen.getByLabelText(/^password$/i), 'password123')
-    await user.type(screen.getByLabelText(/confirm password/i), 'password123')
+    await user.type(screen.getByLabelText(/email/i), 'john.doe@example.com')
+    await user.type(screen.getByLabelText(/^Password/i), 'Password123!')
+    await user.type(screen.getByLabelText(/confirm password/i), 'Password123!')
     await user.click(screen.getByRole('button', { name: /continue/i }))
     
     await waitFor(() => {
@@ -229,8 +242,9 @@ describe('RegisterPage', () => {
     await user.type(screen.getByLabelText(/first name/i), 'John')
     await user.type(screen.getByLabelText(/last name/i), 'Doe')
     await user.type(screen.getByLabelText(/username/i), 'johndoe')
-    await user.type(screen.getByLabelText(/^password$/i), 'password123')
-    await user.type(screen.getByLabelText(/confirm password/i), 'password123')
+    await user.type(screen.getByLabelText(/email/i), 'john.doe@example.com')
+    await user.type(screen.getByLabelText(/^Password/i), 'Password123!')
+    await user.type(screen.getByLabelText(/confirm password/i), 'Password123!')
     await user.click(screen.getByRole('button', { name: /continue/i }))
     
     // Step 2
@@ -291,8 +305,8 @@ describe('RegisterPage', () => {
     await user.type(screen.getByLabelText(/first name/i), 'John')
     await user.type(screen.getByLabelText(/last name/i), 'Doe')
     await user.type(screen.getByLabelText(/username/i), 'existinguser')
-    await user.type(screen.getByLabelText(/^password$/i), 'password123')
-    await user.type(screen.getByLabelText(/confirm password/i), 'password123')
+    await user.type(screen.getByLabelText(/^Password/i), 'Password123!')
+    await user.type(screen.getByLabelText(/confirm password/i), 'Password123!')
     await user.click(screen.getByRole('button', { name: /continue/i }))
     
     await waitFor(() => {
@@ -339,8 +353,9 @@ describe('RegisterPage', () => {
     await user.type(screen.getByLabelText(/first name/i), 'John')
     await user.type(screen.getByLabelText(/last name/i), 'Doe')
     await user.type(screen.getByLabelText(/username/i), 'johndoe')
-    await user.type(screen.getByLabelText(/^password$/i), 'password123')
-    await user.type(screen.getByLabelText(/confirm password/i), 'password123')
+    await user.type(screen.getByLabelText(/email/i), 'john.doe@example.com')
+    await user.type(screen.getByLabelText(/^Password/i), 'Password123!')
+    await user.type(screen.getByLabelText(/confirm password/i), 'Password123!')
     await user.click(screen.getByRole('button', { name: /continue/i }))
     
     await waitFor(() => {
@@ -397,8 +412,7 @@ describe('RegisterPage', () => {
     // Try to proceed from Step 1 without filling required fields
     await user.click(screen.getByRole('button', { name: /continue/i }))
     
-    // Should not proceed (HTML5 validation)
-    const firstNameInput = screen.getByLabelText(/first name/i)
-    expect(firstNameInput).toBeInvalid()
+    // Should display validation error message
+    expect(screen.getByText('First name is required')).toBeInTheDocument()
   })
 })

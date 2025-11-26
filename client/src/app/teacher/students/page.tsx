@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import { Users, Search, Mail, Phone, Award } from "lucide-react";
 import { StudentDetailsModal } from "@/components/teacher/modals/StudentDetailsModal";
@@ -10,13 +10,24 @@ import { StudentData } from "@/modules/teacher/types/student.types";
 import { LoadingComponent } from "@/components/common/LoadingComponent";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { EmptyStateComponent } from "@/components/common/EmptyStateComponent";
+import CommonFilter from "@/components/common/CommonFilter";
+import { useInstitutesAndYears } from "@/modules/teacher/hooks/useInstitutesAndYears";
+import { TableSkeleton } from "@/components/teacher/skeletons/TableSkeleton";
 
-export default function TeacherStudentsPage() {
+function TeacherStudentsPageContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const studentsPerPage = 10;
+
+  // Filter state
+  const [selectedInstitute, setSelectedInstitute] = useState("all");
+  const [selectedYear, setSelectedYear] = useState("all");
+  const [selectedAcademicLevel, setSelectedAcademicLevel] = useState("all");
+
+  // Hooks
+  const { institutes, years, academicLevels, isLoadingInstitutes, isLoadingYears, isLoadingAcademicLevels } = useInstitutesAndYears();
 
   const { students, isLoading, error, refetch } = useTeacherStudents();
 
@@ -28,6 +39,21 @@ export default function TeacherStudentsPage() {
       student.username.toLowerCase().includes(query) ||
       student.email?.toLowerCase().includes(query)
     );
+  }).filter((student) => {
+    // TODO: Add institute, year, and academicLevel filters when StudentData type is updated
+    // Apply institute filter
+    // if (selectedInstitute !== "all" && student.institute?._id !== selectedInstitute) {
+    //   return false;
+    // }
+    // Apply year filter
+    // if (selectedYear !== "all" && student.year?._id !== selectedYear) {
+    //   return false;
+    // }
+    // Apply academic level filter
+    // if (selectedAcademicLevel !== "all" && student.academicLevel !== selectedAcademicLevel) {
+    //   return false;
+    // }
+    return true;
   });
 
   // Pagination calculations
@@ -39,7 +65,7 @@ export default function TeacherStudentsPage() {
   // Reset to page 1 when search changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, selectedInstitute, selectedYear, selectedAcademicLevel]);
 
   const getInitials = (student: StudentData) => {
     if (student.firstName && student.lastName) {
@@ -75,9 +101,12 @@ export default function TeacherStudentsPage() {
     setIsModalOpen(true);
   };
 
+
+  // ...
+
   const renderContent = () => {
     if (isLoading) {
-      return <LoadingComponent />;
+      return <TableSkeleton />;
     }
 
     if (error) {
@@ -176,7 +205,7 @@ export default function TeacherStudentsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <button 
+                    <button
                       onClick={() => handleViewDetails(student._id)}
                       className="text-primary hover:underline text-sm font-medium"
                     >
@@ -220,18 +249,33 @@ export default function TeacherStudentsPage() {
         </div>
 
         {/* Search */}
-        <div className="bg-card rounded-xl shadow-md border border-border p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-4">
           <div className="flex items-center gap-3">
-            <Search className="w-5 h-5 text-muted-foreground" />
+            <Search className="w-5 h-5 text-gray-400 dark:text-gray-500" />
             <input
               type="text"
               placeholder="Search students by name, username, or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 outline-none text-sm bg-transparent text-foreground placeholder:text-muted-foreground"
+              className="flex-1 outline-none text-sm bg-transparent text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
           </div>
         </div>
+
+        <CommonFilter
+          institutes={institutes}
+          years={years}
+          academicLevels={academicLevels}
+          selectedInstitute={selectedInstitute}
+          selectedYear={selectedYear}
+          selectedAcademicLevel={selectedAcademicLevel}
+          onInstituteChange={setSelectedInstitute}
+          onYearChange={setSelectedYear}
+          onAcademicLevelChange={setSelectedAcademicLevel}
+          isLoadingInstitutes={isLoadingInstitutes}
+          isLoadingYears={isLoadingYears}
+          isLoadingAcademicLevels={isLoadingAcademicLevels}
+        />
 
         {renderContent()}
       </div>
@@ -246,4 +290,12 @@ export default function TeacherStudentsPage() {
       />
     </TeacherLayout>
   );
+}
+
+export default function TeacherStudentsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TeacherStudentsPageContent />
+    </Suspense>
+  )
 }

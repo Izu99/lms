@@ -8,8 +8,11 @@ export const deleteFile = async (filePath: string): Promise<void> => {
     return;
   }
 
-  // Ensure the path is relative and within the uploads directory to prevent directory traversal
-  const relativePath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+  // Correctly create a relative path by removing the '/uploads/' prefix
+  const relativePath = filePath.startsWith('/uploads/') 
+    ? filePath.substring('/uploads/'.length) 
+    : filePath;
+
   const absolutePath = path.join(UPLOADS_BASE_DIR, relativePath);
 
   // Basic security check to ensure we are deleting within the intended directory

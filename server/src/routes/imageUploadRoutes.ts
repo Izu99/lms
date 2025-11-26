@@ -1,23 +1,51 @@
 import express from 'express';
-import { uploadImage } from '../config/imageUpload';
-import { uploadIdCard } from '../config/idCardUpload';
-import { uploadPaperContent } from '../config/paperContentUpload';
-import { uploadExplanationImage as uploadExplanationImageConfig } from '../config/explanationUpload';
-import { uploadPaperOptionImage, uploadIdCardImage, uploadPaperContentImage, uploadExplanationImage } from '../controllers/imageUploadController';
+import { upload } from '../config/multer'; // Import the centralized multer instance
+import { uploadPaperOptionImage, uploadIdCardImage, uploadPaperContentImage, uploadExplanationImage, deleteImage } from '../controllers/imageUploadController';
 import { protect } from '../modules/shared/middleware/auth';
 
 const router = express.Router();
 
-// Route for uploading paper option images
-router.post('/upload/paper-options', protect, uploadImage.single('image'), uploadPaperOptionImage);
+// The 'protect' middleware is applied at the router level in index.ts/index.secure.ts,
+// so it's not needed for each individual route here.
+
+// Route for uploading paper option images (MCQ answers)
+router.post('/upload/paper-options', (req, res, next) => {
+  (req as any).uploadType = 'option'; // Maps to uploads/paper/answers
+  next();
+}, upload.single('image'), uploadPaperOptionImage);
+
+// Route for uploading question images
+router.post('/upload/question', (req, res, next) => {
+  (req as any).uploadType = 'question'; // Maps to uploads/paper/questions
+  next();
+}, upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No image file provided.' });
+  }
+  // Use req.file.path for consistent path handling
+  const imageUrl = `/${req.file.path.replace(/\\/g, '/')}`;
+  res.status(200).json({ imageUrl, message: 'Question image uploaded successfully.' });
+});
+
+// Route for uploading explanation images
+router.post('/upload/explanation', (req, res, next) => {
+  (req as any).uploadType = 'explanation'; // Maps to uploads/paper/explanations
+  next();
+}, upload.single('image'), uploadExplanationImage);
 
 // Route for uploading id card images
-router.post('/upload/id-card', protect, uploadIdCard.single('image'), uploadIdCardImage);
+router.post('/upload/id-card', (req, res, next) => {
+  (req as any).uploadType = 'id-card'; // Maps to uploads/id-cards
+  next();
+}, upload.single('image'), uploadIdCardImage);
 
 // Route for uploading paper content images
-router.post('/upload/paper-content', protect, uploadPaperContent.single('image'), uploadPaperContentImage);
+router.post('/upload/paper-content', (req, res, next) => {
+  (req as any).uploadType = 'paper'; // Maps to uploads/paper
+  next();
+}, upload.single('image'), uploadPaperContentImage);
 
-// Route for uploading explanation images (විවරණ images)
-router.post('/upload/explanation', protect, uploadExplanationImageConfig.single('image'), uploadExplanationImage);
+// Route for deleting an image
+router.post('/delete', protect, deleteImage);
 
 export default router;

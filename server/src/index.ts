@@ -34,6 +34,7 @@ import yearRoutes from './routes/yearRoutes';
 import youtubeRoutes from './routes/youtubeRoutes';
 import zoomRoutes from './routes/zoomRoutes';
 import coursePackageRoutes from './routes/coursePackageRoutes'; // Import new course package routes
+import tuteRoutes from './routes/tuteRoutes'; // Import tute routes
 
 // Import new modular routes
 import { protect } from './modules/shared/middleware/auth';
@@ -101,6 +102,7 @@ app.use('/api/institutes', instituteRoutes);
 app.use('/api/images', imageUploadRoutes);
 app.use('/api/papers', paperRoutes);
 app.use('/api/videos', videoRoutes);
+app.use('/api/tutes', tuteRoutes);
 app.use('/api/years', yearRoutes);
 app.use('/api/youtube', youtubeRoutes);
 app.use('/api/zoom', zoomRoutes);

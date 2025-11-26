@@ -9,11 +9,13 @@ const videoSchema = new mongoose_1.default.Schema({
     title: { type: String, required: true },
     description: String,
     videoUrl: { type: String, required: true },
+    previewImage: { type: String }, // Preview/thumbnail image
     uploadedBy: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User', required: true },
     institute: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Institute', required: true },
     year: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Year', required: true },
+    academicLevel: { type: String, enum: ['OL', 'AL'] }, // Academic level
     views: { type: Number, default: 0 }, // NEW: Default to 0 views
-    availability: { type: String, enum: ['all', 'physical'], default: 'all' },
+    availability: { type: String, enum: ['all', 'physical', 'paid'], default: 'all' },
     price: { type: Number, default: 0 },
 }, { timestamps: true });
 exports.Video = mongoose_1.default.model('Video', videoSchema);

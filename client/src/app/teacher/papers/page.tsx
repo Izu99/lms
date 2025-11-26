@@ -13,6 +13,8 @@ import {
   TrendingUp,
   Calendar,
   Eye,
+  School,
+  GraduationCap,
 } from "lucide-react";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
 import { LoadingComponent } from "@/components/common/LoadingComponent";
@@ -28,14 +30,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { TeacherPaperService } from "@/modules/teacher/services/PaperService";
 import { PaperData } from "@/modules/teacher/types/paper.types";
 import { isAxiosError } from '@/lib/utils/error';
 import { useTeacherPapers } from "@/modules/teacher/hooks/useTeacherPapers";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"; // Import Tabs components
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import CommonFilter from "@/components/common/CommonFilter";
+import { useInstitutesAndYears } from "@/modules/teacher/hooks/useInstitutesAndYears";
+import { API_BASE_URL } from "@/lib/constants";
+import { GridSkeleton } from "@/components/teacher/skeletons/GridSkeleton";
 
 // New component for displaying papers list
 const TeacherPapersList = ({
@@ -67,7 +71,15 @@ const TeacherPapersList = ({
           onClick={() => router.push(`/teacher/papers/${paper._id}/results`)}
           className="relative w-full h-48 bg-gradient-to-br from-purple-700 to-purple-900 cursor-pointer group overflow-hidden flex items-center justify-center"
         >
-          <FileText className="w-24 h-24 text-white/50 group-hover:scale-110 transition-transform" />
+          {paper.previewImageUrl ? (
+            <img
+              src={`${API_BASE_URL}${paper.previewImageUrl}`}
+              alt={paper.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <FileText className="w-24 h-24 text-white/50 group-hover:scale-110 transition-transform" />
+          )}
           <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
             <div className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg opacity-0 group-hover:opacity-100">
               <Eye className="w-8 h-8 text-white" />
@@ -165,29 +177,34 @@ export default function TeacherPapersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const papersPerPage = 10;
   const [activeTab, setActiveTab] = useState("all-papers");
+  const { institutes, years, academicLevels, isLoadingInstitutes, isLoadingYears, isLoadingAcademicLevels } = useInstitutesAndYears();
+  const [selectedInstitute, setSelectedInstitute] = useState("all");
+  const [selectedYear, setSelectedYear] = useState("all");
+  const [selectedAcademicLevel, setSelectedAcademicLevel] = useState("all");
 
   const router = useRouter();
 
-  const { papers, isLoading, error, refetch } = useTeacherPapers();
+  const { papers, isLoading, error, refetch } = useTeacherPapers(selectedInstitute, selectedYear, selectedAcademicLevel);
 
-  const filteredPapers = papers.filter((paper) =>
-    paper.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    paper.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPapers = papers
+    .filter((paper) =>
+      paper.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      paper.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   const mcqPapers = filteredPapers.filter(
     (paper) => paper.paperType === "MCQ"
   );
 
   const structurePapers = filteredPapers.filter(
-    (paper) => paper.paperType === "Structure"
+    (paper) => paper.paperType === "Structure-Essay"
   );
 
   const displayPapers = activeTab === "mcq"
     ? mcqPapers
-    : activeTab === "structure"
-    ? structurePapers
-    : filteredPapers;
+    : activeTab === "structure-essay"
+      ? structurePapers
+      : filteredPapers;
 
 
   const totalPages = Math.ceil(displayPapers.length / papersPerPage);
@@ -197,7 +214,7 @@ export default function TeacherPapersPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, activeTab]); // Reset to page 1 when search or tab changes
+  }, [searchQuery, activeTab, selectedInstitute, selectedYear]);
 
   const formatDate = (dateString: string | Date) => {
     const date = new Date(dateString);
@@ -239,9 +256,12 @@ export default function TeacherPapersPage() {
     router.push(`/teacher/papers/${paper._id}/edit`);
   };
 
+
+  // ...
+
   const renderPaperList = (papersToRender: PaperData[], emptyMessage: string) => {
     if (isLoading) {
-      return <LoadingComponent />;
+      return <GridSkeleton />;
     }
 
     if (error) {
@@ -261,10 +281,10 @@ export default function TeacherPapersPage() {
           action={
             !searchQuery
               ? {
-                  label: "Create Paper",
-                  onClick: () => router.push('/teacher/papers/create'),
-                  Icon: Plus,
-                }
+                label: "Create Paper",
+                onClick: () => router.push('/teacher/papers/create'),
+                Icon: Plus,
+              }
               : undefined
           }
         />
@@ -273,6 +293,63 @@ export default function TeacherPapersPage() {
 
     return (
       <>
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 sidebar-icon sidebar-icon-papers">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Papers</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{papers.length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center shadow-md">
+                <School className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Institutes</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {[...new Set(papers.filter(p => p.institute).map(p => p.institute!._id))].length}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                <GraduationCap className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Academic Years</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {[...new Set(papers.filter(p => p.year).map(p => p.year!._id))].length}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center shadow-md">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Submissions</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {papers.reduce((sum, p) => sum + (p.submissionCount || 0), 0)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <TeacherPapersList
           paginatedPapers={papersToRender.slice(startIndex, endIndex)}
           handleEdit={handleEdit}
@@ -334,12 +411,27 @@ export default function TeacherPapersPage() {
           </div>
         </div>
 
+        <CommonFilter
+          institutes={institutes}
+          years={years}
+          academicLevels={academicLevels}
+          selectedInstitute={selectedInstitute}
+          selectedYear={selectedYear}
+          selectedAcademicLevel={selectedAcademicLevel}
+          onInstituteChange={setSelectedInstitute}
+          onYearChange={setSelectedYear}
+          onAcademicLevelChange={setSelectedAcademicLevel}
+          isLoadingInstitutes={isLoadingInstitutes}
+          isLoadingYears={isLoadingYears}
+          isLoadingAcademicLevels={isLoadingAcademicLevels}
+        />
+
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="all-papers">All Papers</TabsTrigger>
             <TabsTrigger value="mcq">MCQ</TabsTrigger>
-            <TabsTrigger value="structure">Structure</TabsTrigger>
+            <TabsTrigger value="structure-essay">Structure and Essay</TabsTrigger>
           </TabsList>
           <TabsContent value="all-papers">
             {renderPaperList(filteredPapers, "No papers yet")}
@@ -347,8 +439,8 @@ export default function TeacherPapersPage() {
           <TabsContent value="mcq">
             {renderPaperList(mcqPapers, "No MCQ papers found.")}
           </TabsContent>
-          <TabsContent value="structure">
-            {renderPaperList(structurePapers, "No Structure papers found.")}
+          <TabsContent value="structure-essay">
+            {renderPaperList(structurePapers, "No Structure and Essay papers found.")}
           </TabsContent>
         </Tabs>
       </div>

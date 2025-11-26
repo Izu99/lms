@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/modules/shared/hooks/useAuth";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 
 interface User {
   _id: string;
@@ -16,7 +16,7 @@ interface LocalStorageData {
   parsedUser: User | null;
 }
 
-export default function DebugAuthPage() {
+function DebugAuthPageContent() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const [localStorageData, setLocalStorageData] = useState<LocalStorageData | null>(null);
 
@@ -134,5 +134,14 @@ export default function DebugAuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+
+export default function DebugAuthPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DebugAuthPageContent />
+    </Suspense>
   );
 }

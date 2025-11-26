@@ -5,9 +5,18 @@ import fs from 'fs';
 import path from 'path';
 
 // Get all videos
+// Get all videos
 export const getAllVideos = async (req: Request, res: Response) => {
   try {
-    const videos = await Video.find()
+    const { institute, year, academicLevel } = req.query;
+    const filter: any = {};
+
+    if (institute && institute !== 'all') filter.institute = institute;
+    if (year && year !== 'all') filter.year = year;
+    // Note: Video model might not have academicLevel yet, but adding logic for consistency if it does or will
+    if (academicLevel && academicLevel !== 'all') filter.academicLevel = academicLevel;
+
+    const videos = await Video.find(filter)
       .populate('uploadedBy', 'username role')
       .populate('institute', 'name location')
       .populate('year', 'year name')
@@ -22,13 +31,15 @@ export const getAllVideos = async (req: Request, res: Response) => {
 // Upload new video
 export const uploadVideo = async (req: Request, res: Response) => {
   try {
-    const { title, description, institute: instituteId, year: yearId, availability, price } = req.body;
-    const videoFile = req.file;
-    
+    const { title, description, institute: instituteId, year: yearId, academicLevel, availability, price } = req.body;
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const videoFile = files?.video?.[0];
+    const previewImageFile = files?.previewImage?.[0];
+
     if (!videoFile) {
       return res.status(400).json({ message: 'No video file uploaded' });
     }
-    
+
     if (!title || !instituteId || !yearId) {
       return res.status(400).json({ message: 'Title, institute, and year are required' });
     }
@@ -42,10 +53,12 @@ export const uploadVideo = async (req: Request, res: Response) => {
       title,
       description,
       videoUrl: videoFile.filename,
+      previewImage: previewImageFile ? previewImageFile.filename : undefined,
       uploadedBy: userId,
       institute: instituteId,
       year: yearId,
-      views: 0,  // NEW: Initialize with 0 views
+      academicLevel, // Add academicLevel
+      views: 0,
       availability,
       price,
     });
@@ -54,7 +67,7 @@ export const uploadVideo = async (req: Request, res: Response) => {
     await newVideo.populate('uploadedBy', 'username role');
     await newVideo.populate('institute', 'name location');
     await newVideo.populate('year', 'year name');
-    
+
     res.status(201).json({ message: 'Video uploaded successfully', video: newVideo });
   } catch (error) {
     console.error("Upload video error:", error);
@@ -66,17 +79,17 @@ export const uploadVideo = async (req: Request, res: Response) => {
 export const incrementViewCount = async (req: Request, res: Response) => {
   try {
     const videoId = req.params.id;
-    
+
     const video = await Video.findByIdAndUpdate(
       videoId,
       { $inc: { views: 1 } },  // Increment views by 1
       { new: true }
     );
-    
+
     if (!video) {
       return res.status(404).json({ message: 'Video not found' });
     }
-    
+
     res.json({ message: 'View count updated', views: video.views });
   } catch (error) {
     console.error("Increment view error:", error);
@@ -88,26 +101,44 @@ export const incrementViewCount = async (req: Request, res: Response) => {
 export const updateVideo = async (req: Request, res: Response) => {
   try {
     const update: any = {};
-    const { title, description, institute: instituteId, year: yearId, availability, price } = req.body || {};
-    
+    const { title, description, institute: instituteId, year: yearId, academicLevel, availability, price } = req.body || {};
+
     if (title !== undefined) update.title = title;
     if (description !== undefined) update.description = description;
     if (instituteId !== undefined) update.institute = instituteId;
     if (yearId !== undefined) update.year = yearId;
+    if (academicLevel !== undefined) update.academicLevel = academicLevel; // Add academicLevel
     if (availability !== undefined) update.availability = availability;
     if (price !== undefined) update.price = price;
 
-    // Handle new file if uploaded
-    if (req.file) {
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const videoFile = files?.video?.[0];
+    const previewImageFile = files?.previewImage?.[0];
+
+    // Handle new video file if uploaded
+    if (videoFile) {
       const prev = await Video.findById(req.params.id);
       if (prev && prev.videoUrl) {
         try {
-          fs.unlinkSync(path.join(__dirname, '../../', prev.videoUrl));
-        } catch (e) { 
-          console.log("Old file not found, continuing..."); 
+          fs.unlinkSync(path.join(__dirname, '../../', 'uploads/videos/files', prev.videoUrl));
+        } catch (e) {
+          console.log("Old video file not found, continuing...");
         }
       }
-      update.videoUrl = req.file.filename;
+      update.videoUrl = videoFile.filename;
+    }
+
+    // Handle new preview image if uploaded
+    if (previewImageFile) {
+      const prev = await Video.findById(req.params.id);
+      if (prev && prev.previewImage) {
+        try {
+          fs.unlinkSync(path.join(__dirname, '../../', 'uploads/videos/images', prev.previewImage));
+        } catch (e) {
+          console.log("Old preview image not found, continuing...");
+        }
+      }
+      update.previewImage = previewImageFile.filename;
     }
 
     const video = await Video.findByIdAndUpdate(
@@ -118,11 +149,11 @@ export const updateVideo = async (req: Request, res: Response) => {
       .populate('uploadedBy', 'username role')
       .populate('institute', 'name location')
       .populate('year', 'year name');
-    
+
     if (!video) {
       return res.status(404).json({ message: 'Video not found' });
     }
-    
+
     res.json({ message: 'Video updated successfully', video });
   } catch (err) {
     console.error("Update Error:", err);
@@ -183,7 +214,7 @@ export const getVideoById = async (req: Request, res: Response) => {
       hasAccess = true;
     } else if (video.availability === 'physical' && studentType === 'Physical') {
       hasAccess = true;
-    } else if (video.price && video.price > 0) {
+    } else if (video.availability === 'paid' || (video.price && video.price > 0)) {
       paymentRequired = true;
     } else {
       // Default to free if price is 0 and no specific restriction
@@ -203,7 +234,7 @@ export const getVideoById = async (req: Request, res: Response) => {
       // This case should ideally not be reached if logic is exhaustive, but as a fallback
       return res.status(403).json({ message: 'Access denied to this video.' });
     }
-    
+
     res.json({ video });
   } catch (error) {
     console.error("Get video by ID error:", error);
@@ -245,7 +276,7 @@ export const getVideoAnalytics = async (req: Request, res: Response) => {
     const videoId = req.params.id;
 
     const watches = await VideoWatch.find({ video: videoId }).populate('student', 'username');
-    
+
     const totalWatches = watches.length;
     const uniqueViewers = new Set(watches.map(w => w.student._id.toString())).size;
     const averageWatchTime = totalWatches > 0 ? watches.reduce((acc, w) => acc + w.watchDuration, 0) / totalWatches : 0;

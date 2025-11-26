@@ -89,9 +89,8 @@ export function SearchableMultiSelect({
       >
         {renderButtonText()}
         <svg
-          className={`h-5 w-5 text-gray-500 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`h-5 w-5 text-gray-500 transition-transform ${isOpen ? "rotate-180" : ""
+            }`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -174,6 +173,11 @@ interface Paper {
   title: string;
 }
 
+interface Tute { // New interface for Tute
+  _id: string;
+  title: string;
+}
+
 interface CoursePackageFormProps {
   initialData?: CoursePackageData;
   onSuccess: () => void;
@@ -201,9 +205,11 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
     price: number;
     videos: string[];
     papers: string[];
-    availability: "all" | "physical";
+    tutes: string[]; // Add tutes array
+    availability: "all" | "physical" | "paid";
     instituteId: string;
     yearId: string;
+    academicLevelId: string; // Add academicLevelId
     image?: File;
     backgroundImage?: string;
   }>({
@@ -212,16 +218,24 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
     price: 0,
     videos: [],
     papers: [],
+    tutes: [], // Initialize tutes array
     availability: "all",
     instituteId: "",
     yearId: "",
+    academicLevelId: "", // Initialize academicLevelId
   });
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [availableVideos, setAvailableVideos] = useState<Video[]>([]);
   const [availablePapers, setAvailablePapers] = useState<Paper[]>([]);
+  const [availableTutes, setAvailableTutes] = useState<Tute[]>([]); // New state for available tutes
   const [institutes, setInstitutes] = useState<InstituteData[]>([]);
   const [years, setYears] = useState<YearData[]>([]);
+  // Hardcoded academic levels
+  const academicLevels = [
+    { _id: "OL", name: "Ordinary Level" },
+    { _id: "AL", name: "Advanced Level" }
+  ];
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -232,9 +246,11 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
         price: initialData.price || 0,
         videos: initialData.videos?.map(v => (typeof v === 'string' ? v : v._id)) || [],
         papers: initialData.papers?.map(p => (typeof p === 'string' ? p : p._id)) || [],
+        tutes: initialData.tutes?.map((t: any) => (typeof t === 'string' ? t : t._id)) || [], // Initialize tutes
         availability: initialData.availability || "all",
         instituteId: typeof initialData.institute !== 'string' ? initialData.institute?._id || "" : "",
         yearId: typeof initialData.year !== 'string' ? initialData.year?._id || "" : "",
+        academicLevelId: initialData.academicLevel || "", // Populate academicLevelId
         backgroundImage: initialData.backgroundImage,
       });
       if (initialData.backgroundImage) {
@@ -250,14 +266,16 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [videosRes, papersRes, institutesRes, yearsRes] = await Promise.all([
+        const [videosRes, papersRes, tutesRes, institutesRes, yearsRes] = await Promise.all([
           api.get<{ videos: Video[] }>('/videos'),
           api.get<{ papers: Paper[] }>('/papers'),
+          api.get<{ tutes: Tute[] }>('/tutes/teacher'), // Fetch tutes
           api.get<{ institutes: InstituteData[] }>('/institutes'),
           api.get<{ years: YearData[] }>('/years')
         ]);
         setAvailableVideos(videosRes.data.videos || []);
         setAvailablePapers(papersRes.data.papers || []);
+        setAvailableTutes(tutesRes.data.tutes || []); // Set available tutes
         setInstitutes(institutesRes.data.institutes || []);
         setYears(yearsRes.data.years || []);
       } catch (error) {
@@ -280,14 +298,14 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       toast.error("Please enter a package title");
       return;
     }
 
-    if (formData.videos.length === 0 && formData.papers.length === 0) {
-      toast.error("Please select at least one video or paper");
+    if (formData.videos.length === 0 && formData.papers.length === 0 && formData.tutes.length === 0) {
+      toast.error("Please select at least one video, paper, or tute");
       return;
     }
 
@@ -298,9 +316,11 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
       packageData.append("price", formData.price.toString());
       formData.videos.forEach(v => packageData.append("videos", v));
       formData.papers.forEach(p => packageData.append("papers", p));
+      formData.tutes.forEach(t => packageData.append("tutes", t)); // Append tutes
       packageData.append("availability", formData.availability);
       packageData.append("institute", formData.instituteId);
       packageData.append("year", formData.yearId);
+      packageData.append("academicLevel", formData.academicLevelId); // Append academicLevel
       if (formData.image) {
         packageData.append("image", formData.image);
       }
@@ -312,7 +332,7 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
         await CoursePackageService.createCoursePackage(packageData);
         toast.success("Course package created successfully!");
       }
-      
+
       onSuccess();
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
@@ -374,62 +394,89 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
         )}
       </div>
 
-      {/* Institute Selection */}
-      <div>
-        <label className="block text-sm font-medium mb-2 theme-text-primary">
-          Institute *
-        </label>
-        <Select
-          value={formData.instituteId}
-          onValueChange={(value) => setFormData({ ...formData, instituteId: value })}
-          disabled={loading}
-          required
-        >
-          <SelectTrigger className="w-full pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-            <SelectValue placeholder={loading ? "Loading institutes..." : "Select an institute"} />
-          </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-            {institutes.map(instituteItem => (
-              <SelectItem key={instituteItem._id} value={instituteItem._id} className="text-gray-900 dark:text-white">
-                {instituteItem.name} - {instituteItem.location}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {institutes.length === 0 && !loading && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-            No institutes available.
-          </p>
-        )}
-      </div>
+      {/* Institute, Year, and Academic Level Selection - in one row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Institute Selection */}
+        <div>
+          <label className="block text-sm font-medium mb-2 theme-text-primary">
+            Institute *
+          </label>
+          <Select
+            value={formData.instituteId}
+            onValueChange={(value) => setFormData({ ...formData, instituteId: value })}
+            disabled={loading}
+            required
+          >
+            <SelectTrigger className="w-full pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+              <SelectValue placeholder={loading ? "Loading institutes..." : "Select an institute"} />
+            </SelectTrigger>
+            <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+              {institutes.map(instituteItem => (
+                <SelectItem key={instituteItem._id} value={instituteItem._id} className="text-gray-900 dark:text-white">
+                  {instituteItem.name} - {instituteItem.location}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {institutes.length === 0 && !loading && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+              No institutes available.
+            </p>
+          )}
+        </div>
 
-      {/* Year Selection */}
-      <div>
-        <label className="block text-sm font-medium mb-2 theme-text-primary">
-          Academic Year *
-        </label>
-        <Select
-          value={formData.yearId}
-          onValueChange={(value) => setFormData({ ...formData, yearId: value })}
-          disabled={loading}
-          required
-        >
-          <SelectTrigger className="w-full pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-            <SelectValue placeholder={loading ? "Loading years..." : "Select a year"} />
-          </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-            {years.map(yearItem => (
-              <SelectItem key={yearItem._id} value={yearItem._id} className="text-gray-900 dark:text-white">
-                {yearItem.name} (A-Level Year {yearItem.year})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {years.length === 0 && !loading && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-            No years available.
-          </p>
-        )}
+        {/* Year Selection */}
+        <div>
+          <label className="block text-sm font-medium mb-2 theme-text-primary">
+            Academic Year *
+          </label>
+          <Select
+            value={formData.yearId}
+            onValueChange={(value) => setFormData({ ...formData, yearId: value })}
+            disabled={loading}
+            required
+          >
+            <SelectTrigger className="w-full pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+              <SelectValue placeholder={loading ? "Loading years..." : "Select a year"} />
+            </SelectTrigger>
+            <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+              {years.map(yearItem => (
+                <SelectItem key={yearItem._id} value={yearItem._id} className="text-gray-900 dark:text-white">
+                  {yearItem.name} (A-Level Year {yearItem.year})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {years.length === 0 && !loading && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+              No years available.
+            </p>
+          )}
+        </div>
+
+        {/* Academic Level Selection */}
+        <div>
+          <label className="block text-sm font-medium mb-2 theme-text-primary">
+            Academic Level *
+          </label>
+          <Select
+            value={formData.academicLevelId}
+            onValueChange={(value) => setFormData({ ...formData, academicLevelId: value })}
+            disabled={loading}
+            required
+          >
+            <SelectTrigger className="w-full pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+              <SelectValue placeholder={loading ? "Loading levels..." : "Select a level"} />
+            </SelectTrigger>
+            <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+              {academicLevels.map(level => (
+                <SelectItem key={level._id} value={level._id} className="text-gray-900 dark:text-white">
+                  {level.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div>
@@ -454,6 +501,17 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
         />
       </div>
 
+      <div>
+        <label className="block text-sm font-medium mb-2 theme-text-primary">Select Tutes</label>
+        <SearchableMultiSelect
+          options={availableTutes.map(t => ({ label: t.title, value: t._id }))}
+          selected={formData.tutes}
+          onChange={(selected) => setFormData({ ...formData, tutes: selected })}
+          placeholder={loading ? "Loading tutes..." : "Choose tutes..."}
+          isLoading={loading}
+        />
+      </div>
+
       {/* Availability Selection */}
       <div>
         <label className="block text-sm font-medium mb-2 theme-text-primary">
@@ -461,7 +519,7 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
         </label>
         <Select
           value={formData.availability}
-          onValueChange={(value: "all" | "physical") => setFormData({ ...formData, availability: value })}
+          onValueChange={(value: "all" | "physical" | "paid") => setFormData({ ...formData, availability: value })}
           required
           disabled={loading}
         >
@@ -470,10 +528,13 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
           </SelectTrigger>
           <SelectContent className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
             <SelectItem value="all" className="text-gray-900 dark:text-white">
-              Free for all students in institute/year
+              All Students
             </SelectItem>
             <SelectItem value="physical" className="text-gray-900 dark:text-white">
-              Free for physical students only
+              Physical Class Only
+            </SelectItem>
+            <SelectItem value="paid" className="text-gray-900 dark:text-white">
+              Paid Only
             </SelectItem>
           </SelectContent>
         </Select>

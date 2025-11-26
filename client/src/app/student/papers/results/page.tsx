@@ -46,7 +46,7 @@ interface Result {
     title: string;
     description?: string;
     deadline: string;
-    paperType: 'MCQ' | 'Structure'; // Add paperType
+    paperType: 'MCQ' | 'Structure-Essay'; // Add paperType
     averagePercentage: number; // New: average percentage for this paper
   };
   score: number;
@@ -293,7 +293,7 @@ const ResultCard = ({ result, index }: ResultCardProps) => {
           </div>
           <Link href={`/student/papers/answers/${result.paperId._id}`}>
             <Button variant="outline">
-              {result.paperId.paperType === 'Structure' ? 'View Details' : 'See Answers'}
+              {result.paperId.paperType === 'Structure-Essay' ? 'View Details' : 'See Answers'}
             </Button>
           </Link>
         </div>
@@ -340,7 +340,7 @@ const ResultCard = ({ result, index }: ResultCardProps) => {
           <div className="bg-gray-100 dark:bg-gray-800/50 p-3 rounded-lg">
             <p className="text-sm text-theme-text-secondary flex items-center justify-center gap-1"><BarChart size={14} /> Score</p>
             <p className="font-bold text-lg text-theme-text-primary">
-              {result.paperId.paperType === 'Structure' ? (
+              {result.paperId.paperType === 'Structure-Essay' ? (
                 <>Score: {result.score}</>
               ) : (
                 <>{result.score}/{result.totalQuestions}</>

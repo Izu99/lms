@@ -12,6 +12,8 @@ export interface IZoomLink extends Document {
   uploadedBy: Types.ObjectId;
   institute: Types.ObjectId;
   year: Types.ObjectId;
+  academicLevel?: string;
+  availability: 'all' | 'physical' | 'paid';
 }
 
 const meetingDetailsSchema = new mongoose.Schema<IMeetingDetails>({
@@ -26,6 +28,8 @@ const zoomLinkSchema = new mongoose.Schema<IZoomLink>({
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   institute: { type: mongoose.Schema.Types.ObjectId, ref: 'Institute', required: true },
   year: { type: mongoose.Schema.Types.ObjectId, ref: 'Year', required: true },
+  academicLevel: { type: String, enum: ['OL', 'AL'] },
+  availability: { type: String, enum: ['all', 'physical', 'paid'], default: 'all' },
 }, { timestamps: true });
 
 export const ZoomLink = mongoose.model<IZoomLink>('ZoomLink', zoomLinkSchema);

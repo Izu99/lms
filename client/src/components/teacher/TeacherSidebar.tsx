@@ -10,7 +10,8 @@ import {
   ChevronRight,
   GraduationCap,
   School,
-  Package, // Add this
+  Package,
+  BookOpen, // Add this for Tutes
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,6 +53,12 @@ const menuItems = [
     icon: FileText,
     href: "/teacher/papers",
     colorClass: "sidebar-icon-papers",
+  },
+  {
+    title: "Tutes",
+    icon: BookOpen,
+    href: "/teacher/tutes",
+    colorClass: "sidebar-icon-tutes",
   },
   {
     title: "Students",
@@ -123,7 +130,7 @@ export function TeacherSidebar({ user, onLogout }: TeacherSidebarProps) {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
-            
+
             return (
               <SidebarMenuItem
                 key={item.href}

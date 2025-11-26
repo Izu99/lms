@@ -2,18 +2,18 @@ import { Video } from '../../../models/Video';
 import { Paper } from '../../../models/Paper';
 import { User } from '../../../models/User';
 import { StudentAttempt } from '../../../models/StudentAttempt';
-import { 
-  TeacherDashboardStats, 
-  TeacherVideoSummary, 
-  TeacherPaperSummary, 
+import {
+  TeacherDashboardStats,
+  TeacherVideoSummary,
+  TeacherPaperSummary,
   StudentSummary,
-  TeacherAnalytics 
+  TeacherAnalytics
 } from '../types/teacherDashboard.types';
 
 // Helper to safely convert date to ISO string
 function safeISOString(date: any): string {
   if (!date) {
-    return new Date(0).toISOString(); 
+    return new Date(0).toISOString();
   }
   try {
     const d = new Date(date);
@@ -43,58 +43,67 @@ export class TeacherDashboardService {
       const teacherPapers = await Paper.find({ teacherId }).select('_id');
       const teacherPaperIds = teacherPapers.map(p => p._id);
 
+      // Calculate date for active students (last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
       const [
         totalVideos,
         totalPapers,
+        totalTutes,
+        totalCoursePackages,
+        totalStudents,
         teacherVideos,
-        allAttempts
+        activeStudentIds,
+        totalSubmissions
       ] = await Promise.all([
         Video.countDocuments({ uploadedBy: teacherId }),
         Paper.countDocuments({ teacherId }),
+        // Import Tute model at the top: import { Tute } from '../../../models/Tute';
+        (async () => {
+          try {
+            const Tute = require('../../../models/Tute').Tute;
+            return await Tute.countDocuments({ uploadedBy: teacherId });
+          } catch (e) {
+            return 0;
+          }
+        })(),
+        // Import CoursePackage model at the top: import { CoursePackage } from '../../../models/CoursePackage';
+        (async () => {
+          try {
+            const CoursePackage = require('../../../models/CoursePackage').CoursePackage;
+            return await CoursePackage.countDocuments({ createdBy: teacherId });
+          } catch (e) {
+            return 0;
+          }
+        })(),
+        User.countDocuments({ role: 'student' }),
         Video.find({ uploadedBy: teacherId }).select('views'),
-        StudentAttempt.find({ paperId: { $in: teacherPaperIds } }).populate({
-          path: 'paperId',
-          select: 'teacherId',
-          model: 'Paper'
+        StudentAttempt.distinct('studentId', {
+          paperId: { $in: teacherPaperIds },
+          createdAt: { $gte: sevenDaysAgo }
+        }),
+        StudentAttempt.countDocuments({
+          paperId: { $in: teacherPaperIds },
+          status: 'submitted'
         })
       ]);
 
-      const distinctStudents = new Set(allAttempts.map(attempt => attempt.studentId.toString()));
-      const totalStudents = distinctStudents.size;
-
-
-
       const totalViews = teacherVideos.reduce((sum, video) => sum + (video.views || 0), 0);
-    
-    // Filter attempts for teacher's papers
-    const teacherAttempts = allAttempts.filter(attempt => {
-      // Ensure attempt.paperId exists and is an object after population
-      if (!attempt.paperId || typeof attempt.paperId !== 'object') {
-        return false;
-      }
-      const paper = attempt.paperId as { teacherId?: string }; // Explicitly type for safety
-      // Ensure paper.teacherId exists and matches the teacherId
-      return paper.teacherId && paper.teacherId.toString() === teacherId;
-    });
-
-    const activeStudents = new Set(
-      teacherAttempts
-        .filter(attempt => {
-          if (!(attempt as any).createdAt) return false;
-          const daysSinceActivity = (Date.now() - new Date((attempt as any).createdAt).getTime()) / (1000 * 60 * 60 * 24);
-          return daysSinceActivity <= 7; // Active in last 7 days
-        })
-        .map(attempt => attempt.studentId ? attempt.studentId.toString() : null)
-        .filter(id => id !== null)
-    ).size;
+      const activeStudents = activeStudentIds.length;
+      const inactiveStudents = totalStudents - activeStudents;
 
       return {
         totalVideos,
         totalPapers,
+        totalTutes,
+        totalCoursePackages,
         totalStudents,
         totalViews,
+        totalSubmissions,
         averageEngagement: totalStudents > 0 ? (activeStudents / totalStudents) * 100 : 0,
-        activeStudents
+        activeStudents,
+        inactiveStudents
       };
     } catch (error) {
       console.error('ERROR in getDashboardStats:', error);
@@ -152,7 +161,7 @@ export class TeacherDashboardService {
     }).lean();
 
     return papers.map(paper => {
-      const paperAttempts = attempts.filter(attempt => 
+      const paperAttempts = attempts.filter(attempt =>
         attempt.paperId && paper._id && attempt.paperId.toString() === paper._id.toString()
       );
 
@@ -193,7 +202,7 @@ export class TeacherDashboardService {
         .sort({ createdAt: -1 })
         .limit(limit)
         .lean();
-      
+
       const studentAttempts = await StudentAttempt.find({
         studentId: { $in: students.map(s => s._id) },
         paperId: { $in: teacherPaperIds },
@@ -229,7 +238,7 @@ export class TeacherDashboardService {
           averageScore,
           lastActivity
         };
-        });
+      });
     } catch (error) {
       console.error('ERROR in getStudentsSummary:', error);
       return []; // Return empty array on error

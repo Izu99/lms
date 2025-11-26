@@ -26,45 +26,57 @@ class TeacherDashboardService {
         try {
             const teacherPapers = await Paper_1.Paper.find({ teacherId }).select('_id');
             const teacherPaperIds = teacherPapers.map(p => p._id);
-            const [totalVideos, totalPapers, teacherVideos, allAttempts] = await Promise.all([
+            // Calculate date for active students (last 7 days)
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const [totalVideos, totalPapers, totalTutes, totalCoursePackages, totalStudents, teacherVideos, activeStudentIds, totalSubmissions] = await Promise.all([
                 Video_1.Video.countDocuments({ uploadedBy: teacherId }),
                 Paper_1.Paper.countDocuments({ teacherId }),
+                // Import Tute model at the top: import { Tute } from '../../../models/Tute';
+                (async () => {
+                    try {
+                        const Tute = require('../../../models/Tute').Tute;
+                        return await Tute.countDocuments({ uploadedBy: teacherId });
+                    }
+                    catch (e) {
+                        return 0;
+                    }
+                })(),
+                // Import CoursePackage model at the top: import { CoursePackage } from '../../../models/CoursePackage';
+                (async () => {
+                    try {
+                        const CoursePackage = require('../../../models/CoursePackage').CoursePackage;
+                        return await CoursePackage.countDocuments({ createdBy: teacherId });
+                    }
+                    catch (e) {
+                        return 0;
+                    }
+                })(),
+                User_1.User.countDocuments({ role: 'student' }),
                 Video_1.Video.find({ uploadedBy: teacherId }).select('views'),
-                StudentAttempt_1.StudentAttempt.find({ paperId: { $in: teacherPaperIds } }).populate({
-                    path: 'paperId',
-                    select: 'teacherId',
-                    model: 'Paper'
+                StudentAttempt_1.StudentAttempt.distinct('studentId', {
+                    paperId: { $in: teacherPaperIds },
+                    createdAt: { $gte: sevenDaysAgo }
+                }),
+                StudentAttempt_1.StudentAttempt.countDocuments({
+                    paperId: { $in: teacherPaperIds },
+                    status: 'submitted'
                 })
             ]);
-            const distinctStudents = new Set(allAttempts.map(attempt => attempt.studentId.toString()));
-            const totalStudents = distinctStudents.size;
             const totalViews = teacherVideos.reduce((sum, video) => sum + (video.views || 0), 0);
-            // Filter attempts for teacher's papers
-            const teacherAttempts = allAttempts.filter(attempt => {
-                // Ensure attempt.paperId exists and is an object after population
-                if (!attempt.paperId || typeof attempt.paperId !== 'object') {
-                    return false;
-                }
-                const paper = attempt.paperId; // Explicitly type for safety
-                // Ensure paper.teacherId exists and matches the teacherId
-                return paper.teacherId && paper.teacherId.toString() === teacherId;
-            });
-            const activeStudents = new Set(teacherAttempts
-                .filter(attempt => {
-                if (!attempt.createdAt)
-                    return false;
-                const daysSinceActivity = (Date.now() - new Date(attempt.createdAt).getTime()) / (1000 * 60 * 60 * 24);
-                return daysSinceActivity <= 7; // Active in last 7 days
-            })
-                .map(attempt => attempt.studentId ? attempt.studentId.toString() : null)
-                .filter(id => id !== null)).size;
+            const activeStudents = activeStudentIds.length;
+            const inactiveStudents = totalStudents - activeStudents;
             return {
                 totalVideos,
                 totalPapers,
+                totalTutes,
+                totalCoursePackages,
                 totalStudents,
                 totalViews,
+                totalSubmissions,
                 averageEngagement: totalStudents > 0 ? (activeStudents / totalStudents) * 100 : 0,
-                activeStudents
+                activeStudents,
+                inactiveStudents
             };
         }
         catch (error) {

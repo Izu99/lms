@@ -4,18 +4,21 @@ import axios from "axios";
 import { API_URL, API_BASE_URL } from "@/lib/constants";
 import Link from "next/link";
 import { StudentLayout } from "@/components/student/StudentLayout";
-import { Video, Eye, Clock, Plus, Search, Play, School, GraduationCap } from "lucide-react"; // Import icons
+import { Video, Eye, Clock, Plus, Search, Play, School, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LoadingComponent } from "@/components/common/LoadingComponent";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { EmptyStateComponent } from "@/components/common/EmptyStateComponent";
 import { Pagination } from "@/components/ui/pagination";
+import CommonFilter from "@/components/common/CommonFilter";
+import { StudentGridSkeleton } from "@/components/student/skeletons/StudentGridSkeleton";
+import { useStudentFilters } from "@/modules/student/hooks/useStudentFilters";
 
 interface Video {
   _id: string;
   title: string;
   description: string;
   videoUrl: string;
+  previewImage?: string;
   uploadedBy: {
     username: string;
   };
@@ -47,7 +50,13 @@ export default function VideosPage() {
   const [videoStats, setVideoStats] = useState<VideoStats | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const videosPerPage = 9; // Display 9 videos per page
+  const videosPerPage = 9;
+
+  // Filter states
+  const [selectedInstitute, setSelectedInstitute] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [selectedAcademicLevel, setSelectedAcademicLevel] = useState<string>("all");
+  const { institutes, years, academicLevels, isLoadingInstitutes, isLoadingYears, isLoadingAcademicLevels } = useStudentFilters();
 
   useEffect(() => {
     setCurrentPage(1);
@@ -94,10 +103,14 @@ export default function VideosPage() {
     }
   };
 
-  const filteredVideos = videos.filter(video =>
-    video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    video.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredVideos = videos.filter(video => {
+    const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesInstitute = selectedInstitute === "all" || video.institute?._id === selectedInstitute;
+    const matchesYear = selectedYear === "all" || video.year?._id === selectedYear;
+    // Academic level filtering can be added when backend supports it
+    return matchesSearch && matchesInstitute && matchesYear;
+  });
 
   // Pagination Logic
   const indexOfLastVideo = currentPage * videosPerPage;
@@ -108,7 +121,7 @@ export default function VideosPage() {
   if (loading) {
     return (
       <StudentLayout>
-        <LoadingComponent />
+        <StudentGridSkeleton />
       </StudentLayout>
     );
   }
@@ -126,16 +139,32 @@ export default function VideosPage() {
       <div>
         <h1 className="text-3xl font-bold theme-text-primary mb-8">Video Lessons</h1>
 
-        {/* Search and Filter */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-4 mb-8">
+        {/* Filter Component */}
+        <CommonFilter
+          institutes={institutes}
+          years={years}
+          academicLevels={academicLevels}
+          selectedInstitute={selectedInstitute}
+          selectedYear={selectedYear}
+          selectedAcademicLevel={selectedAcademicLevel}
+          onInstituteChange={setSelectedInstitute}
+          onYearChange={setSelectedYear}
+          onAcademicLevelChange={setSelectedAcademicLevel}
+          isLoadingInstitutes={isLoadingInstitutes}
+          isLoadingYears={isLoadingYears}
+          isLoadingAcademicLevels={isLoadingAcademicLevels}
+        />
+
+        {/* Search Bar */}
+        <div className="theme-bg-primary rounded-xl shadow-md theme-border p-4 mb-8">
           <div className="flex items-center gap-3">
-            <Search className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+            <Search className="w-5 h-5 theme-text-tertiary" />
             <input
               type="text"
               placeholder="Search videos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 outline-none text-sm bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+              className="flex-1 outline-none text-sm bg-transparent theme-text-primary placeholder:theme-text-tertiary"
             />
           </div>
         </div>
@@ -188,17 +217,25 @@ export default function VideosPage() {
               {paginatedVideos.map((video, index) => (
                 <Link href={`/student/videos/${video._id}`} key={video._id}>
                   <div
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                    className="theme-bg-primary rounded-xl shadow-md theme-border overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                     style={{
                       animation: `slideInRight 0.5s ease-out ${index * 0.1}s both`,
                     }}
                   >
                     <div className="relative w-full h-48 bg-gray-900 cursor-pointer group overflow-hidden">
-                      <video
-                        src={`${API_BASE_URL}/uploads/${video.videoUrl}`}
-                        className="w-full h-full object-cover"
-                        preload="metadata"
-                      />
+                      {video.previewImage ? (
+                        <img
+                          src={`${API_BASE_URL}/uploads/videos/images/${video.previewImage}`}
+                          alt={video.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <video
+                          src={`${API_BASE_URL}/uploads/${video.videoUrl}`}
+                          className="w-full h-full object-cover"
+                          preload="metadata"
+                        />
+                      )}
                       <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
                         <div className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg opacity-0 group-hover:opacity-100">
                           <Play size={32} className="text-white" />
@@ -209,22 +246,22 @@ export default function VideosPage() {
                       </div>
                     </div>
                     <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 dark:text-white mb-2 truncate">
+                      <h3 className="font-semibold theme-text-primary mb-2 truncate">
                         {video.title}
                       </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2 min-h-[40px]">
+                      <p className="text-sm theme-text-secondary mb-3 line-clamp-2 min-h-[40px]">
                         {video.description || "No description"}
                       </p>
 
                       <div className="flex items-center gap-4 mb-3">
                         {video.institute && (
-                          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center gap-2 text-xs theme-text-secondary">
                             <School className="w-4 h-4 text-purple-500" />
                             <span>{video.institute.name}</span>
                           </div>
                         )}
                         {video.year && (
-                          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center gap-2 text-xs theme-text-secondary">
                             <GraduationCap className="w-4 h-4 text-blue-500" />
                             <span>{video.year.name}</span>
                           </div>

@@ -9,9 +9,19 @@ const VideoWatch_1 = require("../models/VideoWatch");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 // Get all videos
+// Get all videos
 const getAllVideos = async (req, res) => {
     try {
-        const videos = await Video_1.Video.find()
+        const { institute, year, academicLevel } = req.query;
+        const filter = {};
+        if (institute && institute !== 'all')
+            filter.institute = institute;
+        if (year && year !== 'all')
+            filter.year = year;
+        // Note: Video model might not have academicLevel yet, but adding logic for consistency if it does or will
+        if (academicLevel && academicLevel !== 'all')
+            filter.academicLevel = academicLevel;
+        const videos = await Video_1.Video.find(filter)
             .populate('uploadedBy', 'username role')
             .populate('institute', 'name location')
             .populate('year', 'year name')
@@ -27,8 +37,10 @@ exports.getAllVideos = getAllVideos;
 // Upload new video
 const uploadVideo = async (req, res) => {
     try {
-        const { title, description, institute: instituteId, year: yearId, availability, price } = req.body;
-        const videoFile = req.file;
+        const { title, description, institute: instituteId, year: yearId, academicLevel, availability, price } = req.body;
+        const files = req.files;
+        const videoFile = files?.video?.[0];
+        const previewImageFile = files?.previewImage?.[0];
         if (!videoFile) {
             return res.status(400).json({ message: 'No video file uploaded' });
         }
@@ -43,10 +55,12 @@ const uploadVideo = async (req, res) => {
             title,
             description,
             videoUrl: videoFile.filename,
+            previewImage: previewImageFile ? previewImageFile.filename : undefined,
             uploadedBy: userId,
             institute: instituteId,
             year: yearId,
-            views: 0, // NEW: Initialize with 0 views
+            academicLevel, // Add academicLevel
+            views: 0,
             availability,
             price,
         });
@@ -83,7 +97,7 @@ exports.incrementViewCount = incrementViewCount;
 const updateVideo = async (req, res) => {
     try {
         const update = {};
-        const { title, description, institute: instituteId, year: yearId, availability, price } = req.body || {};
+        const { title, description, institute: instituteId, year: yearId, academicLevel, availability, price } = req.body || {};
         if (title !== undefined)
             update.title = title;
         if (description !== undefined)
@@ -92,22 +106,40 @@ const updateVideo = async (req, res) => {
             update.institute = instituteId;
         if (yearId !== undefined)
             update.year = yearId;
+        if (academicLevel !== undefined)
+            update.academicLevel = academicLevel; // Add academicLevel
         if (availability !== undefined)
             update.availability = availability;
         if (price !== undefined)
             update.price = price;
-        // Handle new file if uploaded
-        if (req.file) {
+        const files = req.files;
+        const videoFile = files?.video?.[0];
+        const previewImageFile = files?.previewImage?.[0];
+        // Handle new video file if uploaded
+        if (videoFile) {
             const prev = await Video_1.Video.findById(req.params.id);
             if (prev && prev.videoUrl) {
                 try {
-                    fs_1.default.unlinkSync(path_1.default.join(__dirname, '../../', prev.videoUrl));
+                    fs_1.default.unlinkSync(path_1.default.join(__dirname, '../../', 'uploads/videos/files', prev.videoUrl));
                 }
                 catch (e) {
-                    console.log("Old file not found, continuing...");
+                    console.log("Old video file not found, continuing...");
                 }
             }
-            update.videoUrl = req.file.filename;
+            update.videoUrl = videoFile.filename;
+        }
+        // Handle new preview image if uploaded
+        if (previewImageFile) {
+            const prev = await Video_1.Video.findById(req.params.id);
+            if (prev && prev.previewImage) {
+                try {
+                    fs_1.default.unlinkSync(path_1.default.join(__dirname, '../../', 'uploads/videos/images', prev.previewImage));
+                }
+                catch (e) {
+                    console.log("Old preview image not found, continuing...");
+                }
+            }
+            update.previewImage = previewImageFile.filename;
         }
         const video = await Video_1.Video.findByIdAndUpdate(req.params.id, { $set: update }, { new: true, runValidators: true })
             .populate('uploadedBy', 'username role')
@@ -174,7 +206,7 @@ const getVideoById = async (req, res) => {
         else if (video.availability === 'physical' && studentType === 'Physical') {
             hasAccess = true;
         }
-        else if (video.price && video.price > 0) {
+        else if (video.availability === 'paid' || (video.price && video.price > 0)) {
             paymentRequired = true;
         }
         else {

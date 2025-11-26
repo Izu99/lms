@@ -2,10 +2,16 @@ import { Request, Response } from 'express';
 import { ZoomLink } from '../models/ZoomLink';
 
 // Get all zoom links
+// Get all zoom links
 export const getZoomLinks = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
+    const { institute, year, academicLevel } = req.query;
     let query: any = {};
+
+    if (institute && institute !== 'all') query.institute = institute;
+    if (year && year !== 'all') query.year = year;
+    if (academicLevel && academicLevel !== 'all') query.academicLevel = academicLevel;
 
     // Removed student-specific filtering as per user request.
     // All authenticated users will now see all Zoom links.
@@ -25,7 +31,7 @@ export const getZoomLinks = async (req: Request, res: Response) => {
 // Create new zoom link
 export const createZoomLink = async (req: Request, res: Response) => {
   try {
-    const { meeting, institute: instituteId, year: yearId } = req.body; // Expect meeting object
+    const { meeting, institute: instituteId, year: yearId, academicLevel, availability } = req.body; // Add academicLevel
     const { title, zoomLink } = meeting; // Extract from meeting
 
     if (!title || !zoomLink || !instituteId || !yearId) {
@@ -47,13 +53,15 @@ export const createZoomLink = async (req: Request, res: Response) => {
       uploadedBy: userId,
       institute: instituteId,
       year: yearId,
+      academicLevel: academicLevel, // Add academicLevel
+      availability: availability || 'all',
     });
 
     await newZoomLink.save();
     await newZoomLink.populate('uploadedBy', 'username role');
     await newZoomLink.populate('institute', 'name location');
     await newZoomLink.populate('year', 'year name');
-    
+
     res.status(201).json({ message: 'Zoom link created successfully', zoomLink: newZoomLink });
   } catch (error) {
     console.error("Create zoom link error:", error);
@@ -80,7 +88,7 @@ export const deleteZoomLink = async (req: Request, res: Response) => {
 // Update zoom link
 export const updateZoomLink = async (req: Request, res: Response) => {
   try {
-    const { meeting, institute, year } = req.body; // Expect meeting object
+    const { meeting, institute, year, academicLevel, availability } = req.body; // Add academicLevel
     const { id } = req.params;
 
     const zoomLink = await ZoomLink.findById(id);
@@ -121,6 +129,12 @@ export const updateZoomLink = async (req: Request, res: Response) => {
     }
     if (year !== undefined) {
       zoomLink.year = year;
+    }
+    if (academicLevel !== undefined) {
+      zoomLink.academicLevel = academicLevel; // Add academicLevel update
+    }
+    if (availability !== undefined) {
+      zoomLink.availability = availability;
     }
 
     await zoomLink.save();
