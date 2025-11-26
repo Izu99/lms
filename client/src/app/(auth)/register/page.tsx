@@ -55,6 +55,13 @@ interface Institute {
   isActive: boolean;
 }
 
+interface Year {
+  _id: string;
+  year: string;  // e.g., "2024-2025"
+  name: string;  // e.g., "A/L Batch of 2025"
+  isActive?: boolean;
+}
+
 // Password Strength Checker
 interface PasswordStrength {
   score: number;
@@ -118,6 +125,7 @@ interface RegisterData {
   whatsappNumber: string;
   studentType: 'Physical' | 'Online' | '';
   institute: string;
+  year: string;
   academicLevel: string;
   apiError?: string;
 }
@@ -139,12 +147,16 @@ export default function RegisterPage() {
     whatsappNumber: "",
     studentType: "",
     institute: "",
+    year: "",
     academicLevel: "",
   });
   const [fetchedInstitutes, setFetchedInstitutes] = useState<Institute[]>([]);
   const [filteredInstitutes, setFilteredInstitutes] = useState<Institute[]>([]);
   const [isLoadingInstitutes, setIsLoadingInstitutes] = useState(false);
   const [instituteError, setInstituteError] = useState<string | null>(null);
+  const [fetchedYears, setFetchedYears] = useState<Year[]>([]);
+  const [isLoadingYears, setIsLoadingYears] = useState(false);
+  const [yearError, setYearError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof RegisterData, string>>>({});
   const [usernameAvailability, setUsernameAvailability] = useState<{
@@ -231,9 +243,25 @@ export default function RegisterPage() {
     }
   };
 
-  // Effect to fetch institutes on component mount
+  // Function to fetch years from the backend
+  const fetchYears = async () => {
+    setIsLoadingYears(true);
+    setYearError(null);
+    try {
+      const response = await api.get<{ years: Year[] }>("/years");
+      setFetchedYears(response.data.years || []);
+    } catch (error) {
+      console.error("Error fetching years:", error);
+      setYearError("Failed to load years. Please try again.");
+    } finally {
+      setIsLoadingYears(false);
+    }
+  };
+
+  // Effect to fetch institutes and years on component mount
   useEffect(() => {
     fetchInstitutes();
+    fetchYears();
   }, []);
 
   // Set all institutes without filtering
@@ -307,6 +335,7 @@ export default function RegisterPage() {
       if (!data.academicLevel) newErrors.academicLevel = "Academic level is required";
       if (!data.studentType) newErrors.studentType = "Student type is required";
       if (!data.institute) newErrors.institute = "Institute is required";
+      if (!data.year) newErrors.year = "Year is required";
 
       setErrors(newErrors);
       if (Object.keys(newErrors).length === 0) {
@@ -350,6 +379,7 @@ export default function RegisterPage() {
     formData.append('telegram', data.telegram || '');
     formData.append('studentType', data.studentType);
     formData.append('institute', data.institute);
+    formData.append('year', data.year);
     formData.append('academicLevel', data.academicLevel);
 
     // Only append ID cards if they exist (for AL Physical students)
@@ -816,12 +846,12 @@ export default function RegisterPage() {
                           value={data.academicLevel}
                           onValueChange={(value) => setData({ ...data, academicLevel: value })}
                         >
-                          <SelectTrigger id="academicLevel" className="form-input">
+                          <SelectTrigger id="academicLevel" className="w-full !bg-white dark:!bg-gray-800">
                             <SelectValue placeholder="Select AL or OL" />
                           </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="AL">AL (Advanced Level)</SelectItem>
-                            <SelectItem value="OL">OL (Ordinary Level)</SelectItem>
+                          <SelectContent className="!bg-white dark:!bg-gray-800">
+                            <SelectItem value="AL" className="!bg-white dark:!bg-gray-800 hover:!bg-gray-100 dark:hover:!bg-gray-700">AL (Advanced Level)</SelectItem>
+                            <SelectItem value="OL" className="!bg-white dark:!bg-gray-800 hover:!bg-gray-100 dark:hover:!bg-gray-700">OL (Ordinary Level)</SelectItem>
                           </SelectContent>
                         </Select>
                         {errors.academicLevel && <p className="text-red-500 text-xs mt-1">{errors.academicLevel}</p>}
@@ -832,12 +862,12 @@ export default function RegisterPage() {
                           value={data.studentType}
                           onValueChange={(value) => setData({ ...data, studentType: value as "Physical" | "Online" })}
                         >
-                          <SelectTrigger id="studentType" className="form-input">
+                          <SelectTrigger id="studentType" className="w-full !bg-white dark:!bg-gray-800">
                             <SelectValue placeholder="Select Student Type" />
                           </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Physical">Physical (In-person)</SelectItem>
-                            <SelectItem value="Online">Online (Remote)</SelectItem>
+                          <SelectContent className="!bg-white dark:!bg-gray-800">
+                            <SelectItem value="Physical" className="!bg-white dark:!bg-gray-800 hover:!bg-gray-100 dark:hover:!bg-gray-700">Physical (In-person)</SelectItem>
+                            <SelectItem value="Online" className="!bg-white dark:!bg-gray-800 hover:!bg-gray-100 dark:hover:!bg-gray-700">Online (Remote)</SelectItem>
                           </SelectContent>
                         </Select>
                         {errors.studentType && <p className="text-red-500 text-xs mt-1">{errors.studentType}</p>}
@@ -861,12 +891,12 @@ export default function RegisterPage() {
                           onValueChange={(value) => setData({ ...data, institute: value })}
                           disabled={isLoadingInstitutes}
                         >
-                          <SelectTrigger id="institute" className="form-input">
+                          <SelectTrigger id="institute" className="w-full !bg-white dark:!bg-gray-800">
                             <SelectValue placeholder="Select an institute" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="!bg-white dark:!bg-gray-800">
                             {filteredInstitutes.map((inst) => (
-                              <SelectItem key={inst._id} value={inst._id}>
+                              <SelectItem key={inst._id} value={inst._id} className="!bg-white dark:!bg-gray-800 hover:!bg-gray-100 dark:hover:!bg-gray-700">
                                 {inst.name} - {inst.location}
                               </SelectItem>
                             ))}
@@ -874,6 +904,38 @@ export default function RegisterPage() {
                         </Select>
                       )}
                       {errors.institute && <p className="text-red-500 text-xs mt-1">{errors.institute}</p>}
+                    </div>
+
+                    {/* Year Selection */}
+                    <div className="mt-5">
+                      <label htmlFor="year" className="form-label">OL/AL Facing Year (Exam Year) <span className="text-red-500">*</span></label>
+                      {isLoadingYears ? (
+                        <div className="w-full px-4 py-3 bg-gray-100 border-2 border-gray-200 rounded-xl text-gray-500 text-center">
+                          Loading years...
+                        </div>
+                      ) : yearError ? (
+                        <div className="w-full px-4 py-3 bg-red-50 border-2 border-red-200 rounded-xl text-red-600 text-center text-sm">
+                          {yearError}
+                        </div>
+                      ) : (
+                        <Select
+                          value={data.year}
+                          onValueChange={(value) => setData({ ...data, year: value })}
+                          disabled={isLoadingYears}
+                        >
+                          <SelectTrigger id="year" className="w-full !bg-white dark:!bg-gray-800">
+                            <SelectValue placeholder="Select your facing year" />
+                          </SelectTrigger>
+                          <SelectContent className="!bg-white dark:!bg-gray-800">
+                            {fetchedYears.map((year) => (
+                              <SelectItem key={year._id} value={year._id} className="!bg-white dark:!bg-gray-800 hover:!bg-gray-100 dark:hover:!bg-gray-700">
+                                {year.name || year.year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {errors.year && <p className="text-red-500 text-xs mt-1">{errors.year}</p>}
                     </div>
 
                     {/* Info message based on selection */}

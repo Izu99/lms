@@ -44,7 +44,7 @@ export const register = async (req: Request, res: Response) => {
   const files = req.files as { [fieldname: string]: Express.Multer.File[] };
   const frontFile = files?.idCardFront?.[0];
   const backFile = files?.idCardBack?.[0];
-  
+
   if (frontFile) uploadedFiles.push(frontFile);
   if (backFile) uploadedFiles.push(backFile);
 
@@ -123,8 +123,8 @@ export const register = async (req: Request, res: Response) => {
       phoneNumber,
       whatsappNumber,
       telegram,
-      institute,
-      year,
+      ...(institute && mongoose.Types.ObjectId.isValid(institute) && { institute }),
+      ...(year && mongoose.Types.ObjectId.isValid(year) && { year }),
       studentType,
       role: 'student',
     });
@@ -141,45 +141,45 @@ export const register = async (req: Request, res: Response) => {
     if (uploadedFiles.length > 0) {
       const fs = require('fs');
       const path = require('path');
-      
+
       // Create user-specific directory
       const userDir = path.join(__dirname, '..', '..', 'uploads', 'id-cards', user._id.toString());
       if (!fs.existsSync(userDir)) {
-        fs.mkdirSync(userDir, { recurmakesive: true });
+        fs.mkdirSync(userDir, { recursive: true });
       }
-      
+
       try {
         // Move and rename front image
         if (frontFile) {
           const oldFrontPath = path.join(__dirname, '..', '..', 'uploads', 'id-cards', 'temp', frontFile.filename);
           const frontExtension = path.extname(frontFile.originalname);
           const newFrontPath = path.join(userDir, `front${frontExtension}`);
-          
+
           if (fs.existsSync(oldFrontPath)) {
             fs.renameSync(oldFrontPath, newFrontPath);
             idCardFrontImage = `/uploads/id-cards/${user._id}/front${frontExtension}`;
             console.log(`✅ ID card front image saved: ${user._id}/front${frontExtension}`);
           }
         }
-        
+
         // Move and rename back image
         if (backFile) {
           const oldBackPath = path.join(__dirname, '..', '..', 'uploads', 'id-cards', 'temp', backFile.filename);
           const backExtension = path.extname(backFile.originalname);
           const newBackPath = path.join(userDir, `back${backExtension}`);
-          
+
           if (fs.existsSync(oldBackPath)) {
             fs.renameSync(oldBackPath, newBackPath);
             idCardBackImage = `/uploads/id-cards/${user._id}/back${backExtension}`;
             console.log(`✅ ID card back image saved: ${user._id}/back${backExtension}`);
           }
         }
-        
+
         // Update user with image paths
         user.idCardFrontImage = idCardFrontImage;
         user.idCardBackImage = idCardBackImage;
         await user.save();
-        
+
       } catch (renameError) {
         console.error('❌ Error organizing ID card images:', renameError);
         // Clean up temp files
@@ -190,28 +190,28 @@ export const register = async (req: Request, res: Response) => {
     return res.status(201).json({ message: 'User registered successfully' });
   } catch (error: any) {
     console.error('Registration error:', error);
-    
+
     // Delete uploaded files if user creation fails
     if (uploadedFiles.length > 0) {
       deleteAllUploadedFiles(uploadedFiles);
     }
-    
+
     // Check for MongoDB validation errors
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map((err: any) => err.message);
       console.error('Validation errors:', validationErrors);
-      return res.status(400).json({ 
-        message: 'Validation failed', 
-        errors: validationErrors 
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: validationErrors
       });
     }
-    
+
     // Check for MongoDB duplicate key error
     if (error.code === 11000) {
       console.error('Duplicate key error:', error.keyValue);
-      return res.status(400).json({ 
-        message: 'Duplicate value error', 
-        field: Object.keys(error.keyValue)[0] 
+      return res.status(400).json({
+        message: 'Duplicate value error',
+        field: Object.keys(error.keyValue)[0]
       });
     }
 
@@ -229,16 +229,16 @@ export const register = async (req: Request, res: Response) => {
 export const checkUsername = async (req: Request, res: Response) => {
   try {
     const { username } = req.body;
-    
+
     if (!username) {
       return res.status(400).json({ message: 'Username is required' });
     }
 
-    const existingUser = await User.findOne({ 
-      username: { $regex: new RegExp("^" + username + "$", "i") } 
+    const existingUser = await User.findOne({
+      username: { $regex: new RegExp("^" + username + "$", "i") }
     });
 
-    res.json({ 
+    res.json({
       available: !existingUser,
       message: existingUser ? 'Username is already taken' : 'Username is available'
     });
@@ -252,7 +252,7 @@ export const checkUsername = async (req: Request, res: Response) => {
 // Login controller
 export const login = async (req: Request, res: Response) => {
   const { identifier, password } = req.body; // Use 'identifier' to represent username, email, or phone number
-  
+
   const user = await User.findOne({
     $or: [
       { username: { $regex: new RegExp("^" + identifier + "$", "i") } },
@@ -260,17 +260,17 @@ export const login = async (req: Request, res: Response) => {
       { phoneNumber: identifier }
     ]
   });
-  
+
   if (!user || !(await user.comparePassword(password))) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
   const payload = { id: user._id, role: user.role };
   const token = jwt.sign(payload, JWT_SECRET as string, { expiresIn: '1d' });
-  
+
   // Return consistent user data for frontend
-  res.json({ 
-    token, 
-    role: user.role, 
+  res.json({
+    token,
+    role: user.role,
     username: user.username,
     id: user._id,
     firstName: user.firstName,
@@ -291,16 +291,16 @@ export const getCurrentUser = async (req: Request, res: Response) => {
   try {
     // FIX: Using the new auth middleware format
     const userId = (req as any).user.id;  // ✅ Changed to use .id instead of ._id
-    
+
     const user = await User.findById(userId).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     // Return more complete user info
-    res.json({ 
+    res.json({
       user: {
-        username: user.username, 
+        username: user.username,
         role: user.role,
         _id: user._id,
         email: user.email,
@@ -320,12 +320,12 @@ export const getUserProfile = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const requestingUser = (req as any).user;
-    
+
     const isTeacherOrAdmin = requestingUser.role === 'teacher' || requestingUser.role === 'admin';
     const isViewingOwnProfile = id === requestingUser.id.toString();
 
     if (!isTeacherOrAdmin && !isViewingOwnProfile) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         message: 'Access denied. You do not have permission to view this profile.',
         debug: {
           requestingUserRole: requestingUser.role,
@@ -356,17 +356,17 @@ export const updateUserProfile = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const requestingUserId = (req as any).user.id;
-    
+
     // Users can only update their own profile
     if (id !== requestingUserId.toString()) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    const { 
-      username, 
-      email, 
+    const {
+      username,
+      email,
       phoneNumber,
-      firstName, 
+      firstName,
       lastName,
       address,
       institute,
@@ -383,7 +383,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const frontFile = files?.idCardFront?.[0];
     const backFile = files?.idCardBack?.[0];
-    
+
     if (frontFile) uploadedFiles.push(frontFile);
     if (backFile) uploadedFiles.push(backFile);
 
@@ -446,19 +446,19 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     if (uploadedFiles.length > 0) {
       const fs = require('fs');
       const path = require('path');
-      
+
       const userDir = path.join(__dirname, '..', '..', 'uploads', 'id-cards', user._id.toString());
       if (!fs.existsSync(userDir)) {
         fs.mkdirSync(userDir, { recursive: true });
       }
-      
+
       try {
         // Move and rename front image
         if (frontFile) {
           const oldFrontPath = path.join(__dirname, '..', '..', 'uploads', 'id-cards', 'temp', frontFile.filename);
           const frontExtension = path.extname(frontFile.originalname);
           const newFrontPath = path.join(userDir, `front${frontExtension}`);
-          
+
           // Delete old front image if it exists
           if (user.idCardFrontImage) {
             const oldImageFullPath = path.join(__dirname, '..', '..', user.idCardFrontImage);
@@ -475,7 +475,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
             console.log(`✅ ID card front image updated: ${user._id}/front${frontExtension}`);
           }
         }
-        
+
         // Move and rename back image
         if (backFile) {
           const oldBackPath = path.join(__dirname, '..', '..', 'uploads', 'id-cards', 'temp', backFile.filename);
@@ -490,7 +490,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
               console.log(`🗑️ Deleted old ID card back image for user ${user._id}`);
             }
           }
-          
+
           if (fs.existsSync(oldBackPath)) {
             fs.renameSync(oldBackPath, newBackPath);
             idCardBackImage = `/uploads/id-cards/${user._id}/back${backExtension}`;
@@ -498,7 +498,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
             console.log(`✅ ID card back image updated: ${user._id}/back${backExtension}`);
           }
         }
-        
+
       } catch (renameError) {
         console.error('❌ Error organizing ID card images during profile update:', renameError);
         // Clean up temp files
@@ -512,10 +512,10 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     // Return updated user without password
     const updatedUser = await User.findById(id).select('-password');
     res.json({ message: 'Profile updated successfully', user: updatedUser });
-    
+
   } catch (error: any) {
     console.error('Update user profile error:', error);
-    
+
     // Delete uploaded files if user update fails
     if (uploadedFiles.length > 0) {
       deleteAllUploadedFiles(uploadedFiles);
@@ -525,18 +525,18 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     if (error.name === 'ValidationError') {
       const validationErrors = Object.values(error.errors).map((err: any) => err.message);
       console.error('Validation errors:', validationErrors);
-      return res.status(400).json({ 
-        message: 'Validation failed', 
-        errors: validationErrors 
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: validationErrors
       });
     }
-    
+
     // Check for MongoDB duplicate key error
     if (error.code === 11000) {
       console.error('Duplicate key error:', error.keyValue);
-      return res.status(400).json({ 
-        message: 'Duplicate value error', 
-        field: Object.keys(error.keyValue)[0] 
+      return res.status(400).json({
+        message: 'Duplicate value error',
+        field: Object.keys(error.keyValue)[0]
       });
     }
 
@@ -554,7 +554,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 export const getAllStudents = async (req: Request, res: Response) => {
   try {
     const requestingUser = (req as any).user;
-    
+
     // Only teachers and admins can view all students
     if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied. Only teachers can view student list.' });
@@ -565,7 +565,7 @@ export const getAllStudents = async (req: Request, res: Response) => {
       '-password' // Exclude password field
     ).sort({ createdAt: -1 }); // Sort by newest first
 
-    res.json({ 
+    res.json({
       students,
       total: students.length,
       message: 'Students retrieved successfully'
@@ -612,8 +612,8 @@ export const updateStudentStatus = async (req: Request, res: Response) => {
 
     // Return updated student without password
     const updatedStudent = await User.findById(studentId).select('-password');
-    
-    res.json({ 
+
+    res.json({
       message: 'Student status updated successfully',
       student: updatedStudent
     });
