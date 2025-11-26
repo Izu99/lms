@@ -1,4 +1,4 @@
-"use client";                      
+"use client";
 import { useState, useEffect } from "react";
 import {
   GraduationCap,
@@ -98,7 +98,7 @@ export default function LoginPage() {
 
       // Store token in localStorage (consistent with the rest of the app)
       localStorage.setItem("token", result.token);
-      
+
       // Store user data for role-based routing
       const userData = {
         id: result.id || result.user?.id || result.userId,
@@ -107,7 +107,7 @@ export default function LoginPage() {
         firstName: result.firstName || result.user?.firstName,
         lastName: result.lastName || result.user?.lastName
       };
-      
+
       console.log("Login successful - User data:", userData);
       localStorage.setItem("user", JSON.stringify(userData));
 
@@ -147,9 +147,8 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-center items-center text-white p-12 w-full">
           {/* Logo Section */}
           <div
-            className={`flex items-center gap-4 mb-16 transform transition-all duration-1000 ${
-              mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
+            className={`flex items-center gap-4 mb-16 transform transition-all duration-1000 ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+              }`}
           >
             <div className="relative">
               <div className="absolute inset-0 bg-white/20 rounded-2xl blur-sm transform rotate-6"></div>
@@ -170,9 +169,8 @@ export default function LoginPage() {
 
           {/* Main Welcome Message */}
           <div
-            className={`text-center mb-16 transform transition-all duration-1000 delay-300 ${
-              mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
+            className={`text-center mb-16 transform transition-all duration-1000 delay-300 ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+              }`}
           >
             <h2 className="text-4xl font-bold mb-6 leading-tight">
               Welcome Back to Your
@@ -188,9 +186,8 @@ export default function LoginPage() {
 
           {/* Motivational Quote Section */}
           <div
-            className={`bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 max-w-lg w-full transform transition-all duration-1000 delay-500 ${
-              mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
+            className={`bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 max-w-lg w-full transform transition-all duration-1000 delay-500 ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+              }`}
           >
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
@@ -217,9 +214,8 @@ export default function LoginPage() {
               {motivationalQuotes.map((_, index) => (
                 <div
                   key={index}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    index === currentQuote ? "bg-white" : "bg-white/30"
-                  }`}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentQuote ? "bg-white" : "bg-white/30"
+                    }`}
                 />
               ))}
             </div>
@@ -227,9 +223,8 @@ export default function LoginPage() {
 
           {/* Bottom Message for Students */}
           <div
-            className={`mt-12 text-center transform transition-all duration-1000 delay-700 ${
-              mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
+            className={`mt-12 text-center transform transition-all duration-1000 delay-700 ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+              }`}
           >
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-white/20">
               <Star className="w-5 h-5 text-yellow-300" />
@@ -257,9 +252,8 @@ export default function LoginPage() {
         <div className="w-full max-w-md relative z-10">
           {/* Mobile branding */}
           <div
-            className={`lg:hidden text-center mb-8 transform transition-all duration-700 ${
-              mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
-            }`}
+            className={`lg:hidden text-center mb-8 transform transition-all duration-700 ${mounted ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+              }`}
           >
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="relative">
@@ -276,9 +270,8 @@ export default function LoginPage() {
           </div>
 
           <div
-            className={`bg-white backdrop-blur-xl rounded-3xl shadow-2xl p-8 transform transition-all duration-700 delay-200 ${
-              mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
+            className={`bg-white backdrop-blur-xl rounded-3xl shadow-2xl p-8 transform transition-all duration-700 delay-200 ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+              }`}
             style={{
               boxShadow:
                 "0 25px 50px -12px rgba(59, 130, 246, 0.25), 0 10px 20px -5px rgba(59, 130, 246, 0.1)",
@@ -370,7 +363,7 @@ export default function LoginPage() {
               </Button>
 
               {error && (
-                <div className="bg-destructive/10 border-2 border-destructive/20 text-destructive-foreground px-4 py-4 rounded-xl text-sm text-center font-medium">
+                <div className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-4 rounded-xl text-sm text-center font-medium">
                   {error}
                 </div>
               )}

@@ -1,5 +1,5 @@
 import express from 'express';
-import { upload } from '../config/multer';
+import { upload, uploadPdf } from '../config/multer';
 import {
   createPaper,
   getAllPapers,
@@ -24,7 +24,7 @@ const router = express.Router();
 // Paper CRUD operations
 router.post('/', protect, upload.fields([{ name: 'file', maxCount: 1 }, { name: 'previewImage', maxCount: 1 }]), createPaper);
 router.get('/', protect, getAllPapers);
-router.post('/upload', protect, upload.single('file'), uploadPaperPdf);
+router.post('/upload', protect, uploadPdf.single('file'), uploadPaperPdf);
 
 // Paper attempts and results - MUST come before /:id routes
 router.get('/results/my-results', protect, getStudentResults);

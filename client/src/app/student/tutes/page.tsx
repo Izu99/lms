@@ -24,7 +24,7 @@ interface Tute {
   };
   availability: 'all' | 'physical';
   price: number;
-  teacherId: {
+  teacherId?: {
     firstName: string;
     lastName: string;
   };
@@ -188,7 +188,7 @@ export default function StudentTutesPage() {
                   )}
 
                   <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
-                    <span>By {tute.teacherId.firstName} {tute.teacherId.lastName}</span>
+                    <span>By {tute.teacherId ? `${tute.teacherId.firstName} ${tute.teacherId.lastName}` : (tute.uploadedBy?.username || "Unknown Teacher")}</span>
                   </div>
 
                   <div className="flex items-center justify-between pt-4 border-t border-border">

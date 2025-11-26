@@ -51,6 +51,7 @@ export default function StudentPapersPage() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<'all' | 'mcq' | 'structure-essay'>('all');
+  const [activeSubTab, setActiveSubTab] = useState<'not-answered' | 'answered' | 'expired'>('not-answered');
   const [answeredPapers, setAnsweredPapers] = useState<string[]>([]);
 
   // Filter states
@@ -79,8 +80,16 @@ export default function StudentPapersPage() {
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setPapers(response.data.papers || []);
-      setAnsweredPapers(response.data.attemptedPapers || []);
+      const attemptedPapers = response.data.attemptedPapers || [];
+      const papersData = response.data.papers || [];
+
+      const mappedPapers = papersData.map((p: any) => ({
+        ...p,
+        isCompleted: attemptedPapers.includes(p._id)
+      }));
+
+      setPapers(mappedPapers);
+      setAnsweredPapers(attemptedPapers);
     } catch (error) {
       console.error("Error fetching papers:", error);
       if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -125,16 +134,30 @@ export default function StudentPapersPage() {
     const matchesSearch = paper.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       paper.description?.toLowerCase().includes(searchTerm.toLowerCase());
 
+    // Filter by Main Tab
+    let matchesTab = false;
     if (activeTab === 'all') {
-      return matchesSearch;
+      matchesTab = true;
+    } else if (activeTab === 'mcq') {
+      matchesTab = paper.paperType === 'MCQ';
+    } else if (activeTab === 'structure-essay') {
+      matchesTab = paper.paperType === 'Structure-Essay';
     }
-    if (activeTab === 'mcq') {
-      return matchesSearch && paper.paperType === 'MCQ';
+
+    // Filter by Sub Tab
+    let matchesSubTab = false;
+    const isAnswered = answeredPapers.includes(paper._id);
+    const isPaperExpired = isExpired(paper.deadline);
+
+    if (activeSubTab === 'not-answered') {
+      matchesSubTab = !isAnswered && !isPaperExpired;
+    } else if (activeSubTab === 'answered') {
+      matchesSubTab = isAnswered;
+    } else if (activeSubTab === 'expired') {
+      matchesSubTab = !isAnswered && isPaperExpired;
     }
-    if (activeTab === 'structure-essay') {
-      return matchesSearch && paper.paperType === 'Structure-Essay';
-    }
-    return false;
+
+    return matchesSearch && matchesTab && matchesSubTab;
   });
 
   if (loading) {
@@ -178,6 +201,70 @@ export default function StudentPapersPage() {
           </div>
         </motion.div>
 
+        {/* Statistics Cards - Moved to top */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
+        >
+          <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
+                <FileText className="text-blue-600 dark:text-blue-400" size={24} />
+              </div>
+              <div>
+                <p className="text-sm theme-text-secondary">Total Papers</p>
+                <p className="text-2xl font-bold theme-text-primary">
+                  {papers.length}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
+                <Clock className="text-green-600 dark:text-green-400" size={24} />
+              </div>
+              <div>
+                <p className="text-sm theme-text-secondary">Active Papers</p>
+                <p className="text-2xl font-bold theme-text-primary">
+                  {papers.filter(p => !isExpired(p.deadline)).length}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
+                <Users className="text-purple-600 dark:text-purple-400" size={24} />
+              </div>
+              <div>
+                <p className="text-sm theme-text-secondary">Answered Papers</p>
+                <p className="text-2xl font-bold theme-text-primary">
+                  {answeredPapers.length}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
+                <AlertCircle className="text-orange-600 dark:text-orange-400" size={24} />
+              </div>
+              <div>
+                <p className="text-sm theme-text-secondary">Expired Papers</p>
+                <p className="text-2xl font-bold theme-text-primary">
+                  {papers.filter(p => isExpired(p.deadline)).length}
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Filter Component */}
         <CommonFilter
           institutes={institutes}
@@ -214,97 +301,64 @@ export default function StudentPapersPage() {
           </div>
         </motion.div>
 
-        {/* Tabs for Paper Types */}
+        {/* Combined Tabs - Paper Types on Left, Status on Right */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-8 flex space-x-4"
+          className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
         >
-          <Button
-            variant={activeTab === 'all' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('all')}
-            className={`transition-all duration-300 ${activeTab === 'all' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
-          >
-            All Papers
-          </Button>
-          <Button
-            variant={activeTab === 'mcq' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('mcq')}
-            className={`transition-all duration-300 ${activeTab === 'mcq' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
-          >
-            MCQ Papers
-          </Button>
-          <Button
-            variant={activeTab === 'structure-essay' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('structure-essay')}
-            className={`transition-all duration-300 ${activeTab === 'structure-essay' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
-          >
-            Structure and Essay Papers
-          </Button>
-        </motion.div>
-
-        {/* Statistics Cards */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
-        >
-          <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg theme-border p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
-                <FileText className="text-blue-600 dark:text-blue-400" size={24} />
-              </div>
-              <div>
-                <p className="text-sm theme-text-secondary">Total Papers</p>
-                <p className="text-2xl font-bold theme-text-primary">
-                  {papers.length}
-                </p>
-              </div>
-            </div>
+          {/* Paper Type Tabs - Left Side */}
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant={activeTab === 'all' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('all')}
+              className={`transition-all duration-300 ${activeTab === 'all' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+            >
+              All Papers
+            </Button>
+            <Button
+              variant={activeTab === 'mcq' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('mcq')}
+              className={`transition-all duration-300 ${activeTab === 'mcq' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+            >
+              MCQ Papers
+            </Button>
+            <Button
+              variant={activeTab === 'structure-essay' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('structure-essay')}
+              className={`transition-all duration-300 ${activeTab === 'structure-essay' ? "bg-blue-500 hover:bg-blue-600 text-white" : "theme-text-secondary hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+            >
+              Structure and Essay Papers
+            </Button>
           </div>
 
-          <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg theme-border p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
-                <Clock className="text-green-600 dark:text-green-400" size={24} />
-              </div>
-              <div>
-                <p className="text-sm theme-text-secondary">Active Papers</p>
-                <p className="text-2xl font-bold theme-text-primary">
-                  {papers.filter(p => !isExpired(p.deadline)).length}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg theme-border p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
-                <Users className="text-purple-600 dark:text-purple-400" size={24} />
-              </div>
-              <div>
-                <p className="text-sm theme-text-secondary">Answered Papers</p>
-                <p className="text-2xl font-bold theme-text-primary">
-                  {answeredPapers.length}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="theme-bg-primary/90 backdrop-blur-sm rounded-2xl shadow-lg theme-border p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
-                <AlertCircle className="text-orange-600 dark:text-orange-400" size={24} />
-              </div>
-              <div>
-                <p className="text-sm theme-text-secondary">Expired Papers</p>
-                <p className="text-2xl font-bold theme-text-primary">
-                  {papers.filter(p => isExpired(p.deadline)).length}
-                </p>
-              </div>
-            </div>
+          {/* Status Tabs - Right Side */}
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant={activeSubTab === 'not-answered' ? 'default' : 'outline'}
+              onClick={() => setActiveSubTab('not-answered')}
+              size="sm"
+              className={`transition-all duration-300 text-sm ${activeSubTab === 'not-answered' ? "bg-green-500 hover:bg-green-600 text-white border-green-500" : "theme-text-secondary hover:bg-green-50 dark:hover:bg-green-900/20 border-green-200 dark:border-green-800"}`}
+            >
+              Not Answered
+            </Button>
+            <Button
+              variant={activeSubTab === 'answered' ? 'default' : 'outline'}
+              onClick={() => setActiveSubTab('answered')}
+              size="sm"
+              className={`transition-all duration-300 text-sm ${activeSubTab === 'answered' ? "bg-purple-500 hover:bg-purple-600 text-white border-purple-500" : "theme-text-secondary hover:bg-purple-50 dark:hover:bg-purple-900/20 border-purple-200 dark:border-purple-800"}`}
+            >
+              Answered
+            </Button>
+            <Button
+              variant={activeSubTab === 'expired' ? 'default' : 'outline'}
+              onClick={() => setActiveSubTab('expired')}
+              size="sm"
+              className={`transition-all duration-300 text-sm ${activeSubTab === 'expired' ? "bg-orange-500 hover:bg-orange-600 text-white border-orange-500" : "theme-text-secondary hover:bg-orange-50 dark:hover:bg-orange-900/20 border-orange-200 dark:border-orange-800"}`}
+            >
+              Expired
+            </Button>
           </div>
         </motion.div>
 

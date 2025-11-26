@@ -104,7 +104,8 @@ export default function PaperAnswerPage() {
       setStudentAttempt(attempt);
 
       if (attempt && attempt.paperId) {
-        const paperResponse = await axios.get<{ paper: Paper }>(`${API_URL}/papers/${attempt.paperId}?showAnswers=true`, { headers });
+        const paperId = typeof attempt.paperId === 'string' ? attempt.paperId : attempt.paperId._id;
+        const paperResponse = await axios.get<{ paper: Paper }>(`${API_URL}/papers/${paperId}?showAnswers=true`, { headers });
         setPaper(paperResponse.data.paper);
       } else {
         throw new Error("Attempt data or paper ID is missing.");
