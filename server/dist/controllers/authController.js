@@ -113,8 +113,8 @@ const register = async (req, res) => {
             phoneNumber,
             whatsappNumber,
             telegram,
-            institute,
-            year,
+            ...(institute && mongoose_1.default.Types.ObjectId.isValid(institute) && { institute }),
+            ...(year && mongoose_1.default.Types.ObjectId.isValid(year) && { year }),
             studentType,
             role: 'student',
         });
@@ -132,7 +132,7 @@ const register = async (req, res) => {
             // Create user-specific directory
             const userDir = path.join(__dirname, '..', '..', 'uploads', 'id-cards', user._id.toString());
             if (!fs.existsSync(userDir)) {
-                fs.mkdirSync(userDir, { recurmakesive: true });
+                fs.mkdirSync(userDir, { recursive: true });
             }
             try {
                 // Move and rename front image

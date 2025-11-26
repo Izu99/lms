@@ -839,7 +839,7 @@ export default function RegisterPage() {
                       </svg>
                       Select Your Academic Level & Student Type
                     </h4>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div>
                         <label htmlFor="academicLevel" className="form-label">AL or OL <span className="text-red-500">*</span></label>
                         <Select

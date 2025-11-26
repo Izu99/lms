@@ -18,6 +18,7 @@ export interface IUser extends Document {
   idCardFrontImage?: string;
   idCardBackImage?: string;
   studentType?: string;
+  academicLevel?: string;
   role: UserRole;
   status?: StudentStatus; // Added status field
   notes?: string; // Added notes for teachers to add comments
@@ -39,11 +40,12 @@ const userSchema = new mongoose.Schema<IUser>({
   idCardFrontImage: { type: String },
   idCardBackImage: { type: String },
   studentType: { type: String },
+  academicLevel: { type: String },
   role: { type: String, enum: ['student', 'teacher', 'admin'], default: 'student' },
-  status: { 
-    type: String, 
-    enum: ['active', 'inactive', 'pending', 'paid', 'unpaid'], 
-    default: 'pending' 
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'pending', 'paid', 'unpaid'],
+    default: 'pending'
   },
   notes: { type: String },
   institute: { type: mongoose.Schema.Types.ObjectId, ref: 'Institute' },

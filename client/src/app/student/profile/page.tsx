@@ -301,8 +301,8 @@ export default function StudentProfilePage() {
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">My Profile</h1>
-          <p className="text-gray-400">Manage your account settings and preferences</p>
+          <h1 className="text-3xl font-bold theme-text-primary mb-2">My Profile</h1>
+          <p className="theme-text-secondary">Manage your account settings and preferences</p>
         </div>
 
         {/* Tab Navigation */}
@@ -347,36 +347,36 @@ export default function StudentProfilePage() {
         <div className="card rounded-lg p-6 md:p-8">
           {/* Personal Details Tab */}
           <div id="personal" className={`tab-content ${activeTab === "personal" ? "active" : ""}`}>
-            <h2 className="text-xl font-semibold text-white mb-6">Personal Information</h2>
+            <h2 className="text-xl font-semibold theme-text-primary mb-6">Personal Information</h2>
             <form onSubmit={handleSubmitPersonal}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Username</label>
-                  <Input type="text" name="username" value={profileData.username} onChange={handleProfileChange} className="input-field w-full px-4 py-3 rounded-lg text-white" disabled />
+                  <Input type="text" name="username" value={profileData.username} onChange={handleProfileChange} className="input-field w-full px-4 py-3 rounded-lg theme-text-primary" disabled />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">First Name</label>
-                  <Input type="text" name="firstName" value={profileData.firstName || ""} onChange={handleProfileChange} className="input-field w-full px-4 py-3 rounded-lg text-white" required />
+                  <Input type="text" name="firstName" value={profileData.firstName || ""} onChange={handleProfileChange} className="input-field w-full px-4 py-3 rounded-lg theme-text-primary" required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Last Name</label>
-                  <Input type="text" name="lastName" value={profileData.lastName || ""} onChange={handleProfileChange} className="input-field w-full px-4 py-3 rounded-lg text-white" required />
+                  <Input type="text" name="lastName" value={profileData.lastName || ""} onChange={handleProfileChange} className="input-field w-full px-4 py-3 rounded-lg theme-text-primary" required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
-                  <Input type="email" name="email" value={profileData.email || ""} onChange={handleProfileChange} className="input-field w-full px-4 py-3 rounded-lg text-white" required />
+                  <Input type="email" name="email" value={profileData.email || ""} onChange={handleProfileChange} className="input-field w-full px-4 py-3 rounded-lg theme-text-primary" required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
-                  <Input type="tel" name="phoneNumber" value={profileData.phoneNumber || ""} onChange={handleProfileChange} className="input-field w-full px-4 py-3 rounded-lg text-white" required />
+                  <Input type="tel" name="phoneNumber" value={profileData.phoneNumber || ""} onChange={handleProfileChange} className="input-field w-full px-4 py-3 rounded-lg theme-text-primary" required />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-300 mb-2">Address</label>
-                  <Textarea name="address" rows={3} value={profileData.address || ""} onChange={handleProfileChange} className="input-field w-full px-4 py-3 rounded-lg text-white" required></Textarea>
+                  <Textarea name="address" rows={3} value={profileData.address || ""} onChange={handleProfileChange} className="input-field w-full px-4 py-3 rounded-lg theme-text-primary" required></Textarea>
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">
-                <Button type="submit" className="btn-primary px-6 py-2.5 rounded-lg text-white font-medium" disabled={isSaving}>
+                <Button type="submit" className="px-6 py-2.5 rounded-lg font-medium" disabled={isSaving}>
                   {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
@@ -385,7 +385,7 @@ export default function StudentProfilePage() {
 
           {/* Academic Information Tab */}
           <div id="academic" className={`tab-content ${activeTab === "academic" ? "active" : ""}`}>
-            <h2 className="text-xl font-semibold text-white mb-6">Academic Details</h2>
+            <h2 className="text-xl font-semibold theme-text-primary mb-6">Academic Details</h2>
             <form onSubmit={handleSubmitAcademic}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -460,7 +460,7 @@ export default function StudentProfilePage() {
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">
-                <Button type="submit" className="btn-primary px-6 py-2.5 rounded-lg text-white font-medium" disabled={isSaving}>
+                <Button type="submit" className="px-6 py-2.5 rounded-lg font-medium" disabled={isSaving}>
                   {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
@@ -469,22 +469,22 @@ export default function StudentProfilePage() {
 
           {/* Contact & Social Tab */}
           <div id="contact" className={`tab-content ${activeTab === "contact" ? "active" : ""}`}>
-            <h2 className="text-xl font-semibold text-white mb-6">Contact & Social Media</h2>
+            <h2 className="text-xl font-semibold theme-text-primary mb-6">Contact & Social Media</h2>
             <form onSubmit={handleSubmitContact}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">WhatsApp Number</label>
-                  <Input type="tel" name="whatsappNumber" value={profileData.whatsappNumber || ""} onChange={handleProfileChange} placeholder="+94 XX XXX XXXX" className="input-field w-full px-4 py-3 rounded-lg text-white" />
+                  <Input type="tel" name="whatsappNumber" value={profileData.whatsappNumber || ""} onChange={handleProfileChange} placeholder="+94 XX XXX XXXX" className="input-field w-full px-4 py-3 rounded-lg theme-text-primary" />
                   <p className="text-gray-500 text-xs mt-1">For course updates and notifications</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Telegram Username</label>
-                  <Input type="text" name="telegram" value={profileData.telegram || ""} onChange={handleProfileChange} placeholder="@username" className="input-field w-full px-4 py-3 rounded-lg text-white" />
+                  <Input type="text" name="telegram" value={profileData.telegram || ""} onChange={handleProfileChange} placeholder="@username" className="input-field w-full px-4 py-3 rounded-lg theme-text-primary" />
                   <p className="text-gray-500 text-xs mt-1">For group discussions and support</p>
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">
-                <Button type="submit" className="btn-primary px-6 py-2.5 rounded-lg text-white font-medium" disabled={isSaving}>
+                <Button type="submit" className="px-6 py-2.5 rounded-lg font-medium" disabled={isSaving}>
                   {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
@@ -493,7 +493,7 @@ export default function StudentProfilePage() {
 
           {/* Security Tab */}
           <div id="security" className={`tab-content ${activeTab === "security" ? "active" : ""}`}>
-            <h2 className="text-xl font-semibold text-white mb-6">Security Settings</h2>
+            <h2 className="text-xl font-semibold theme-text-primary mb-6">Security Settings</h2>
 
             <div className="card rounded-lg p-6 mb-6 border border-blue-500/30">
               <div className="flex items-start gap-4">
@@ -512,7 +512,7 @@ export default function StudentProfilePage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Current Password</label>
                   <div className="relative">
-                    <Input type={showPassword ? "text" : "password"} name="currentPassword" value={passwordFields.currentPassword} onChange={handlePasswordChange} placeholder="Enter current password" className="input-field w-full px-4 py-3 rounded-lg text-white" required />
+                    <Input type={showPassword ? "text" : "password"} name="currentPassword" value={passwordFields.currentPassword} onChange={handlePasswordChange} placeholder="Enter current password" className="input-field w-full px-4 py-3 rounded-lg theme-text-primary" required />
                     <span className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 hover:text-gray-700" onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </span>
@@ -521,7 +521,7 @@ export default function StudentProfilePage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">New Password</label>
                   <div className="relative">
-                    <Input type={showConfirmPassword ? "text" : "password"} name="newPassword" value={passwordFields.newPassword} onChange={handlePasswordChange} id="newPassword" placeholder="Enter new password" className="input-field w-full px-4 py-3 rounded-lg text-white" required />
+                    <Input type={showConfirmPassword ? "text" : "password"} name="newPassword" value={passwordFields.newPassword} onChange={handlePasswordChange} id="newPassword" placeholder="Enter new password" className="input-field w-full px-4 py-3 rounded-lg theme-text-primary" required />
                     <span className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer text-gray-500 hover:text-gray-700" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                       {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </span>
@@ -530,12 +530,12 @@ export default function StudentProfilePage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Confirm New Password</label>
-                  <Input type="password" name="confirmNewPassword" value={passwordFields.confirmNewPassword} onChange={handlePasswordChange} id="confirmConfirmPassword" placeholder="Confirm new password" className="input-field w-full px-4 py-3 rounded-lg text-white" required />
+                  <Input type="password" name="confirmNewPassword" value={passwordFields.confirmNewPassword} onChange={handlePasswordChange} id="confirmConfirmPassword" placeholder="Confirm new password" className="input-field w-full px-4 py-3 rounded-lg theme-text-primary" required />
                 </div>
               </div>
 
               <div className="flex justify-end gap-3 mt-6">
-                <Button type="submit" className="btn-primary px-6 py-2.5 rounded-lg text-white font-medium" disabled={isSaving}>
+                <Button type="submit" className="px-6 py-2.5 rounded-lg font-medium" disabled={isSaving}>
                   {isSaving ? "Saving..." : "Change Password"}
                 </Button>
               </div>
