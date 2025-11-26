@@ -36,7 +36,7 @@ const getUserIdCardFolder = (userId) => {
 };
 // Registration controller
 const register = async (req, res) => {
-    const { username, password, firstName, lastName, address, phoneNumber, whatsappNumber, telegram, email, institute, year, studentType } = req.body;
+    const { username, password, firstName, lastName, address, phoneNumber, whatsappNumber, telegram, email, institute, year, academicLevel, studentType } = req.body;
     let idCardFrontImage;
     let idCardBackImage;
     let uploadedFiles = [];
@@ -115,6 +115,7 @@ const register = async (req, res) => {
             telegram,
             ...(institute && mongoose_1.default.Types.ObjectId.isValid(institute) && { institute }),
             ...(year && mongoose_1.default.Types.ObjectId.isValid(year) && { year }),
+            academicLevel,
             studentType,
             role: 'student',
         });

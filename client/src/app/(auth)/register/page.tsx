@@ -603,7 +603,7 @@ export default function RegisterPage() {
                 <div className="space-y-5">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label htmlFor="firstName" className="form-label">First Name *</label>
                       <input
@@ -668,7 +668,7 @@ export default function RegisterPage() {
                     {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label htmlFor="password" className="form-label">Password *</label>
                       <div className="relative">
@@ -959,7 +959,7 @@ export default function RegisterPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <div>
                       <label htmlFor="phoneNumber" className="form-label">Phone Number <span className="text-red-500">*</span></label>
                       <input
@@ -1009,7 +1009,7 @@ export default function RegisterPage() {
                     />
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row">
                     <button
                       type="button"
                       onClick={prevStep}
@@ -1132,7 +1132,7 @@ export default function RegisterPage() {
 
 
 
-                  <div className="flex gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row">
 
                     <button
 

@@ -19,6 +19,7 @@ const userSchema = new mongoose_1.default.Schema({
     idCardFrontImage: { type: String },
     idCardBackImage: { type: String },
     studentType: { type: String },
+    academicLevel: { type: String },
     role: { type: String, enum: ['student', 'teacher', 'admin'], default: 'student' },
     status: {
         type: String,
