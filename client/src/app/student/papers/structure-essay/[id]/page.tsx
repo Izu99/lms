@@ -37,6 +37,7 @@ export default function StructureEssayPaperPage() {
   const [answerFile, setAnswerFile] = useState<File | null>(null);
   const [answerFileUrl, setAnswerFileUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [hasPaperDownloaded, setHasPaperDownloaded] = useState(false);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -53,6 +54,11 @@ export default function StructureEssayPaperPage() {
         const headers = getAuthHeaders();
         const response = await axios.get(`${API_URL}/papers/${paperId}`, { headers });
         setPaper(response.data.paper);
+
+        // Check if paper was already downloaded (stored in localStorage)
+        const downloadKey = `paper_downloaded_${paperId}`;
+        const hasDownloaded = localStorage.getItem(downloadKey) === 'true';
+        setHasPaperDownloaded(hasDownloaded);
       } catch (error) {
         console.error("Error fetching paper:", error);
         setError("Failed to load paper");
@@ -176,7 +182,16 @@ export default function StructureEssayPaperPage() {
             <h2 className="text-xl font-semibold theme-text-primary">Download Paper</h2>
             <p className="theme-text-secondary">Click the button to download the paper PDF.</p>
           </div>
-          <a href={`${API_BASE_URL}${paper.fileUrl}`} download rel="noopener noreferrer">
+          <a
+            href={`${API_BASE_URL}${paper.fileUrl}`}
+            download
+            rel="noopener noreferrer"
+            onClick={() => {
+              const downloadKey = `paper_downloaded_${paperId}`;
+              localStorage.setItem(downloadKey, 'true');
+              setHasPaperDownloaded(true);
+            }}
+          >
             <Button>
               <Download className="mr-2" />
               Download PDF
@@ -186,6 +201,23 @@ export default function StructureEssayPaperPage() {
 
         <div className="theme-card p-6">
           <h2 className="text-xl font-semibold theme-text-primary mb-4">Upload Your Answer</h2>
+
+          {!hasPaperDownloaded && (
+            <div className="mb-4 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="text-orange-500 flex-shrink-0 mt-0.5" size={20} />
+                <div>
+                  <p className="text-sm font-medium text-orange-800 dark:text-orange-300">
+                    Please download the paper first
+                  </p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                    You must download and review the paper before uploading your answer.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
             <FileUpload
               onFileSelect={(file) => setAnswerFile(file)}
@@ -193,13 +225,13 @@ export default function StructureEssayPaperPage() {
               maxSizeMB={10}
               label="Upload Answer PDF"
               description="Drag & drop your answer PDF here"
-              disabled={submitting}
+              disabled={submitting || !hasPaperDownloaded}
             />
 
             <div className="flex justify-end">
               <Button
                 onClick={handleSubmit}
-                disabled={submitting || !answerFile}
+                disabled={submitting || !answerFile || !hasPaperDownloaded}
                 className="w-full sm:w-auto"
               >
                 {submitting ? (

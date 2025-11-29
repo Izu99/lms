@@ -41,7 +41,7 @@ router.post('/upload/id-card', (req, res, next) => {
 
 // Route for uploading paper content images
 router.post('/upload/paper-content', (req, res, next) => {
-  (req as any).uploadType = 'paper'; // Maps to uploads/paper
+  (req as any).uploadType = 'mcq-content'; // Maps to uploads/papers/mcq/content
   next();
 }, upload.single('image'), uploadPaperContentImage);
 

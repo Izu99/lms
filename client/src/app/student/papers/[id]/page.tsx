@@ -41,7 +41,7 @@ interface Option {
 }
 
 interface Question {
-  _id:string;
+  _id: string;
   questionText: string;
   imageUrl?: string;
   options: Option[];
@@ -147,7 +147,7 @@ export default function PaperAttempt() {
     if (level === "warning") return "WARNING: Less than 30% of time remaining!";
     return null;
   }, [getTimeWarningLevel]);
-  
+
   const autoSave = useCallback(async () => {
     // This is a placeholder for now. In a real scenario, this would post to an endpoint.
     if (!started || Object.keys(answers).length === 0) return;
@@ -191,9 +191,9 @@ export default function PaperAttempt() {
         submissionData,
         { headers }
       );
-      
+
       const attempt = response.data.attempt;
-      
+
       if (attempt) {
         toast.success(`Paper Submitted!`, {
           description: `Score: ${attempt.score}/${attempt.totalQuestions} (${attempt.percentage}%)`,
@@ -201,8 +201,8 @@ export default function PaperAttempt() {
       } else {
         toast.success(autoSubmit ? `Time's up! Paper submitted automatically.` : `Paper submitted successfully!`);
       }
-      
-      router.push(`/student/papers/answers/${attempt._id}`);
+
+      router.push('/student/papers/results');
     } catch (error) {
       console.error("Error submitting paper:", error);
       const errorMessage = axios.isAxiosError(error) ? error.response?.data?.message : "Failed to submit paper";
@@ -224,12 +224,12 @@ export default function PaperAttempt() {
       setLoading(true);
       const headers = getAuthHeaders();
       const response = await axios.get<{ paper: Paper }>(`${API_URL}/papers/${paperId}`, { headers });
-      
+
       if (!response.data.paper) {
         setError("Paper data not found.");
         return;
       }
-      
+
       setPaper(response.data.paper);
       setTimeLeft(response.data.paper.timeLimit * 60);
 
@@ -297,7 +297,7 @@ export default function PaperAttempt() {
       return () => clearInterval(timer);
     }
   }, [started, timeLeft, handleSubmit, autoSave]);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (started && Object.keys(answers).length > 0) {
@@ -470,13 +470,12 @@ export default function PaperAttempt() {
                       <button
                         key={index}
                         onClick={() => goToQuestion(index)}
-                        className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center ${
-                          currentQuestion === index
+                        className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center ${currentQuestion === index
                             ? 'bg-blue-600 text-white shadow-md ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 ring-blue-500'
                             : answers[paper.questions[index]._id]
-                            ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/60'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                        }`}
+                              ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/60'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
                       >
                         {index + 1}
                       </button>
@@ -505,11 +504,11 @@ export default function PaperAttempt() {
                             {currentQuestionData.questionText}
                           </p>
                         </div>
-                        
+
                         {currentQuestionData.imageUrl && (
                           <div className="mt-6 flex justify-center">
                             <div className="relative p-2 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl">
-                               <img
+                              <img
                                 src={`${API_BASE_URL}${currentQuestionData.imageUrl}`}
                                 alt="Question illustration"
                                 className="rounded-lg max-w-full h-auto max-h-[400px] object-contain"
@@ -528,11 +527,10 @@ export default function PaperAttempt() {
                               initial={{ opacity: 0, y: 20 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: optionIndex * 0.1 }}
-                              className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
-                                answers[currentQuestionData._id] === option._id
+                              className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${answers[currentQuestionData._id] === option._id
                                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-md'
                                   : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-gray-50 dark:hover:bg-gray-800/40'
-                              }`}
+                                }`}
                             >
                               <input
                                 type="radio"
@@ -542,17 +540,16 @@ export default function PaperAttempt() {
                                 onChange={() => handleAnswerChange(currentQuestionData._id, option._id)}
                                 className="sr-only" // Hide the default radio button
                               />
-                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-base font-bold flex-shrink-0 transition-colors ${
-                                  answers[currentQuestionData._id] === option._id
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-base font-bold flex-shrink-0 transition-colors ${answers[currentQuestionData._id] === option._id
                                   ? 'bg-blue-600 text-white'
                                   : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                              }`}>
+                                }`}>
                                 {optionIndex + 1}
                               </div>
                               <div className="flex-1 text-gray-800 dark:text-gray-200 text-lg font-medium">
                                 {option.imageUrl ? (
                                   <div className="flex items-center gap-4">
-                                     <img
+                                    <img
                                       src={`${API_BASE_URL}${option.imageUrl}`}
                                       alt={`Option ${optionIndex + 1}`}
                                       className="rounded-md h-16 w-16 object-cover bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700"

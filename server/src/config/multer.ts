@@ -39,14 +39,20 @@ const storage = multer.diskStorage({
       case 'mcq-explanation':
         subDir = 'papers/mcq/explanations';
         break;
+      case 'mcq-content':
+        subDir = 'papers/mcq/content';
+        break;
       case 'structure-question-paper':
-        subDir = 'papers/structure-essay/question-papers';
+      case 'structure-essay-question': // Alias for consistency
+        subDir = 'papers/structure-essay/questions';
         break;
       case 'structure-student-answer':
-        subDir = 'papers/structure-essay/student-answers';
+      case 'student-answer': // Alias for consistency
+        subDir = 'papers/structure-essay/answers';
         break;
       case 'structure-teacher-review':
-        subDir = 'papers/structure-essay/teacher-reviews';
+      case 'teacher-review': // Alias for consistency
+        subDir = 'papers/structure-essay/reviews';
         break;
       case 'paper-thumbnail':
         // Check paperType from form body to determine subfolder

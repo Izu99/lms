@@ -389,9 +389,10 @@ export function PaperResultsView({ basePath }: PaperResultsViewProps) {
                                                                 onClick={() =>
                                                                     handleDownloadAnswer(result.answerFileUrl!)
                                                                 }
+                                                                title="Download Student Answer"
+                                                                className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                                                             >
-                                                                <Download className="w-4 h-4 mr-2" />
-                                                                Student Answer
+                                                                <Download className="w-4 h-4" />
                                                             </Button>
                                                         )}
 
@@ -405,9 +406,10 @@ export function PaperResultsView({ basePath }: PaperResultsViewProps) {
                                                                         "_blank"
                                                                     )
                                                                 }
+                                                                title="Download Teacher Review"
+                                                                className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                                                             >
-                                                                <Download className="w-4 h-4 mr-2" />
-                                                                Teacher Review
+                                                                <Download className="w-4 h-4" />
                                                             </Button>
                                                         )}
 
@@ -419,17 +421,13 @@ export function PaperResultsView({ basePath }: PaperResultsViewProps) {
                                                                 setCurrentReviewFileUrl(result.teacherReviewFileUrl);
                                                                 setIsReviewUploadModalOpen(true);
                                                             }}
+                                                            title={result.teacherReviewFileUrl ? "Update Review" : "Upload Review"}
+                                                            className="border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
                                                         >
                                                             {result.teacherReviewFileUrl ? (
-                                                                <>
-                                                                    <Edit className="w-4 h-4 mr-2" />
-                                                                    Update Review
-                                                                </>
+                                                                <Edit className="w-4 h-4" />
                                                             ) : (
-                                                                <>
-                                                                    <Upload className="w-4 h-4 mr-2" />
-                                                                    Upload Review
-                                                                </>
+                                                                <Upload className="w-4 h-4" />
                                                             )}
                                                         </Button>
 
@@ -439,9 +437,10 @@ export function PaperResultsView({ basePath }: PaperResultsViewProps) {
                                                                     size="sm"
                                                                     variant="outline"
                                                                     onClick={() => handleOpenGradeModal(result._id, 0)}
+                                                                    title="Add Grade"
+                                                                    className="border-purple-500 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20"
                                                                 >
-                                                                    <Edit className="w-4 h-4 mr-2" />
-                                                                    Add Grade
+                                                                    <Edit className="w-4 h-4" />
                                                                 </Button>
                                                             </>
                                                         ) : (
@@ -452,9 +451,10 @@ export function PaperResultsView({ basePath }: PaperResultsViewProps) {
                                                                     onClick={() =>
                                                                         handleOpenGradeModal(result._id, result.percentage)
                                                                     }
+                                                                    title="Edit Grade"
+                                                                    className="border-purple-500 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20"
                                                                 >
-                                                                    <Edit className="w-4 h-4 mr-2" />
-                                                                    Edit Grade
+                                                                    <Edit className="w-4 h-4" />
                                                                 </Button>
                                                             </>
                                                         )}

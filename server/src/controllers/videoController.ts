@@ -53,7 +53,7 @@ export const uploadVideo = async (req: Request, res: Response) => {
       title,
       description,
       videoUrl: videoFile.filename,
-      thumbnailUrl: thumbnailFile ? thumbnailFile.filename : undefined,
+      thumbnailUrl: thumbnailFile ? `/uploads/videos/images/${thumbnailFile.filename}` : undefined,
       uploadedBy: userId,
       institute: instituteId,
       year: yearId,
@@ -133,12 +133,14 @@ export const updateVideo = async (req: Request, res: Response) => {
       const prev = await Video.findById(req.params.id);
       if (prev && prev.thumbnailUrl) {
         try {
-          fs.unlinkSync(path.join(__dirname, '../../', 'uploads/videos/images', prev.thumbnailUrl));
+          // Extract filename from path if it's a full path
+          const oldFilename = prev.thumbnailUrl.includes('/') ? prev.thumbnailUrl.split('/').pop() : prev.thumbnailUrl;
+          fs.unlinkSync(path.join(__dirname, '../../', 'uploads/videos/images', oldFilename!));
         } catch (e) {
           console.log("Old thumbnail image not found, continuing...");
         }
       }
-      update.thumbnailUrl = thumbnailFile.filename;
+      update.thumbnailUrl = `/uploads/videos/images/${thumbnailFile.filename}`;
     }
 
     const video = await Video.findByIdAndUpdate(
@@ -169,12 +171,25 @@ export const deleteVideo = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Video not found' });
     }
 
-    // Delete file from filesystem
+    // Delete video file from filesystem
     if (video.videoUrl) {
       try {
-        fs.unlinkSync(path.join(__dirname, '../../', video.videoUrl));
+        fs.unlinkSync(path.join(__dirname, '../../', 'uploads/videos/files', video.videoUrl));
       } catch (e) {
-        console.log("File not found, continuing with deletion...");
+        console.log("Video file not found, continuing with deletion...");
+      }
+    }
+
+    // Delete thumbnail image from filesystem
+    if (video.thumbnailUrl) {
+      try {
+        // Extract filename from path if it's a full path
+        const thumbnailFilename = video.thumbnailUrl.includes('/')
+          ? video.thumbnailUrl.split('/').pop()
+          : video.thumbnailUrl;
+        fs.unlinkSync(path.join(__dirname, '../../', 'uploads/videos/images', thumbnailFilename!));
+      } catch (e) {
+        console.log("Thumbnail image not found, continuing with deletion...");
       }
     }
 

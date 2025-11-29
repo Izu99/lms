@@ -831,7 +831,7 @@ export const getAttemptById = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid attempt ID' });
     }
 
-    const attempt = await StudentAttempt.findById(attemptId).populate('paperId', 'title description');
+    const attempt = await StudentAttempt.findById(attemptId).populate('paperId', 'title description deadline paperType');
 
     if (!attempt) {
       return res.status(404).json({ message: 'Attempt not found' });
@@ -845,6 +845,21 @@ export const getAttemptById = async (req: Request, res: Response) => {
       attempt.studentId.toString() !== requestingUser.id.toString()
     ) {
       return res.status(403).json({ message: 'Access denied. You can only view your own attempts.' });
+    }
+
+    // Deadline check for students
+    if (requestingUser.role === 'student') {
+      const paper = attempt.paperId as any;
+      if (paper.deadline) {
+        const now = new Date();
+        const deadline = new Date(paper.deadline);
+        if (now < deadline) {
+          return res.status(403).json({
+            message: `Answers will be available after the deadline: ${deadline.toLocaleString()}`,
+            deadline: deadline // Send deadline in response for frontend handling
+          });
+        }
+      }
     }
 
     res.json({ attempt });

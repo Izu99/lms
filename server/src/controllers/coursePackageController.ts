@@ -240,6 +240,21 @@ export const deleteCoursePackage = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Not authorized to delete this course package' });
     }
 
+    // Delete background image from filesystem
+    if (coursePackage.backgroundImage) {
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        // Extract filename from path if it's a full path
+        const imageFilename = coursePackage.backgroundImage.includes('/')
+          ? coursePackage.backgroundImage.split('/').pop()
+          : coursePackage.backgroundImage;
+        fs.unlinkSync(path.join(__dirname, '../../', 'uploads/packages/images', imageFilename!));
+      } catch (e) {
+        console.log("Background image not found, continuing with deletion...");
+      }
+    }
+
     await coursePackage.deleteOne();
     res.json({ message: 'Course package deleted successfully' });
   } catch (error) {

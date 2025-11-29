@@ -397,7 +397,14 @@ export function PaperForm({ mode, paperId, basePath }: PaperFormProps) {
 
     const removeThumbnail = async () => {
         if (currentThumbnailUrl) {
-            if (!confirm("Are you sure you want to remove the current thumbnail?")) return;
+            const confirmed = await confirm({
+                title: "Remove Thumbnail",
+                description: "Are you sure you want to remove the current thumbnail?",
+                confirmText: "Remove",
+                variant: "danger",
+            });
+            if (!confirmed) return;
+
             try {
                 const token = localStorage.getItem("token");
                 await axios.post(
@@ -405,7 +412,7 @@ export function PaperForm({ mode, paperId, basePath }: PaperFormProps) {
                     { fileUrl: currentThumbnailUrl },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
-                toast.success("thumbnail removed successfully!");
+                toast.success("Thumbnail removed successfully!");
                 setCurrentThumbnailUrl("");
                 setThumbnail(null);
             } catch (error) {
@@ -517,6 +524,11 @@ export function PaperForm({ mode, paperId, basePath }: PaperFormProps) {
                     JSON.stringify(questions.map(({ open, ...rest }) => rest))
                 );
             } else {
+                // Append uploadType BEFORE file for multer to detect it
+                if (paperType === "Structure-Essay") {
+                    formData.append("uploadType", "structure-essay-question");
+                }
+
                 if (pdfFile) {
                     formData.append("file", pdfFile);
                 }

@@ -91,8 +91,8 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
         academicLevelId: video.academicLevel || "",
       });
 
-      // Use 'thumbnail' field from backend, not 'thumbnailUrl'
-      setCurrentThumbnailUrl(video.thumbnail || "");
+      // Use 'thumbnailUrl' field from backend
+      setCurrentThumbnailUrl(video.thumbnailUrl || "");
       setCurrentVideoUrl(video.videoUrl || "");
     } else { // If video prop is null/undefined, clear form
       setFormData({

@@ -126,9 +126,7 @@ export const createEmployee = async (req: AuthenticatedRequest, res: Response) =
 
         await employee.save();
 
-        // Remove password from response
-        const employeeResponse = employee.toObject();
-        delete employeeResponse.password;
+        const { password: _, ...employeeResponse } = employee.toObject();
 
         res.status(201).json({
             success: true,
@@ -224,9 +222,7 @@ export const updateEmployee = async (req: AuthenticatedRequest, res: Response) =
 
         await employee.save();
 
-        // Remove password from response
-        const employeeResponse = employee.toObject();
-        delete employeeResponse.password;
+        const { password: _, ...employeeResponse } = employee.toObject();
 
         res.status(200).json({
             success: true,
