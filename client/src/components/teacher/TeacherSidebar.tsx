@@ -12,6 +12,7 @@ import {
   School,
   Package,
   BookOpen, // Add this for Tutes
+  UserCog, // Add this for Employees
 } from "lucide-react";
 import {
   Sidebar,
@@ -65,6 +66,12 @@ const menuItems = [
     icon: Users,
     href: "/teacher/students",
     colorClass: "sidebar-icon-students",
+  },
+  {
+    title: "Employees",
+    icon: UserCog,
+    href: "/teacher/employees",
+    colorClass: "sidebar-icon-employees",
   },
   {
     title: "Institute & Year Setup",

@@ -1,4 +1,4 @@
-export type UserRole = 'student' | 'teacher' | 'admin';
+export type UserRole = 'student' | 'teacher' | 'admin' | 'paper_manager' | 'video_manager';
 export type StudentStatus = 'active' | 'inactive' | 'pending' | 'paid' | 'unpaid';
 
 export interface ApiResponse<T = any> {

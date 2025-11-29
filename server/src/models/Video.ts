@@ -4,7 +4,7 @@ export interface IVideo extends Document {
   title: string;
   description: string;
   videoUrl: string;
-  previewImage?: string;  // Preview/thumbnail image
+  thumbnailUrl?: string;  // Thumbnail image
   uploadedBy: Types.ObjectId;
   institute: Types.ObjectId;  // Reference to Institute
   year: Types.ObjectId;   // Reference to Year
@@ -18,7 +18,7 @@ const videoSchema = new mongoose.Schema<IVideo>({
   title: { type: String, required: true },
   description: String,
   videoUrl: { type: String, required: true },
-  previewImage: { type: String },  // Preview/thumbnail image
+  thumbnailUrl: { type: String },  // Thumbnail image
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   institute: { type: mongoose.Schema.Types.ObjectId, ref: 'Institute', required: true },
   year: { type: mongoose.Schema.Types.ObjectId, ref: 'Year', required: true },

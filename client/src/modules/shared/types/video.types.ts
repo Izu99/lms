@@ -24,5 +24,6 @@ export interface VideoData {
   availability?: string;
   price?: number;
   views?: number;
-  previewImageUrl?: string;
+  thumbnailUrl?: string;
+  thumbnail?: string; // Raw filename from backend
 }

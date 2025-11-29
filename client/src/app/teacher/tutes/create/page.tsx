@@ -19,7 +19,7 @@ export default function CreateTutePage() {
   const [availability, setAvailability] = useState("all");
   const [price, setPrice] = useState(0);
   const [file, setFile] = useState<File | null>(null);
-  const [previewImage, setPreviewImage] = useState<File | null>(null);
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [institutes, setInstitutes] = useState<{ _id: string, name: string, location?: string }[]>([]);
   const [years, setYears] = useState<{ _id: string, year: string, name: string }[]>([]);
@@ -87,8 +87,8 @@ export default function CreateTutePage() {
     if (file) {
       formData.append("file", file);
     }
-    if (previewImage) {
-      formData.append("previewImage", previewImage);
+    if (thumbnail) {
+      formData.append("thumbnail", thumbnail);
     }
 
     try {
@@ -292,29 +292,29 @@ export default function CreateTutePage() {
             </div>
           </div>
 
-          {/* Preview Image Upload */}
+          {/* Thumbnail Upload */}
           <div>
             <label className="font-semibold text-foreground mb-3 block text-lg">
-              Upload Preview Image (Optional)
+              Upload Thumbnail (Optional)
             </label>
             <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary transition-colors">
-              {previewImage ? (
+              {thumbnail ? (
                 <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={URL.createObjectURL(previewImage)}
-                    alt="Preview"
+                    src={URL.createObjectURL(thumbnail)}
+                    alt="Thumbnail"
                     className="mx-auto max-h-48 object-contain rounded-lg shadow-md"
                   />
                   <Button
                     variant="destructive"
                     size="icon"
                     className="absolute top-2 right-2 shadow-lg"
-                    onClick={() => setPreviewImage(null)}
+                    onClick={() => setThumbnail(null)}
                   >
                     <X size={16} />
                   </Button>
-                  <p className="font-medium text-foreground mt-3">{previewImage.name}</p>
+                  <p className="font-medium text-foreground mt-3">{thumbnail.name}</p>
                 </div>
               ) : (
                 <div className="text-center">
@@ -324,11 +324,11 @@ export default function CreateTutePage() {
                   <Input
                     type="file"
                     accept="image/jpeg,image/png,image/gif,image/webp"
-                    onChange={(e) => setPreviewImage(e.target.files?.[0] || null)}
+                    onChange={(e) => setThumbnail(e.target.files?.[0] || null)}
                     className="max-w-xs mx-auto bg-card text-foreground border-border"
                   />
                   <p className="text-sm text-muted-foreground mt-2">
-                    Upload an image for preview (Max 5MB)
+                    Upload an image for thumbnail (Max 5MB)
                   </p>
                 </div>
               )}

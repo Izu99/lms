@@ -15,7 +15,7 @@ const storage = multer.diskStorage({
     let subDir = '';
     if (file.fieldname === 'file') {
       subDir = 'files';
-    } else if (file.fieldname === 'previewImage') {
+    } else if (file.fieldname === 'thumbnail') {
       subDir = 'images';
     } else {
       // Default to files if fieldname is unexpected, though it shouldn't happen with .fields()
@@ -50,7 +50,7 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
     'image/gif',
     'image/webp'
   ];
-  
+
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {

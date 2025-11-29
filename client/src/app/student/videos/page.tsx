@@ -18,7 +18,7 @@ interface Video {
   title: string;
   description: string;
   videoUrl: string;
-  previewImage?: string;
+  thumbnail?: string;
   uploadedBy: {
     username: string;
   };
@@ -223,9 +223,9 @@ export default function VideosPage() {
                     }}
                   >
                     <div className="relative w-full h-48 bg-gray-900 cursor-pointer group overflow-hidden">
-                      {video.previewImage ? (
+                      {video.thumbnail ? (
                         <img
-                          src={`${API_BASE_URL}/uploads/videos/images/${video.previewImage}`}
+                          src={`${API_BASE_URL}/uploads/videos/images/${video.thumbnail}`}
                           alt={video.title}
                           className="w-full h-full object-cover"
                         />

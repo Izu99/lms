@@ -13,6 +13,7 @@ import CommonFilter from "@/components/common/CommonFilter";
 import { useInstitutesAndYears } from "@/modules/teacher/hooks/useInstitutesAndYears";
 import { GridSkeleton } from "@/components/teacher/skeletons/GridSkeleton";
 import { ClientLayoutProvider } from "@/components/common/ClientLayoutProvider";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 interface Tute {
   _id: string;
@@ -20,7 +21,7 @@ interface Tute {
   description?: string;
   fileUrl: string;
   fileType: 'pdf' | 'pptx' | 'ppt' | 'image';
-  previewImageUrl?: string;
+  thumbnailUrl?: string;
   availability: 'all' | 'physical';
   price: number;
   createdAt: string;
@@ -42,21 +43,11 @@ function TutesPageContent() {
   const [tutes, setTutes] = useState<Tute[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const { institutes, years, academicLevels, isLoadingInstitutes, isLoadingYears, isLoadingAcademicLevels } = useInstitutesAndYears();
   const [selectedInstitute, setSelectedInstitute] = useState("all");
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedAcademicLevel, setSelectedAcademicLevel] = useState("all");
-  const [floatingElementStyles, setFloatingElementStyles] = useState<React.CSSProperties[]>([]);
-
-  useEffect(() => {
-    const elements = Array.from({ length: 15 }, () => ({
-      left: `${Math.random() * 100}%`,
-      top: `${Math.random() * 100}%`,
-      animation: `float ${4 + Math.random() * 4}s ease-in-out infinite`,
-      animationDelay: `${Math.random() * 4}s`,
-    }));
-    setFloatingElementStyles(elements);
-  }, []);
 
   useEffect(() => {
     fetchTutes();
@@ -88,7 +79,15 @@ function TutesPageContent() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this tute?')) return;
+    const confirmed = await confirm({
+      title: 'Delete Tute',
+      description: 'Are you sure you want to delete this tute? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger'
+    });
+
+    if (!confirmed) return;
 
     try {
       const token = localStorage.getItem('token');
@@ -105,8 +104,8 @@ function TutesPageContent() {
 
   const getFileIcon = (fileType: string) => {
     if (fileType === 'pdf') return <FileText className="text-red-500" size={24} />;
-    if (fileType === 'image') return <BookOpen className="text-blue-500" size={24} />; // Using BookOpen for image as a placeholder
-    return <Presentation className="text-orange-500" size={24} />; // For ppt/pptx
+    if (fileType === 'image') return <BookOpen className="text-blue-500" size={24} />;
+    return <Presentation className="text-orange-500" size={24} />;
   };
 
   const filteredTutes = tutes.filter(tute =>
@@ -116,21 +115,7 @@ function TutesPageContent() {
 
   return (
     <TeacherLayout>
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl"></div>
-        {/* Floating Elements */}
-        {floatingElementStyles.map((style, i) => (
-          <div
-            key={i}
-            className="absolute w-2 h-2 bg-white/20 rounded-full"
-            style={style}
-          />
-        ))}
-      </div>
       <div className="space-y-6 relative z-10">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
@@ -152,7 +137,6 @@ function TutesPageContent() {
           </Button>
         </div>
 
-        {/* Search Input */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-4">
           <div className="flex items-center gap-3">
             <Search className="w-5 h-5 text-gray-400 dark:text-gray-500" />
@@ -181,7 +165,6 @@ function TutesPageContent() {
           isLoadingAcademicLevels={isLoadingAcademicLevels}
         />
 
-        {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-100 dark:border-gray-700 p-6">
             <div className="flex items-center gap-3">
@@ -253,9 +236,9 @@ function TutesPageContent() {
                 transition={{ delay: index * 0.1 }}
                 className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
-                {tute.previewImageUrl ? (
+                {tute.thumbnailUrl ? (
                   <img
-                    src={`${API_BASE_URL}${tute.previewImageUrl}`}
+                    src={`${API_BASE_URL}${tute.thumbnailUrl}`}
                     alt={tute.title}
                     className="w-full h-48 object-cover border-b border-border"
                   />
@@ -354,33 +337,19 @@ function TutesPageContent() {
           </div>
         )}
       </div>
-
-      <style jsx global>{`
-        @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0) translateX(0) rotate(0deg);
-          }
-          33% {
-            transform: translateY(-20px) translateX(10px) rotate(120deg);
-          }
-          66% {
-            transform: translateY(10px) translateX(-10px) rotate(240deg);
-          }
-        }
-      `}</style>
+      <ConfirmDialog />
     </TeacherLayout>
   );
 }
 
 export default function TutesPage() {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <ClientLayoutProvider>
-                <TutesPageContent />
-            </ClientLayoutProvider>
-        </Suspense>
-    )
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ClientLayoutProvider>
+        <TutesPageContent />
+      </ClientLayoutProvider>
+    </Suspense>
+  )
 }
 
 // single default export (kept the ClientLayoutProvider wrapper above)

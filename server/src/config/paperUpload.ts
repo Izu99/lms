@@ -11,7 +11,7 @@ const ensureDirectories = () => {
     path.join(UPLOAD_DIR, 'files'),
     path.join(UPLOAD_DIR, 'images')
   ];
-  
+
   dirs.forEach(dir => {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
@@ -26,7 +26,7 @@ const storage = multer.diskStorage({
     let subDir = '';
     if (file.fieldname === 'file') {
       subDir = 'files';
-    } else if (file.fieldname === 'previewImage') {
+    } else if (file.fieldname === 'thumbnail') {
       subDir = 'images';
     } else {
       subDir = 'files';
@@ -50,7 +50,7 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
     } else {
       cb(new Error('Invalid file type. Only PDF allowed for papers'));
     }
-  } else if (file.fieldname === 'previewImage') {
+  } else if (file.fieldname === 'thumbnail') {
     // Image files
     const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (allowedMimes.includes(file.mimetype)) {

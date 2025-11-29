@@ -18,6 +18,7 @@ import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { EmptyStateComponent } from "@/components/common/EmptyStateComponent";
 import { motion } from "framer-motion";
 import { GridSkeleton } from "@/components/teacher/skeletons/GridSkeleton";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 export default function TeacherCoursePackagesPage() {
   const { coursePackages, isLoading, error, refetch } = useCoursePackages();
@@ -27,15 +28,22 @@ export default function TeacherCoursePackagesPage() {
   const [selectedInstitute, setSelectedInstitute] = useState("all");
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedAcademicLevel, setSelectedAcademicLevel] = useState("all");
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const handleEdit = (pkg: CoursePackageData) => {
     router.push(`/teacher/course-packages/${pkg._id}`);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this course package? This action cannot be undone.")) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: 'Delete Course Package',
+      description: 'Are you sure you want to delete this course package? This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger'
+    });
+
+    if (!confirmed) return;
 
     try {
       await CoursePackageService.deleteCoursePackage(id);
@@ -221,6 +229,7 @@ export default function TeacherCoursePackagesPage() {
 
         {renderContent()}
       </div>
+      <ConfirmDialog />
     </TeacherLayout>
   );
 }

@@ -20,9 +20,9 @@ const extractImageUrlsFromPaper = (paper: IPaper): string[] => {
   if (paper.fileUrl) {
     imageUrls.push(paper.fileUrl);
   }
-  // Add paper-level previewImageUrl if it exists
-  if (paper.previewImageUrl) {
-    imageUrls.push(paper.previewImageUrl);
+  // Add paper-level thumbnailUrl if it exists
+  if (paper.thumbnailUrl) {
+    imageUrls.push(paper.thumbnailUrl);
   }
 
   // Extract image URLs from questions, options, and explanations
@@ -52,13 +52,13 @@ export const createPaper = async (req: Request, res: Response) => {
   try {
     const requestingUser = (req as any).user;
 
-    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Only teachers can create papers.' });
+    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin' && requestingUser.role !== 'paper_manager') {
+      return res.status(403).json({ message: 'Access denied. Only teachers and paper managers can create papers.' });
     }
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const mainFile = files?.file ? files.file[0] : undefined;
-    const previewImageFile = files?.previewImage ? files.previewImage[0] : undefined;
+    const thumbnailFile = files?.thumbnail ? files.thumbnail[0] : undefined;
 
     const { title, description, deadline, timeLimit, availability, price, paperType, institute, year, academicLevel } = req.body;
     let { questions } = req.body;
@@ -71,8 +71,14 @@ export const createPaper = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Title is required' });
     }
 
-    const fileUrl = mainFile ? `/uploads/${mainFile.path.split('uploads/')[1]}` : undefined;
-    const previewImageUrl = previewImageFile ? `/uploads/${previewImageFile.path.split('uploads/')[1]}` : undefined;
+    if (mainFile) {
+      console.log('Main File Path:', mainFile.path);
+      console.log('Split Result:', mainFile.path.split('uploads/'));
+    }
+    const fileUrl = mainFile ? `/uploads/${mainFile.path.replace(/\\/g, '/').split('uploads/').pop()}` : undefined;
+    console.log('Generated fileUrl:', fileUrl);
+
+    const thumbnailUrl = thumbnailFile ? `/uploads/${thumbnailFile.path.replace(/\\/g, '/').split('uploads/').pop()}` : undefined;
 
     if (paperType === 'MCQ') {
       if (!Array.isArray(questions) || questions.length === 0) {
@@ -120,7 +126,7 @@ export const createPaper = async (req: Request, res: Response) => {
       ...(price && { price: price }),
       paperType,
       fileUrl, // Include fileUrl
-      previewImageUrl, // Include previewImageUrl
+      thumbnailUrl, // Include thumbnailUrl
     });
 
     await paper.save();
@@ -152,7 +158,7 @@ export const getAllPapers = async (req: Request, res: Response) => {
     const { institute, year, academicLevel } = req.query;
     let papers;
 
-    if (requestingUser.role === 'teacher' || requestingUser.role === 'admin') {
+    if (requestingUser.role === 'teacher' || requestingUser.role === 'admin' || requestingUser.role === 'paper_manager') {
       const filter: any = {};
       if (institute && institute !== 'all') filter.institute = institute;
       if (year && year !== 'all') filter.year = year;
@@ -480,8 +486,8 @@ export const getPaperResults = async (req: Request, res: Response) => {
     const { id } = req.params;
     const requestingUser = (req as any).user;
 
-    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Only teachers can view results.' });
+    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin' && requestingUser.role !== 'paper_manager') {
+      return res.status(403).json({ message: 'Access denied. Only teachers and paper managers can view results.' });
     }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -493,13 +499,7 @@ export const getPaperResults = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Paper not found' });
     }
 
-    // Check if teacher owns this paper
-    if (paper.teacherId.toString() !== requestingUser.id.toString()) {
-      return res.status(403).json({
-        message: 'You can only view results for your own papers'
-      });
-    }
-
+    // Teachers, paper managers, and admins can all view results for any paper
     const results = await StudentAttempt.find({
       paperId: id,
       status: 'submitted'
@@ -537,8 +537,8 @@ export const updatePaper = async (req: Request, res: Response) => {
     const { id } = req.params;
     const requestingUser = (req as any).user;
 
-    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Only teachers can update papers.' });
+    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin' && requestingUser.role !== 'paper_manager') {
+      return res.status(403).json({ message: 'Access denied. Only teachers and paper managers can update papers.' });
     }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -550,10 +550,7 @@ export const updatePaper = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Paper not found' });
     }
 
-    // Check if teacher owns this paper
-    if (paper.teacherId.toString() !== requestingUser.id.toString() && requestingUser.role !== 'admin') {
-      return res.status(403).json({ message: 'You can only update your own papers' });
-    }
+    // Teachers, paper managers, and admins can all update any paper
 
     // Check if there are any student attempts for this paper
     const attemptCount = await StudentAttempt.countDocuments({ paperId: id });
@@ -574,7 +571,7 @@ export const updatePaper = async (req: Request, res: Response) => {
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const mainFile = files?.file ? files.file[0] : undefined;
-    const previewImageFile = files?.previewImage ? files.previewImage[0] : undefined;
+    const thumbnailFile = files?.thumbnail ? files.thumbnail[0] : undefined;
 
     const { title, description, deadline, timeLimit, availability, price, paperType, institute, year, academicLevel } = req.body;
     let { questions } = req.body;
@@ -611,9 +608,13 @@ export const updatePaper = async (req: Request, res: Response) => {
       }
     }
 
-    // Determine new fileUrl and previewImageUrl
-    const newFileUrl = mainFile ? `/uploads/${mainFile.path.split('uploads/')[1]}` : undefined;
-    const newPreviewImageUrl = previewImageFile ? `/uploads/${previewImageFile.path.split('uploads/')[1]}` : undefined;
+    // Determine new fileUrl and thumbnailUrl
+    if (mainFile) {
+      console.log('Update Main File Path:', mainFile.path);
+    }
+    const newFileUrl = mainFile ? `/uploads/${mainFile.path.replace(/\\/g, '/').split('uploads/').pop()}` : undefined;
+    console.log('Update Generated newFileUrl:', newFileUrl);
+    const newThumbnailUrl = thumbnailFile ? `/uploads/${thumbnailFile.path.replace(/\\/g, '/').split('uploads/').pop()}` : undefined;
 
     // Prepare update data
     const updateData: any = {
@@ -626,9 +627,9 @@ export const updatePaper = async (req: Request, res: Response) => {
       institute,
       year,
       academicLevel, // Add academicLevel
-      // Only update fileUrl/previewImageUrl if a new file was uploaded or it's explicitly set to null
+      // Only update fileUrl/thumbnailUrl if a new file was uploaded or it's explicitly set to null
       ...(newFileUrl !== undefined && { fileUrl: newFileUrl }),
-      ...(newPreviewImageUrl !== undefined && { previewImageUrl: newPreviewImageUrl }),
+      ...(newThumbnailUrl !== undefined && { thumbnailUrl: newThumbnailUrl }),
     };
 
     if (paperType === 'MCQ') {
@@ -668,11 +669,11 @@ export const updatePaper = async (req: Request, res: Response) => {
     const imagesToKeep = new Set(newImageUrls);
     for (const oldImageUrl of oldImageUrls) {
       // Only delete if the old URL is not in the new set of URLs
-      // and it's not the newly uploaded main file or preview image
+      // and it's not the newly uploaded main file or thumbnail image
       const isNewMainFile = newFileUrl && oldImageUrl === oldPaper.fileUrl && newFileUrl !== oldPaper.fileUrl;
-      const isNewPreviewImage = newPreviewImageUrl && oldImageUrl === oldPaper.previewImageUrl && newPreviewImageUrl !== oldPaper.previewImageUrl;
+      const isNewThumbnail = newThumbnailUrl && oldImageUrl === oldPaper.thumbnailUrl && newThumbnailUrl !== oldPaper.thumbnailUrl;
 
-      if (!imagesToKeep.has(oldImageUrl) || isNewMainFile || isNewPreviewImage) {
+      if (!imagesToKeep.has(oldImageUrl) || isNewMainFile || isNewThumbnail) {
         await deleteFile(oldImageUrl);
       }
     }
@@ -694,8 +695,8 @@ export const deletePaper = async (req: Request, res: Response) => {
     const { id } = req.params;
     const requestingUser = (req as any).user;
 
-    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Only teachers can delete papers.' });
+    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin' && requestingUser.role !== 'paper_manager') {
+      return res.status(403).json({ message: 'Access denied. Only teachers and paper managers can delete papers.' });
     }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -707,10 +708,7 @@ export const deletePaper = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Paper not found' });
     }
 
-    // Check if teacher owns this paper
-    if (paper.teacherId.toString() !== requestingUser.id.toString()) {
-      return res.status(403).json({ message: 'You can only delete your own papers' });
-    }
+    // Teachers, paper managers, and admins can all delete any paper
 
 
 
@@ -794,12 +792,32 @@ export const getStudentAttemptForPaper = async (req: Request, res: Response) => 
 };
 
 export const uploadPaperPdf = (req: Request, res: Response) => {
+  console.log('📤 [UPLOAD PDF] Starting upload...');
+  console.log('  - uploadType:', (req as any).uploadType);
+
   if (!req.file) {
+    console.log('❌ [UPLOAD PDF] No file in request');
     return res.status(400).json({ message: 'No file uploaded.' });
   }
+
+  console.log('  - File info:', {
+    filename: req.file.filename,
+    path: req.file.path,
+    mimetype: req.file.mimetype,
+    size: req.file.size
+  });
+
+  // Extract relative path from uploads/
+  const relativePath = req.file.path.replace(/\\/g, '/').split('uploads/').pop();
+  const fileUrl = `/uploads/${relativePath}`;
+
+  console.log('  - Relative path:', relativePath);
+  console.log('  - Generated fileUrl:', fileUrl);
+  console.log('✅ [UPLOAD PDF] Success');
+
   res.status(200).json({
     message: 'File uploaded successfully',
-    fileUrl: `/uploads/${req.file.filename}`
+    fileUrl: fileUrl
   });
 };
 
@@ -823,6 +841,7 @@ export const getAttemptById = async (req: Request, res: Response) => {
     if (
       requestingUser.role !== 'teacher' &&
       requestingUser.role !== 'admin' &&
+      requestingUser.role !== 'paper_manager' &&
       attempt.studentId.toString() !== requestingUser.id.toString()
     ) {
       return res.status(403).json({ message: 'Access denied. You can only view your own attempts.' });
@@ -842,8 +861,8 @@ export const uploadTeacherReviewFile = async (req: Request, res: Response) => {
     const { attemptId } = req.params;
     const requestingUser = (req as any).user;
 
-    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Only teachers and admins can upload review files.' });
+    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin' && requestingUser.role !== 'paper_manager') {
+      return res.status(403).json({ message: 'Access denied. Only teachers, paper managers and admins can upload review files.' });
     }
 
     if (!mongoose.Types.ObjectId.isValid(attemptId)) {
@@ -864,7 +883,17 @@ export const uploadTeacherReviewFile = async (req: Request, res: Response) => {
       await deleteFile(attempt.teacherReviewFileUrl);
     }
 
-    attempt.teacherReviewFileUrl = `/uploads/${req.file.filename}`;
+    // Extract relative path from uploads/
+    const relativePath = req.file.path.replace(/\\/g, '/').split('uploads/').pop();
+    const reviewFileUrl = `/uploads/${relativePath}`;
+
+    console.log('📤 [TEACHER REVIEW] Upload info:');
+    console.log('  - uploadType:', (req as any).uploadType);
+    console.log('  - File path:', req.file.path);
+    console.log('  - Relative path:', relativePath);
+    console.log('  - Generated URL:', reviewFileUrl);
+
+    attempt.teacherReviewFileUrl = reviewFileUrl;
     await attempt.save();
 
     res.status(200).json({
@@ -883,8 +912,8 @@ export const downloadStudentAttemptFile = async (req: Request, res: Response) =>
     const { attemptId } = req.params;
     const requestingUser = (req as any).user;
 
-    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Only teachers and admins can download student attempt files.' });
+    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin' && requestingUser.role !== 'paper_manager') {
+      return res.status(403).json({ message: 'Access denied. Only teachers, paper managers and admins can download student attempt files.' });
     }
 
     if (!mongoose.Types.ObjectId.isValid(attemptId)) {
@@ -928,8 +957,8 @@ export const updateStudentAttemptMarks = async (req: Request, res: Response) => 
     const { score } = req.body;
     const requestingUser = (req as any).user;
 
-    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied. Only teachers and admins can update student attempt marks.' });
+    if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin' && requestingUser.role !== 'paper_manager') {
+      return res.status(403).json({ message: 'Access denied. Only teachers, paper managers and admins can update student attempt marks.' });
     }
 
     if (!mongoose.Types.ObjectId.isValid(attemptId)) {

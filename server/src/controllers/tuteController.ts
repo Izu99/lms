@@ -11,9 +11,9 @@ export const createTute = async (req: Request, res: Response) => {
     const teacherId = (req as any).user?.id;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const mainFile = files?.file ? files.file[0] : undefined;
-    const previewImageFile = files?.previewImage ? files.previewImage[0] : undefined;
+    const thumbnailFile = files?.thumbnail ? files.thumbnail[0] : undefined;
 
-    console.log('Create Tute Request:', { title, teacherId, hasMainFile: !!mainFile, hasPreviewImage: !!previewImageFile });
+    console.log('Create Tute Request:', { title, teacherId, hasMainFile: !!mainFile, hasThumbnail: !!thumbnailFile });
 
     if (!teacherId) {
       return res.status(401).json({ message: 'User not authenticated' });
@@ -40,11 +40,11 @@ export const createTute = async (req: Request, res: Response) => {
     }
 
     const fileUrl = `/${mainFile.path.replace(/\\/g, '/')}`;
-    let previewImageUrl = previewImageFile ? `/${previewImageFile.path.replace(/\\/g, '/')}` : undefined;
+    let thumbnailUrl = thumbnailFile ? `/${thumbnailFile.path.replace(/\\/g, '/')}` : undefined;
 
-    // If the main file is an image and no specific preview is set, use the main file for preview
-    if (fileType === 'image' && !previewImageUrl) {
-      previewImageUrl = fileUrl;
+    // If the main file is an image and no specific thumbnail is set, use the main file for preview
+    if (fileType === 'image' && !thumbnailUrl) {
+      thumbnailUrl = fileUrl;
     }
 
     const tute = new Tute({
@@ -53,7 +53,7 @@ export const createTute = async (req: Request, res: Response) => {
       teacherId,
       fileUrl,
       fileType,
-      previewImageUrl,
+      thumbnailUrl,
       availability: availability || 'all',
       price: price || 0,
       institute,
@@ -121,7 +121,7 @@ export const updateTute = async (req: Request, res: Response) => {
     const teacherId = (req as any).user.id;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const mainFile = files?.file ? files.file[0] : undefined;
-    const previewImageFile = files?.previewImage ? files.previewImage[0] : undefined;
+    const thumbnailFile = files?.thumbnail ? files.thumbnail[0] : undefined;
 
     const tute = await Tute.findOne({ _id: id, teacherId });
 
@@ -174,24 +174,24 @@ export const updateTute = async (req: Request, res: Response) => {
       tute.fileType = fileType;
     }
 
-    // If new preview image is uploaded, delete old and update
-    if (previewImageFile) {
-      // Delete old preview image if it exists
-      if (tute.previewImageUrl) {
+    // If new thumbnail image is uploaded, delete old and update
+    if (thumbnailFile) {
+      // Delete old thumbnail image if it exists
+      if (tute.thumbnailUrl) {
         try {
-          const oldPreviewPath = new URL(tute.previewImageUrl).pathname.substring(1);
-          await fs.unlink(oldPreviewPath);
+          const oldThumbnailPath = new URL(tute.thumbnailUrl).pathname.substring(1);
+          await fs.unlink(oldThumbnailPath);
         } catch (err) {
-          console.error('Error deleting old preview image:', err);
+          console.error('Error deleting old thumbnail image:', err);
         }
       }
-      // Update with new preview image
-      tute.previewImageUrl = `${baseUrl}/${previewImageFile.path.replace(/\\/g, '/')}`;
+      // Update with new thumbnail image
+      tute.thumbnailUrl = `${baseUrl}/${thumbnailFile.path.replace(/\\/g, '/')}`;
     }
 
-    // If the main file is an image and no specific preview is set, use the main file for preview
-    if (tute.fileType === 'image' && !previewImageFile) {
-      tute.previewImageUrl = tute.fileUrl;
+    // If the main file is an image and no specific thumbnail is set, use the main file for preview
+    if (tute.fileType === 'image' && !thumbnailFile) {
+      tute.thumbnailUrl = tute.fileUrl;
     }
 
     await tute.save();
@@ -223,12 +223,12 @@ export const deleteTute = async (req: Request, res: Response) => {
         console.error(`Error deleting main file ${tute.fileUrl}:`, err);
       }
     }
-    if (tute.previewImageUrl && tute.previewImageUrl !== tute.fileUrl) {
+    if (tute.thumbnailUrl && tute.thumbnailUrl !== tute.fileUrl) {
       try {
-        const previewPath = new URL(tute.previewImageUrl).pathname.substring(1);
-        await fs.unlink(previewPath);
+        const thumbnailPath = new URL(tute.thumbnailUrl).pathname.substring(1);
+        await fs.unlink(thumbnailPath);
       } catch (err) {
-        console.error(`Error deleting preview image ${tute.previewImageUrl}:`, err);
+        console.error(`Error deleting thumbnail image ${tute.thumbnailUrl}:`, err);
       }
     }
 

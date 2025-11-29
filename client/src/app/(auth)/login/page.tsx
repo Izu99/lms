@@ -1,4 +1,4 @@
-"use client";  
+"use client";
 import { useState, useEffect } from "react";
 import {
   GraduationCap,
@@ -354,13 +354,22 @@ export default function LoginPage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
                 {loading ? (
                   <div className="flex items-center justify-center gap-3">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="relative w-5 h-5">
+                      {/* Outer ring */}
+                      <div className="absolute inset-0 border-2 border-white/30 rounded-full"></div>
+                      <div className="absolute inset-0 border-2 border-transparent border-t-white rounded-full animate-spin"></div>
+
+                      {/* Inner ring */}
+                      <div className="absolute inset-0.5 border-2 border-white/30 rounded-full"></div>
+                      <div className="absolute inset-0.5 border-2 border-transparent border-t-blue-200 rounded-full animate-spin-reverse"></div>
+                    </div>
                     <span>Signing in...</span>
                   </div>
                 ) : (
                   <span className="relative z-10">Sign In to Dashboard</span>
                 )}
               </Button>
+
 
               {error && (
                 <div className="bg-red-50 border-2 border-red-200 text-red-700 px-4 py-4 rounded-xl text-sm text-center font-medium">
@@ -415,6 +424,19 @@ export default function LoginPage() {
           }
           66% {
             transform: translateY(10px) translateX(-10px) rotate(240deg);
+          }
+        }
+        
+        :global(.animate-spin-reverse) {
+          animation: spin-reverse 0.8s linear infinite;
+        }
+        
+        @keyframes spin-reverse {
+          from {
+            transform: rotate(360deg);
+          }
+          to {
+            transform: rotate(0deg);
           }
         }
       `}</style>

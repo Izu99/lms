@@ -7,7 +7,7 @@ export interface ITute extends Document {
   teacherId: Types.ObjectId;
   fileUrl: string; // PDF or PowerPoint file
   fileType: 'pdf' | 'pptx' | 'ppt' | 'image'; // File type
-  previewImageUrl?: string;
+  thumbnailUrl?: string;
   availability: 'all' | 'physical' | 'paid';
   price?: number;
   institute?: Types.ObjectId;
@@ -23,7 +23,7 @@ const tuteSchema = new mongoose.Schema<ITute>({
   teacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   fileUrl: { type: String, required: true },
   fileType: { type: String, enum: ['pdf', 'pptx', 'ppt', 'image'], required: true },
-  previewImageUrl: { type: String },
+  thumbnailUrl: { type: String },
   availability: { type: String, enum: ['all', 'physical', 'paid'], default: 'all' },
   price: { type: Number, default: 0 },
   institute: { type: mongoose.Schema.Types.ObjectId, ref: 'Institute' },

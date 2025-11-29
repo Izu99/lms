@@ -10,6 +10,7 @@ import { InfoDialog } from "@/components/InfoDialog";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 
+import { getFileUrl } from "@/lib/fileUtils";
 import { VideoData } from '@/modules/shared/types/video.types';
 
 interface InstituteData {
@@ -44,8 +45,8 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [currentVideoUrl, setCurrentVideoUrl] = useState(""); // New state for existing video URL
-  const [previewImage, setPreviewImage] = useState<File | null>(null);
-  const [currentPreviewImageUrl, setCurrentPreviewImageUrl] = useState("");
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [currentThumbnailUrl, setCurrentThumbnailUrl] = useState("");
   const [loading, setLoading] = useState(false); // Re-added loading state
   const [institutes, setInstitutes] = useState<InstituteData[]>([]);
   const [years, setYears] = useState<YearData[]>([]);
@@ -63,17 +64,22 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
   }, []);
 
   useEffect(() => {
+    // Wait for institutes and years to load before setting form data
+    if (dataLoading) return;
+
     if (video) { // Always try to set form data if video prop is present
       console.log('🎥 VideoForm - Loading video data:', video);
       console.log('📍 Institute ID:', video.institute ? video.institute._id : 'NOT SET');
       console.log('📅 Year ID:', video.year ? video.year._id : 'NOT SET');
+      console.log('📅 Year Object:', video.year);
+      console.log('📅 Year Type:', typeof video.year);
       console.log('🎓 Academic Level:', video.academicLevel || 'NOT SET');
 
       setFormData({
         title: video.title || "",
         description: video.description || "",
         instituteId: video.institute ? video.institute._id : "",
-        yearId: video.year ? video.year._id : "",
+        yearId: video.year ? (typeof video.year === 'object' ? video.year._id : video.year) : "",
         academicLevelId: video.academicLevel || "", // Populate academicLevelId
         availability: video.availability || "all",
         price: video.price || 0,
@@ -81,12 +87,13 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
 
       console.log('✅ FormData set to:', {
         instituteId: video.institute ? video.institute._id : "",
-        yearId: video.year ? video.year._id : "",
+        yearId: video.year ? (typeof video.year === 'object' ? video.year._id : video.year) : "",
         academicLevelId: video.academicLevel || "",
       });
 
-      setCurrentPreviewImageUrl(video.previewImageUrl || ""); // Always set from video.previewImageUrl, fallback to ""
-      setCurrentVideoUrl(video.videoUrl || ""); // Always set from video.videoUrl, fallback to ""
+      // Use 'thumbnail' field from backend, not 'thumbnailUrl'
+      setCurrentThumbnailUrl(video.thumbnail || "");
+      setCurrentVideoUrl(video.videoUrl || "");
     } else { // If video prop is null/undefined, clear form
       setFormData({
         title: "",
@@ -97,10 +104,10 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
         availability: "all",
         price: 0,
       });
-      setCurrentPreviewImageUrl("");
+      setCurrentThumbnailUrl("");
       setCurrentVideoUrl("");
     }
-  }, [video]); // Depend only on video prop for form initialization, not dataLoading
+  }, [video, dataLoading]); // Add dataLoading to dependencies
 
   const getAuthHeaders = () => {
     const token = Cookies.get('token');
@@ -191,13 +198,13 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
         submitData.append('removeVideo', 'true');
       }
 
-      // Append preview image if selected
-      if (previewImage) {
-        submitData.append('previewImage', previewImage);
-      } else if (video && !currentPreviewImageUrl) {
-        // If it's an existing video, no new preview image is selected, and currentPreviewImageUrl is cleared,
-        // it means the user wants to remove the existing preview image.
-        submitData.append('removePreviewImage', 'true');
+      // Append thumbnail if selected
+      if (thumbnail) {
+        submitData.append('thumbnail', thumbnail);
+      } else if (video && !currentThumbnailUrl) {
+        // If it's an existing video, no new thumbnail is selected, and currentThumbnailUrl is cleared,
+        // it means the user wants to remove the existing thumbnail.
+        submitData.append('removeThumbnail', 'true');
       }
 
       if (video) {
@@ -293,6 +300,7 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
               <div className="relative">
                 <School className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
                 <Select
+                  key={`institute-${video?._id || 'new'}-${formData.instituteId}`}
                   value={formData.instituteId}
                   onValueChange={(value) => setFormData({ ...formData, instituteId: value })}
                   disabled={dataLoading}
@@ -325,6 +333,7 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
                 <Select
+                  key={`year-${video?._id || 'new'}-${formData.yearId}`}
                   value={formData.yearId}
                   onValueChange={(value) => setFormData({ ...formData, yearId: value })}
                   disabled={dataLoading}
@@ -338,7 +347,7 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
                       console.log('📅 Year option:', yearItem._id, '- Current value:', formData.yearId, '- Match:', yearItem._id === formData.yearId);
                       return (
                         <SelectItem key={yearItem._id} value={yearItem._id} className="text-gray-900 dark:text-white">
-                          {yearItem.name} (A-Level Year {yearItem.year})
+                          {yearItem.name}
                         </SelectItem>
                       );
                     })}
@@ -468,7 +477,7 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
               {videoFile || currentVideoUrl ? (
                 <div className="relative">
                   <p className="text-lg font-semibold text-green-600">Video available!</p>
-                  <a href={`${API_BASE_URL}/api/uploads/${videoFile?.name || currentVideoUrl}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                  <a href={getFileUrl(videoFile?.name || currentVideoUrl, 'video')} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
                     View Uploaded Video ({videoFile?.name || currentVideoUrl.split('/').pop()})
                   </a>
                   <Button
@@ -517,18 +526,18 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
             )}
           </div>
 
-          {/* Preview Image Upload */}
+          {/* Thumbnail Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Preview/Thumbnail Image (Optional)
+              Thumbnail Image (Optional)
             </label>
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 hover:border-blue-300 dark:hover:border-blue-600 transition-colors bg-gray-50 dark:bg-gray-900/30">
-              {(currentPreviewImageUrl || previewImage) ? (
+              {(currentThumbnailUrl || thumbnail) ? (
                 <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={previewImage ? URL.createObjectURL(previewImage) : `${API_BASE_URL}${currentPreviewImageUrl}`}
-                    alt="Preview"
+                    src={thumbnail ? URL.createObjectURL(thumbnail) : getFileUrl(currentThumbnailUrl, 'video-thumbnail')}
+                    alt="Thumbnail"
                     className="mx-auto max-h-48 object-contain rounded-lg shadow-md"
                   />
                   <Button
@@ -536,13 +545,13 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
                     size="icon"
                     className="absolute top-2 right-2 shadow-lg"
                     onClick={() => {
-                      setCurrentPreviewImageUrl("");
-                      setPreviewImage(null);
+                      setCurrentThumbnailUrl("");
+                      setThumbnail(null);
                     }}
                   >
                     <X size={16} />
                   </Button>
-                  <p className="font-medium text-foreground mt-3">{previewImage?.name || currentPreviewImageUrl.split('/').pop()}</p>
+                  <p className="font-medium text-foreground mt-3">{thumbnail?.name || (currentThumbnailUrl ? currentThumbnailUrl.split('/').pop() : '')}</p>
                 </div>
               ) : (
                 <div className="text-center">
@@ -550,7 +559,7 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setPreviewImage(e.target.files?.[0] || null)}
+                    onChange={(e) => setThumbnail(e.target.files?.[0] || null)}
                     className="max-w-xs mx-auto bg-card text-foreground border-border"
                   />
                   <p className="text-sm text-muted-foreground mt-2">
@@ -561,10 +570,10 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
             </div>
           </div>
 
-          {/* Preview */}
+          {/* Thumbnail */}
           {formData.title && formData.instituteId && formData.yearId && (
             <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Preview</h3>
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Thumbnail</h3>
               <div className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-start gap-4">
                   <div className="w-20 h-14 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center flex-shrink-0">
@@ -628,7 +637,7 @@ export default function VideoForm({ video, onSuccess, onClose }: VideoFormProps)
           title={infoDialogContent.title}
           description={infoDialogContent.description}
         />
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }

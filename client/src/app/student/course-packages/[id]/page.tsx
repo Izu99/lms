@@ -111,12 +111,12 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
             </div>
 
             {typeof coursePackage.institute === 'object' && coursePackage.institute.name &&
-             typeof coursePackage.year === 'object' && coursePackage.year.name && (
-              <div className="flex items-center gap-2 text-base theme-text-secondary">
-                <School className="w-5 h-5 text-purple-500" />
-                <span>For {coursePackage.institute.name} - {coursePackage.year.name}</span>
-              </div>
-            )}
+              typeof coursePackage.year === 'object' && coursePackage.year.name && (
+                <div className="flex items-center gap-2 text-base theme-text-secondary">
+                  <School className="w-5 h-5 text-purple-500" />
+                  <span>For {coursePackage.institute.name} - {coursePackage.year.name}</span>
+                </div>
+              )}
 
             {coursePackage.availability === "all" && (
               <span className="px-3 py-1 text-sm font-medium bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 rounded-full">Free for All</span>
@@ -144,8 +144,8 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
 
                 return (
                   <div key={videoData._id}
-                       className="relative w-full h-48 bg-gray-900 cursor-pointer group overflow-hidden rounded-lg shadow-md"
-                       onClick={() => handleVideoClick(videoData.videoUrl, videoData.title)}>
+                    className="relative w-full h-48 bg-gray-900 cursor-pointer group overflow-hidden rounded-lg shadow-md"
+                    onClick={() => handleVideoClick(videoData.videoUrl, videoData.title)}>
                     <video
                       src={`${API_BASE_URL}/api/uploads/${videoData.videoUrl}`}
                       className="w-full h-full object-cover"
@@ -157,7 +157,7 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
                       </div>
                     </div>
                     <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                      Preview
+                      Video
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
                       <h3 className="font-medium text-white truncate">{videoData.title}</h3>

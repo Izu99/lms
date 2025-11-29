@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import VideoForm from "../VideoForm";
-
 import { VideoData } from '@/modules/shared/types/video.types';
 
 interface CreateVideoModalProps {
@@ -10,9 +11,16 @@ interface CreateVideoModalProps {
 }
 
 export function CreateVideoModal({ isOpen, onClose, onSuccess, video }: CreateVideoModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
     <VideoForm
       video={video}
       onSuccess={() => {
@@ -20,6 +28,7 @@ export function CreateVideoModal({ isOpen, onClose, onSuccess, video }: CreateVi
         onClose();
       }}
       onClose={onClose}
-    />
+    />,
+    document.body
   );
 }

@@ -42,7 +42,7 @@ interface Paper {
   percentage?: number;
   paperType: 'MCQ' | 'Structure-Essay';
   fileUrl?: string;
-  previewImageUrl?: string;
+  thumbnailUrl?: string;
 }
 
 export default function StudentPapersPage() {
@@ -402,10 +402,10 @@ export default function StudentPapersPage() {
                 className="group"
               >
                 <div className="theme-card rounded-2xl shadow-lg theme-border overflow-hidden h-full flex flex-col hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                  {/* Thumbnail/Preview Image */}
-                  {paper.previewImageUrl ? (
+                  {/* Thumbnail/Thumbnail */}
+                  {paper.thumbnailUrl ? (
                     <img
-                      src={`${API_BASE_URL}${paper.previewImageUrl}`}
+                      src={`${API_BASE_URL}${paper.thumbnailUrl}`}
                       alt={paper.title}
                       className="w-full h-48 object-cover border-b theme-border"
                     />

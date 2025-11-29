@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingScreen from "@/components/common/LoadingScreen";
 
 interface User {
   id: string;
   username: string;
-  role: "student" | "teacher" | "admin";
+  role: "student" | "teacher" | "admin" | "paper_manager" | "video_manager";
   firstName?: string;
   lastName?: string;
 }
@@ -33,7 +34,7 @@ export default function RoleBasedRedirect() {
 
       try {
         const user: User = JSON.parse(savedUser);
-        
+
         // Redirect based on role
         switch (user.role) {
           case "student":
@@ -44,6 +45,12 @@ export default function RoleBasedRedirect() {
             break;
           case "admin":
             router.push("/admin/dashboard");
+            break;
+          case "paper_manager":
+            router.push("/paper-manager/dashboard");
+            break;
+          case "video_manager":
+            router.push("/video-manager/dashboard");
             break;
           default:
             router.push("/login");
@@ -57,15 +64,5 @@ export default function RoleBasedRedirect() {
     checkAuthAndRedirect();
   }, [router]);
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          ezyICT - Smart Learning Made Easy
-        </h1>
-        <p className="text-gray-600">Redirecting to your dashboard...</p>
-      </div>
-    </div>
-  );
+  return <LoadingScreen />;
 }

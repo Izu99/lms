@@ -24,8 +24,8 @@ export default function EditTutePage() {
   const [file, setFile] = useState<File | null>(null);
   const [currentFileUrl, setCurrentFileUrl] = useState("");
   const [currentFileType, setCurrentFileType] = useState("");
-  const [previewImage, setPreviewImage] = useState<File | null>(null); // New state for new preview image
-  const [currentPreviewImageUrl, setCurrentPreviewImageUrl] = useState(""); // New state for existing preview image
+  const [thumbnail, setThumbnail] = useState<File | null>(null); // New state for new thumbnail
+  const [currentThumbnailUrl, setCurrentThumbnailUrl] = useState(""); // New state for existing thumbnail
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [institutes, setInstitutes] = useState<{ _id: string, name: string }[]>([]);
@@ -78,7 +78,7 @@ export default function EditTutePage() {
       setPrice(tute.price);
       setCurrentFileUrl(tute.fileUrl);
       setCurrentFileType(tute.fileType);
-      setCurrentPreviewImageUrl(tute.previewImageUrl || ""); // Set existing preview image URL
+      setCurrentThumbnailUrl(tute.thumbnailUrl || ""); // Set existing thumbnail URL
       setInstituteId(tute.institute?._id || tute.institute || "");
       setYearId(tute.year?._id || tute.year || "");
       setAcademicLevelId(tute.academicLevel || ""); // Populate academicLevelId
@@ -124,8 +124,8 @@ export default function EditTutePage() {
     } else if (!currentFileUrl) { // If no new file and current file is cleared, signal removal
       formData.append("removeFile", "true");
     }
-    if (previewImage) { // Append preview image if it exists
-      formData.append("previewImage", previewImage);
+    if (thumbnail) { // Append thumbnail if it exists
+      formData.append("thumbnail", thumbnail);
     }
 
     try {
@@ -330,18 +330,18 @@ export default function EditTutePage() {
             </div>
           </div >
 
-          {/* Preview Image Upload */}
+          {/* Thumbnail Upload */}
           < div >
             <label className="font-semibold text-foreground mb-3 block text-lg">
-              Preview Image (Optional - leave empty to keep current)
+              Thumbnail (Optional - leave empty to keep current)
             </label>
             <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary transition-colors">
-              {(currentPreviewImageUrl || previewImage) ? (
+              {(currentThumbnailUrl || thumbnail) ? (
                 <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={previewImage ? URL.createObjectURL(previewImage) : `${API_BASE_URL}${currentPreviewImageUrl}`}
-                    alt="Preview"
+                    src={thumbnail ? URL.createObjectURL(thumbnail) : `${API_BASE_URL}${currentThumbnailUrl}`}
+                    alt="Thumbnail"
                     className="mx-auto max-h-48 object-contain rounded-lg shadow-md"
                   />
                   <Button
@@ -349,23 +349,23 @@ export default function EditTutePage() {
                     size="icon"
                     className="absolute top-2 right-2 shadow-lg"
                     onClick={() => {
-                      setCurrentPreviewImageUrl(""); // Clear existing URL
-                      setPreviewImage(null); // Clear newly selected file
+                      setCurrentThumbnailUrl(""); // Clear existing URL
+                      setThumbnail(null); // Clear newly selected file
                     }}
                   >
                     <X size={16} />
                   </Button>
-                  <p className="font-medium text-foreground mt-3">{previewImage?.name || currentPreviewImageUrl.split('/').pop()}</p>
+                  <p className="font-medium text-foreground mt-3">{thumbnail?.name || currentThumbnailUrl.split('/').pop()}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   <Upload size={48} className="mx-auto text-muted-foreground" />
-                  <p className="text-foreground font-medium">Upload New Preview Image (Optional)</p>
+                  <p className="text-foreground font-medium">Upload New Thumbnail (Optional)</p>
                   <p className="text-sm text-muted-foreground">Supported: .jpg, .jpeg, .png, .gif, .webp (Max 5MB)</p>
                   <Input
                     type="file"
                     accept="image/jpeg,image/png,image/gif,image/webp"
-                    onChange={(e) => setPreviewImage(e.target.files?.[0] || null)}
+                    onChange={(e) => setThumbnail(e.target.files?.[0] || null)}
                     className="max-w-xs mx-auto"
                   />
                 </div>

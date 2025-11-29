@@ -76,6 +76,8 @@ export default function StructureEssayPaperPage() {
 
     setSubmitting(true);
     const formData = new FormData();
+    // uploadType MUST come before file for multer to see it
+    formData.append("uploadType", "student-answer");
     formData.append("file", answerFile);
 
     try {
@@ -85,9 +87,17 @@ export default function StructureEssayPaperPage() {
         "Authorization": `Bearer ${token}`
       };
 
+      console.log('📤 [FRONTEND] Uploading student answer...');
+      console.log('  - File:', answerFile.name);
+      console.log('  - Size:', answerFile.size);
+      console.log('  - FormData uploadType:', formData.get('uploadType'));
+
       // First, upload the answer file
       const uploadResponse = await axios.post(`${API_URL}/papers/upload`, formData, { headers });
       const uploadedFileUrl = uploadResponse.data.fileUrl;
+
+      console.log('✅ [FRONTEND] Upload response:', uploadResponse.data);
+      console.log('  - fileUrl:', uploadedFileUrl);
 
       // Then, submit the paper with the file URL
       const submissionData = {

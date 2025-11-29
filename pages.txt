@@ -1,0 +1,163 @@
+# LMS Frontend Pages - Complete URL Map
+
+## 📋 Public Pages (No Authentication Required)
+
+### Authentication
+- `/login` - Login page
+- `/register` - Registration page
+
+### General
+- `/` - Home/Landing page
+- `/unauthorized` - Unauthorized access page
+- `/not-found` - 404 error page
+
+---
+
+## 👨‍🎓 Student Pages
+
+### Dashboard & Profile
+- `/student` - Student home/redirect page
+- `/student/dashboard` - Student dashboard
+- `/student/profile` - Student profile (alternative route)
+- `/profile` - Main profile page (all roles)
+
+### Videos
+- `/student/videos` - Browse all videos
+- `/student/videos/[id]` - View specific video (dynamic route)
+
+### Papers/Exams
+- `/student/papers` - Browse all papers/exams
+- `/student/papers/[id]` - Take MCQ paper (dynamic route)
+- `/student/papers/[id]/results` - View MCQ paper results (dynamic route)
+- `/student/papers/results` - View all paper results
+- `/student/papers/structure-essay/[id]` - Take structure/essay paper (dynamic route)
+- `/student/papers/structure-essay/[id]/results` - View structure/essay results (dynamic route)
+
+### Course Packages
+- `/student/course-packages` - Browse all course packages
+- `/student/course-packages/[id]` - View specific course package (dynamic route)
+
+### Tutes (Study Materials)
+- `/student/tutes` - Browse all tutes/study materials
+
+### Meeting
+- `/student/meeting` - Student meeting/video conference page
+
+---
+
+## 👨‍🏫 Teacher Pages
+
+### Dashboard & Profile
+- `/teacher` - Teacher home/redirect page
+- `/teacher/dashboard` - Teacher dashboard
+- `/profile` - Main profile page (all roles)
+
+### Videos Management
+- `/teacher/videos` - Manage videos list
+- `/teacher/videos/[id]` - Edit specific video (dynamic route)
+
+### Papers/Exams Management
+- `/teacher/papers` - Manage papers list
+- `/teacher/papers/create` - Create new paper
+- `/teacher/papers/[id]/edit` - Edit specific paper (dynamic route)
+- `/teacher/papers/[id]/results` - View paper results/submissions (dynamic route)
+
+### Course Packages Management
+- `/teacher/course-packages` - Manage course packages list
+- `/teacher/course-packages/create` - Create new course package
+- `/teacher/course-packages/[id]` - View/edit specific course package (dynamic route)
+
+### Tutes Management
+- `/teacher/tutes` - Manage tutes/study materials list
+- `/teacher/tutes/[id]/edit` - Edit specific tute (dynamic route)
+
+### Student Management
+- `/teacher/students` - View and manage students
+
+### Employee Management
+- `/teacher/employees` - View and manage employees/staff
+
+### Institute & Year Management
+- `/teacher/institute-year` - Manage institutes and academic years
+
+### Analytics
+- `/teacher/analytics` - View teaching analytics and statistics
+
+### Meeting
+- `/teacher/meeting` - Teacher meeting/video conference page
+
+---
+
+## 📝 Paper Manager Pages
+
+### Dashboard
+- `/paper-manager` - Paper manager home/redirect page
+- `/paper-manager/dashboard` - Paper manager dashboard
+
+### Papers Management
+- `/paper-manager/papers` - Manage papers list
+- `/paper-manager/papers/create` - Create new paper
+- `/paper-manager/papers/[id]/edit` - Edit specific paper (dynamic route)
+- `/paper-manager/papers/[id]/results` - View paper results/submissions (dynamic route)
+
+---
+
+## 🎥 Video Manager Pages
+
+### Dashboard
+- `/video-manager` - Video manager home/redirect page
+- `/video-manager/dashboard` - Video manager dashboard
+
+### Videos Management
+- `/video-manager/videos` - Manage videos list
+- `/video-manager/videos/[id]` - Edit specific video (dynamic route)
+
+---
+
+## 🔍 Admin/Debug Pages
+
+### General Management
+- `/dashboard` - General dashboard (role-based redirect)
+- `/students` - View all students (admin)
+
+### Debug
+- `/debug-auth` - Authentication debugging page
+
+---
+
+## 📊 Dynamic Route Parameters
+
+### [id] - Resource ID
+Used in URLs like `/student/videos/[id]` where `[id]` is replaced with actual resource ID
+Example: `/student/videos/507f1f77bcf86cd799439011`
+
+### Common Dynamic Routes:
+- Videos: `/videos/[id]`
+- Papers: `/papers/[id]`
+- Course Packages: `/course-packages/[id]`
+- Tutes: `/tutes/[id]`
+
+---
+
+## 📝 Notes
+
+1. **Profile Page**: `/profile` is accessible by all authenticated users (students, teachers, paper managers, video managers)
+
+2. **Dynamic Routes**: Routes with `[id]` are dynamic and require a valid MongoDB ObjectId
+
+3. **Role-Based Access**: Each role has specific pages they can access:
+   - Students: Read-only access to content
+   - Teachers: Full CRUD for their content
+   - Paper Managers: CRUD for papers only
+   - Video Managers: CRUD for videos only
+
+4. **Nested Routes**: Some pages have nested structures:
+   - `/student/papers/[id]/results` - Paper results for specific paper
+   - `/student/papers/structure-essay/[id]` - Structure/essay type papers
+
+5. **Meeting Pages**: Both students and teachers have meeting pages for video conferencing
+
+---
+
+**Total Pages**: 53+ pages (including dynamic routes)
+**Roles**: 5 (Public, Student, Teacher, Paper Manager, Video Manager)

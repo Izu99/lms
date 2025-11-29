@@ -18,7 +18,7 @@ interface Tute {
   description?: string;
   fileUrl: string;
   fileType: string;
-  previewImageUrl?: string;
+  thumbnailUrl?: string;
   uploadedBy: {
     username: string;
   };
@@ -151,10 +151,10 @@ export default function StudentTutesPage() {
                 transition={{ delay: index * 0.1 }}
                 className="theme-bg-primary rounded-2xl theme-border overflow-hidden hover:shadow-lg transition-all"
               >
-                {/* Thumbnail/Preview Image */}
-                {tute.previewImageUrl ? (
+                {/* Thumbnail/Thumbnail */}
+                {tute.thumbnailUrl ? (
                   <img
-                    src={`${API_BASE_URL}${tute.previewImageUrl}`}
+                    src={`${API_BASE_URL}${tute.thumbnailUrl}`}
                     alt={tute.title}
                     className="w-full h-48 object-cover border-b theme-border"
                   />

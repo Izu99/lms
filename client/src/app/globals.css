@@ -301,6 +301,11 @@
   background: var(--sidebar-icon-students);
 }
 
+.sidebar-icon-employees {
+  background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+  /* Purple gradient for Employees */
+}
+
 .sidebar-icon-zoom {
   background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
   /* Distinct blue gradient for Zoom */

@@ -225,7 +225,7 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
     academicLevelId: "", // Initialize academicLevelId
   });
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageThumbnail, setImageThumbnail] = useState<string | null>(null);
   const [availableVideos, setAvailableVideos] = useState<Video[]>([]);
   const [availablePapers, setAvailablePapers] = useState<Paper[]>([]);
   const [availableTutes, setAvailableTutes] = useState<Tute[]>([]); // New state for available tutes
@@ -258,7 +258,7 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
         const fullImageUrl = initialData.backgroundImage.startsWith('http')
           ? initialData.backgroundImage
           : `${API_BASE_URL}/${initialData.backgroundImage}`;
-        setImagePreview(fullImageUrl);
+        setImageThumbnail(fullImageUrl);
       }
     }
   }, [initialData, loading]);
@@ -292,7 +292,7 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setFormData({ ...formData, image: file });
-      setImagePreview(URL.createObjectURL(file));
+      setImageThumbnail(URL.createObjectURL(file));
     }
   };
 
@@ -381,15 +381,15 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2 theme-text-primary">Package Image</label>
+        <label className="block text-sm font-medium mb-2 theme-text-primary">Thumbnail Image</label>
         <Input
           type="file"
           onChange={handleImageChange}
           accept="image/*"
         />
-        {imagePreview && (
+        {imageThumbnail && (
           <div className="mt-4 w-32 h-32 overflow-hidden rounded-lg">
-            <img src={imagePreview} alt="Package Preview" className="w-full h-full object-cover" />
+            <img src={imageThumbnail} alt="Package Thumbnail" className="w-full h-full object-cover" />
           </div>
         )}
       </div>

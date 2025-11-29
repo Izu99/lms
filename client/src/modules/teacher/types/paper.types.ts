@@ -23,5 +23,5 @@ export interface PaperData {
     year: number;
     name: string;
   };
-  previewImageUrl?: string;
+  thumbnailUrl?: string;
 }

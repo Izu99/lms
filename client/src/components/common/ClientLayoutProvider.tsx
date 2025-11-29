@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation"; // To detect route changes
-import { LoadingScreen } from "./LoadingScreen"; // Import the LoadingScreen
+import LoadingScreen from "./LoadingScreen"; // Import the LoadingScreen
 
 interface ClientLayoutProviderProps {
   children: React.ReactNode;

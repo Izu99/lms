@@ -1,15 +1,16 @@
 import express from 'express';
 import { uploadVideo as videoUploadMiddleware } from '../config/videoUpload';
-import { protect } from '../modules/shared/middleware/auth';
+import { protect, requireVideoAccess } from '../modules/shared/middleware/auth';
 import * as videoController from '../controllers/videoController';
 
 const router = express.Router();
 
-router.post('/', protect, videoUploadMiddleware.fields([{ name: 'video', maxCount: 1 }, { name: 'previewImage', maxCount: 1 }]), videoController.uploadVideo);
+// Video CRUD operations - require video access for creation and modification
+router.post('/', protect, requireVideoAccess, videoUploadMiddleware.fields([{ name: 'video', maxCount: 1 }, { name: 'thumbnail', maxCount: 1 }]), videoController.uploadVideo);
 router.get('/', protect, videoController.getAllVideos);
 router.get('/:id', protect, videoController.getVideoById);
-router.put('/:id', protect, videoUploadMiddleware.fields([{ name: 'video', maxCount: 1 }, { name: 'previewImage', maxCount: 1 }]), videoController.updateVideo);
-router.delete('/:id', protect, videoController.deleteVideo);
+router.put('/:id', protect, requireVideoAccess, videoUploadMiddleware.fields([{ name: 'video', maxCount: 1 }, { name: 'thumbnail', maxCount: 1 }]), videoController.updateVideo);
+router.delete('/:id', protect, requireVideoAccess, videoController.deleteVideo);
 
 // NEW: Route to increment view count
 router.post('/:id/view', protect, videoController.incrementViewCount);

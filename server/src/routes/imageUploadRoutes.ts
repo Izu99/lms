@@ -10,13 +10,13 @@ const router = express.Router();
 
 // Route for uploading paper option images (MCQ answers)
 router.post('/upload/paper-options', (req, res, next) => {
-  (req as any).uploadType = 'option'; // Maps to uploads/paper/answers
+  (req as any).uploadType = 'mcq-option'; // Maps to uploads/papers/mcq/options
   next();
 }, upload.single('image'), uploadPaperOptionImage);
 
 // Route for uploading question images
 router.post('/upload/question', (req, res, next) => {
-  (req as any).uploadType = 'question'; // Maps to uploads/paper/questions
+  (req as any).uploadType = 'mcq-question'; // Maps to uploads/papers/mcq/questions
   next();
 }, upload.single('image'), (req, res) => {
   if (!req.file) {
@@ -29,7 +29,7 @@ router.post('/upload/question', (req, res, next) => {
 
 // Route for uploading explanation images
 router.post('/upload/explanation', (req, res, next) => {
-  (req as any).uploadType = 'explanation'; // Maps to uploads/paper/explanations
+  (req as any).uploadType = 'mcq-explanation'; // Maps to uploads/papers/mcq/explanations
   next();
 }, upload.single('image'), uploadExplanationImage);
 

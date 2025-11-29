@@ -36,7 +36,7 @@ export default function YearForm({ yearData, onSave, onClose }: YearFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.year.trim()) {
       setInfoDialogContent({ title: "Validation Error", description: "Please fill in all required fields with valid values" });
       setIsInfoOpen(true);
@@ -97,10 +97,10 @@ export default function YearForm({ yearData, onSave, onClose }: YearFormProps) {
             </p>
           </div>
 
-          {/* Preview */}
+          {/* Thumbnail */}
           {formData.year && (
             <div className="border-t border-[var(--theme-border)] pt-6">
-              <h3 className="text-sm font-medium text-[var(--theme-text-secondary)] mb-3">Preview</h3>
+              <h3 className="text-sm font-medium text-[var(--theme-text-secondary)] mb-3">Card Preview</h3>
               <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
@@ -120,9 +120,9 @@ export default function YearForm({ yearData, onSave, onClose }: YearFormProps) {
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={loading} 
+            <Button
+              type="submit"
+              disabled={loading}
               className="flex-1 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
             >
               {loading ? (

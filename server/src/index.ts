@@ -35,6 +35,7 @@ import youtubeRoutes from './routes/youtubeRoutes';
 import zoomRoutes from './routes/zoomRoutes';
 import coursePackageRoutes from './routes/coursePackageRoutes'; // Import new course package routes
 import tuteRoutes from './routes/tuteRoutes'; // Import tute routes
+import employeeRoutes from './routes/employeeRoutes'; // Import employee routes
 
 // Import new modular routes
 import { protect } from './modules/shared/middleware/auth';
@@ -79,7 +80,7 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -112,18 +113,19 @@ app.use('/api/student', protect, studentRoutes);
 app.use('/api/teacher', protect, teacherRoutes);
 app.use('/api/activity', activityRoutes); // New route
 app.use('/api/course-packages', coursePackageRoutes); // New course package routes
+app.use('/api/employees', employeeRoutes); // Employee management routes (teacher-only)
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'healthy', 
+  res.json({
+    status: 'healthy',
     timestamp: new Date().toISOString(),
-    environment: NODE_ENV 
+    environment: NODE_ENV
   });
 });
 
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: '✅ ezyICT LMS API is running',
     version: '1.0.0',
     environment: NODE_ENV
@@ -133,10 +135,10 @@ app.get('/', (req, res) => {
 // ✅ SECURITY: Improved error handler
 app.use((err: any, req: any, res: any, next: any) => {
   console.error('Global error handler:', err);
-  
+
   // Don't expose error details in production
   const isDevelopment = NODE_ENV === 'development';
-  
+
   res.status(err.status || 500).json({
     success: false,
     message: isDevelopment ? err.message : 'An error occurred',
@@ -153,7 +155,7 @@ const connectDB = async (retries = 5) => {
     console.log('✅ MongoDB connected successfully');
   } catch (err) {
     console.error('❌ MongoDB connection error:', err);
-    
+
     if (retries > 0) {
       console.log(`Retrying connection... (${retries} attempts left)`);
       setTimeout(() => connectDB(retries - 1), 5000);

@@ -282,4 +282,4 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 - [ ] Custom color picker
 - [ ] Per-user theme preferences (saved to backend)
 - [ ] Automatic theme based on time of day
-- [ ] Theme preview before applying
+- [ ] Theme thumbnail before applying

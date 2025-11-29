@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 
-export function LoadingScreen() {
+export default function LoadingScreen() {
   const [messageIndex, setMessageIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+
   const messages = [
     "Initializing system...",
     "Loading your courses...",
@@ -19,274 +21,169 @@ export function LoadingScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) return 0;
+        return prev + 1;
+      });
+    }, 30);
+    return () => clearInterval(progressInterval);
+  }, []);
+
   return (
-    <div className="gradient-bg min-h-screen flex items-center justify-center relative">
-      {/* Animated Background Particles */}
-      <div className="particle particle-1"></div>
-      <div className="particle particle-2"></div>
-      <div className="particle particle-3"></div>
+    <div className="relative min-h-screen bg-slate-950 flex items-center justify-center overflow-hidden">
+      {/* Animated Grid Background */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_60%,transparent_100%)]"></div>
+      
+      {/* Subtle Dark Orbs */}
+      <div className="absolute top-0 -left-40 w-96 h-96 bg-slate-800/40 rounded-full blur-3xl"></div>
+      <div className="absolute bottom-0 -right-40 w-96 h-96 bg-slate-800/40 rounded-full blur-3xl"></div>
 
-      {/* Main Loading Container */}
-      <div className="relative z-10 text-center fade-in">
-        {/* Logo with Floating Animation */}
-        <div className="logo-container mb-8">
-          <div className="logo-glow inline-block">
-            <svg className="w-24 h-24 mx-auto" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Background Circle */}
-              <circle cx="50" cy="50" r="48" fill="url(#logoGradient)" opacity="0.9"/>
-              
-              {/* ICT Lines */}
-              <path d="M30 40h40M30 50h40M30 60h28" stroke="white" strokeWidth="4" strokeLinecap="round"/>
-              
-              {/* Green Notification Dot */}
-              <circle cx="75" cy="25" r="12" fill="#22c55e">
-                <animate attributeName="opacity" values="1;0.6;1" dur="2s" repeatCount="indefinite"/>
-              </circle>
-              
-              {/* Gradient Definition */}
-              <defs>
-                <linearGradient id="logoGradient" x1="0" y1="0" x2="100" y2="100">
-                  <stop offset="0%" stopColor="#3b82f6"/>
-                  <stop offset="100%" stopColor="#2563eb"/>
-                </linearGradient>
-              </defs>
-            </svg>
+      {/* Main Card */}
+      <div className="relative z-10 backdrop-blur-xl bg-slate-900/95 border border-slate-800 rounded-3xl p-12 shadow-2xl shadow-black/50 max-w-md w-full mx-4">
+        {/* Logo Section */}
+        <div className="flex flex-col items-center mb-10">
+          <div className="relative mb-6">
+            {/* Animated Ring */}
+            <div className="absolute inset-0 rounded-full border-2 border-emerald-500/20 animate-ping"></div>
+            
+            {/* Logo Container - Dark with subtle accent */}
+            <div className="relative w-28 h-28 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center shadow-2xl">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-transparent"></div>
+              <svg
+                className="w-14 h-14 text-emerald-400 relative z-10"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
+              </svg>
+            </div>
+          </div>
+
+          {/* Brand */}
+          <h1 className="text-5xl font-black mb-2 tracking-tight">
+            <span className="text-slate-100">ezy</span>
+            <span className="text-slate-400">ICT</span>
+          </h1>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="h-px w-8 bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+            <p className="text-slate-500 text-sm font-semibold tracking-widest uppercase">
+              Learning Platform
+            </p>
+            <div className="h-px w-8 bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+          </div>
+          <div className="flex items-center gap-1.5 mt-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+            <p className="text-slate-600 text-xs font-medium">System Online</p>
           </div>
         </div>
 
-        {/* Brand Name */}
-        <h1 className="text-5xl font-bold text-white mb-2">
-          ezy<span className="text-blue-400">ICT</span>
-        </h1>
-        <p className="text-gray-400 text-sm mb-12">Learning Management System</p>
+        {/* Advanced Spinner */}
+        <div className="flex justify-center mb-10">
+          <div className="relative w-24 h-24">
+            {/* Outer rotating ring */}
+            <div className="absolute inset-0 rounded-full border-4 border-slate-800"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-500 border-r-emerald-500 animate-spin"></div>
 
-        {/* Animated Spinner with Rings */}
-        <div className="relative inline-block mb-8">
-          <div className="ring ring-1"></div>
-          <div className="ring ring-2"></div>
-          <div className="loader-circle"></div>
-        </div>
+            {/* Middle ring */}
+            <div className="absolute inset-3 rounded-full border-4 border-slate-800"></div>
+            <div className="absolute inset-3 rounded-full border-4 border-transparent border-r-slate-600 border-b-slate-600 animate-spin-slow"></div>
 
-        {/* Loading Dots */}
-        <div className="flex justify-center items-center space-x-3 mb-6">
-          <div className="dot"></div>
-          <div className="dot"></div>
-          <div className="dot"></div>
-        </div>
+            {/* Inner ring */}
+            <div className="absolute inset-6 rounded-full border-4 border-slate-800"></div>
+            <div className="absolute inset-6 rounded-full border-4 border-transparent border-b-emerald-600 border-l-emerald-600 animate-spin-reverse"></div>
 
-        {/* Loading Text */}
-        <p className="text-white text-lg font-medium loading-text mb-8">
-          {messages[messageIndex]}
-        </p>
-
-        {/* Progress Bar */}
-        <div className="max-w-xs mx-auto mb-4">
-          <div className="progress-bar">
-            <div className="progress-fill"></div>
+            {/* Center dot */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50"></div>
+            </div>
           </div>
         </div>
 
-        {/* Additional Info */}
-        <p className="text-gray-500 text-sm">
-          Please wait while we load your dashboard
-        </p>
-      </div>
+        {/* Loading Message */}
+        <div className="text-center mb-8">
+          <p className="text-slate-200 text-lg font-semibold mb-4 transition-all duration-300">
+            {messages[messageIndex]}
+          </p>
 
-      {/* Bottom Decorative Elements */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+          {/* Animated Dots */}
+          <div className="flex justify-center gap-2">
+            <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-bounce"></div>
+            <div className="w-2.5 h-2.5 bg-emerald-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-2.5 h-2.5 bg-emerald-700 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          </div>
+        </div>
+
+        {/* Modern Progress Bar */}
+        <div className="relative h-3 bg-slate-800 rounded-full overflow-hidden mb-3 border border-slate-700">
+          <div
+            className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-600 to-emerald-500 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+          </div>
+        </div>
+
+        {/* Progress Info */}
+        <div className="flex items-center justify-between">
+          <p className="text-slate-500 text-xs font-medium">
+            Loading...
+          </p>
+          <p className="text-emerald-400 text-sm font-bold">
+            {progress}%
+          </p>
+        </div>
+
+        {/* Tech Indicators */}
+        <div className="mt-6 pt-6 border-t border-slate-800 flex items-center justify-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span className="text-slate-600 text-xs">Secure</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+            <span className="text-slate-600 text-xs">Fast</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+            <span className="text-slate-600 text-xs">Modern</span>
+          </div>
+        </div>
       </div>
 
       <style jsx>{`
-        .gradient-bg {
-          background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-          position: relative;
-          overflow: hidden;
+        @keyframes spin-slow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
-
-        /* Animated Background Particles */
-        .particle {
-          position: absolute;
-          border-radius: 50%;
-          pointer-events: none;
+        
+        @keyframes spin-reverse {
+          from { transform: rotate(360deg); }
+          to { transform: rotate(0deg); }
         }
-
-        .particle-1 {
-          width: 400px;
-          height: 400px;
-          background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-          top: -150px;
-          left: -150px;
-          animation: float1 20s infinite ease-in-out;
+        
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
         }
-
-        .particle-2 {
-          width: 500px;
-          height: 500px;
-          background: radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, transparent 70%);
-          bottom: -200px;
-          right: -200px;
-          animation: float2 25s infinite ease-in-out;
+        
+        .animate-spin-slow {
+          animation: spin-slow 3s linear infinite;
         }
-
-        .particle-3 {
-          width: 300px;
-          height: 300px;
-          background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
-          top: 40%;
-          right: 10%;
-          animation: float3 18s infinite ease-in-out;
+        
+        .animate-spin-reverse {
+          animation: spin-reverse 2s linear infinite;
         }
-
-        @keyframes float1 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(120px, 80px) scale(1.2); }
-          66% { transform: translate(-80px, 120px) scale(0.9); }
-        }
-
-        @keyframes float2 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(-100px, -80px) scale(1.15); }
-          66% { transform: translate(80px, -100px) scale(0.95); }
-        }
-
-        @keyframes float3 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(-120px, 100px) scale(1.25); }
-        }
-
-        /* Logo Animation */
-        .logo-container {
-          animation: logoFloat 3s ease-in-out infinite;
-        }
-
-        @keyframes logoFloat {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-15px); }
-        }
-
-        .logo-glow {
-          filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.6));
-          animation: glowPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes glowPulse {
-          0%, 100% { filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.6)); }
-          50% { filter: drop-shadow(0 0 50px rgba(59, 130, 246, 0.8)); }
-        }
-
-        /* Circular Progress Loader */
-        .loader-circle {
-          width: 120px;
-          height: 120px;
-          border: 4px solid rgba(59, 130, 246, 0.1);
-          border-top: 4px solid #3b82f6;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        /* Dots Loader */
-        .dot {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          background: #3b82f6;
-          animation: dotBounce 1.4s infinite ease-in-out both;
-        }
-
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; background: #22c55e; }
-        .dot:nth-child(3) { animation-delay: 0s; }
-
-        @keyframes dotBounce {
-          0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
-          40% { transform: scale(1); opacity: 1; }
-        }
-
-        /* Progress Bar */
-        .progress-bar {
-          width: 100%;
-          height: 4px;
-          background: rgba(59, 130, 246, 0.2);
-          border-radius: 2px;
-          overflow: hidden;
-          position: relative;
-        }
-
-        .progress-fill {
-          height: 100%;
-          background: linear-gradient(90deg, #3b82f6, #22c55e, #3b82f6);
-          background-size: 200% 100%;
-          animation: progressSlide 2s ease-in-out infinite;
-          border-radius: 2px;
-          width: 0%;
-          animation: progressFill 3s ease-out infinite;
-        }
-
-        @keyframes progressSlide {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-
-        @keyframes progressFill {
-          0% { width: 0%; }
-          50% { width: 70%; }
-          100% { width: 100%; }
-        }
-
-        /* Text Animation */
-        .loading-text {
-          animation: textFade 2s ease-in-out infinite;
-        }
-
-        @keyframes textFade {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
-        }
-
-        /* Spinning Rings */
-        .ring {
-          position: absolute;
-          border-radius: 50%;
-          border: 2px solid transparent;
-        }
-
-        .ring-1 {
-          width: 140px;
-          height: 140px;
-          border-top-color: #3b82f6;
-          border-right-color: #3b82f6;
-          animation: spinRing 2s linear infinite;
-        }
-
-        .ring-2 {
-          width: 110px;
-          height: 110px;
-          border-bottom-color: #22c55e;
-          border-left-color: #22c55e;
-          animation: spinRing 3s linear infinite reverse;
-        }
-
-        @keyframes spinRing {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        /* Fade In Animation */
-        .fade-in {
-          animation: fadeIn 0.8s ease-out;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
+        
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
         }
       `}</style>
     </div>

@@ -211,7 +211,7 @@ describe('RegisterPage', () => {
     
     await user.upload(fileInput, file)
     
-    // Should show preview or file name
+    // Should show thumbnail or file name
     expect(fileInput.files?.[0]).toBe(file)
   })
 

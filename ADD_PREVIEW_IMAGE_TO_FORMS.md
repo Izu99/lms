@@ -1,31 +1,31 @@
-# 📝 Add Preview Image Upload to All Forms
+# 📝 Add Thumbnail Image Upload to All Forms
 
 ## What to Add to Each Form
 
 ### 1. State Variable
 ```tsx
-const [previewImage, setPreviewImage] = useState<File | null>(null);
+const [thumbnail, setThumbnail] = useState<File | null>(null);
 ```
 
 ### 2. Input Field (Add after main file upload)
 ```tsx
-{/* Preview Image Upload */}
+{/* Thumbnail Image Upload */}
 <div>
   <label className="block text-sm font-medium mb-2">
-    Preview Image (Optional)
+    Thumbnail Image (Optional)
   </label>
   <div className="border-2 border-dashed rounded-lg p-4">
-    {previewImage ? (
+    {thumbnail ? (
       <div className="space-y-2">
         <img 
-          src={URL.createObjectURL(previewImage)} 
+          src={URL.createObjectURL(thumbnail)} 
           alt="Preview" 
           className="w-full h-32 object-cover rounded"
         />
         <Button 
           type="button" 
           variant="outline" 
-          onClick={() => setPreviewImage(null)}
+          onClick={() => setThumbnail(null)}
         >
           Remove Image
         </Button>
@@ -36,11 +36,11 @@ const [previewImage, setPreviewImage] = useState<File | null>(null);
         <Input
           type="file"
           accept="image/*"
-          onChange={(e) => setPreviewImage(e.target.files?.[0] || null)}
+          onChange={(e) => setThumbnail(e.target.files?.[0] || null)}
           className="mt-2"
         />
         <p className="text-xs text-gray-500 mt-1">
-          Upload a thumbnail/preview image
+          Upload a thumbnail/thumbnail
         </p>
       </div>
     )}
@@ -50,8 +50,8 @@ const [previewImage, setPreviewImage] = useState<File | null>(null);
 
 ### 3. Append to FormData (in handleSubmit)
 ```tsx
-if (previewImage) {
-  submitData.append('previewImage', previewImage);
+if (thumbnail) {
+  submitData.append('thumbnail', thumbnail);
 }
 ```
 
@@ -59,31 +59,31 @@ if (previewImage) {
 
 ### Videos
 - ✅ **client/src/components/VideoForm.tsx**
-  - Add preview image state
-  - Add preview image input field
+  - Add thumbnail image state
+  - Add thumbnail image input field
   - Append to FormData
 
 ### Papers  
 - ✅ **client/src/app/teacher/papers/create/page.tsx**
-  - Add preview image state
-  - Add preview image input field (after paper type selection)
+  - Add thumbnail image state
+  - Add thumbnail image input field (after paper type selection)
   - Append to FormData
 
 ### Packages
 - ✅ **client/src/app/teacher/course-packages/page.tsx** (if has create form)
   - OR find the package create modal/form
-  - Add preview image upload
+  - Add thumbnail image upload
 
 ### Tutes
 - ✅ **Already done!** ✓
 
-## Display Preview Images on Cards
+## Display Thumbnail Images on Cards
 
 ### Videos List Page
 ```tsx
-{video.previewImage ? (
+{video.thumbnail ? (
   <img 
-    src={`${API_BASE_URL}${video.previewImage}`} 
+    src={`${API_BASE_URL}${video.thumbnail}`} 
     alt={video.title}
     className="w-full h-48 object-cover"
   />
@@ -96,9 +96,9 @@ if (previewImage) {
 
 ### Papers List Page
 ```tsx
-{paper.previewImageUrl ? (
+{paper.thumbnailUrl ? (
   <img 
-    src={`${API_BASE_URL}${paper.previewImageUrl}`} 
+    src={`${API_BASE_URL}${paper.thumbnailUrl}`} 
     alt={paper.title}
     className="w-full h-48 object-cover"
   />
@@ -111,4 +111,4 @@ if (previewImage) {
 
 ---
 
-**Next:** I'll update each form file to add these preview image upload fields.
+**Next:** I'll update each form file to add these thumbnail image upload fields.

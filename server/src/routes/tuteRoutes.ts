@@ -13,10 +13,10 @@ import {
 const router = express.Router();
 
 // Teacher routes
-router.post('/', protect, uploadTute.fields([{ name: 'file', maxCount: 1 }, { name: 'previewImage', maxCount: 1 }]), createTute);
+router.post('/', protect, uploadTute.fields([{ name: 'file', maxCount: 1 }, { name: 'thumbnail', maxCount: 1 }]), createTute);
 router.get('/teacher', protect, getTeacherTutes);
 router.get('/:id', protect, getTuteById);
-router.put('/:id', protect, uploadTute.fields([{ name: 'file', maxCount: 1 }, { name: 'previewImage', maxCount: 1 }]), updateTute);
+router.put('/:id', protect, uploadTute.fields([{ name: 'file', maxCount: 1 }, { name: 'thumbnail', maxCount: 1 }]), updateTute);
 router.delete('/:id', protect, deleteTute);
 
 // Student routes

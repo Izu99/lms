@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema<IUser>({
   idCardBackImage: { type: String },
   studentType: { type: String },
   academicLevel: { type: String },
-  role: { type: String, enum: ['student', 'teacher', 'admin'], default: 'student' },
+  role: { type: String, enum: ['student', 'teacher', 'admin', 'paper_manager', 'video_manager'], default: 'student' },
   status: {
     type: String,
     enum: ['active', 'inactive', 'pending', 'paid', 'unpaid'],

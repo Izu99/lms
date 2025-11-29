@@ -34,7 +34,7 @@ export const uploadVideo = async (req: Request, res: Response) => {
     const { title, description, institute: instituteId, year: yearId, academicLevel, availability, price } = req.body;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const videoFile = files?.video?.[0];
-    const previewImageFile = files?.previewImage?.[0];
+    const thumbnailFile = files?.thumbnail?.[0];
 
     if (!videoFile) {
       return res.status(400).json({ message: 'No video file uploaded' });
@@ -53,7 +53,7 @@ export const uploadVideo = async (req: Request, res: Response) => {
       title,
       description,
       videoUrl: videoFile.filename,
-      previewImage: previewImageFile ? previewImageFile.filename : undefined,
+      thumbnailUrl: thumbnailFile ? thumbnailFile.filename : undefined,
       uploadedBy: userId,
       institute: instituteId,
       year: yearId,
@@ -113,7 +113,7 @@ export const updateVideo = async (req: Request, res: Response) => {
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const videoFile = files?.video?.[0];
-    const previewImageFile = files?.previewImage?.[0];
+    const thumbnailFile = files?.thumbnail?.[0];
 
     // Handle new video file if uploaded
     if (videoFile) {
@@ -128,17 +128,17 @@ export const updateVideo = async (req: Request, res: Response) => {
       update.videoUrl = videoFile.filename;
     }
 
-    // Handle new preview image if uploaded
-    if (previewImageFile) {
+    // Handle new thumbnail image if uploaded
+    if (thumbnailFile) {
       const prev = await Video.findById(req.params.id);
-      if (prev && prev.previewImage) {
+      if (prev && prev.thumbnailUrl) {
         try {
-          fs.unlinkSync(path.join(__dirname, '../../', 'uploads/videos/images', prev.previewImage));
+          fs.unlinkSync(path.join(__dirname, '../../', 'uploads/videos/images', prev.thumbnailUrl));
         } catch (e) {
-          console.log("Old preview image not found, continuing...");
+          console.log("Old thumbnail image not found, continuing...");
         }
       }
-      update.previewImage = previewImageFile.filename;
+      update.thumbnailUrl = thumbnailFile.filename;
     }
 
     const video = await Video.findByIdAndUpdate(

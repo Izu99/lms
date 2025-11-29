@@ -36,19 +36,19 @@ export interface IPaper extends Document {
   totalQuestions: number;
   paperType: 'MCQ' | 'Structure-Essay';
   fileUrl?: string;
-  previewImageUrl?: string;
+  thumbnailUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const optionSchema = new mongoose.Schema<IOption>({
-  optionText: { type: String, required: true },
+  optionText: { type: String },
   imageUrl: { type: String },
   isCorrect: { type: Boolean, required: true, default: false }
 });
 
 const questionSchema = new mongoose.Schema({
-  questionText: { type: String, required: true },
+  questionText: { type: String },
   imageUrl: { type: String },
   options: [optionSchema],
   order: { type: Number, required: true },
@@ -74,7 +74,7 @@ const paperSchema = new mongoose.Schema<IPaper>({
   totalQuestions: { type: Number, default: 0 },
   paperType: { type: String, enum: ['MCQ', 'Structure-Essay'], default: 'MCQ' },
   fileUrl: { type: String },
-  previewImageUrl: { type: String }
+  thumbnailUrl: { type: String }
 }, { timestamps: true });
 
 // Update totalQuestions before saving

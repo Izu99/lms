@@ -44,7 +44,7 @@ function YourComponent() {
 - Full video upload form
 - Institute and year selection
 - File upload with validation
-- Preview before submission
+- Thumbnail before submission
 - Loading states
 
 ### 2. CreatePaperModal
@@ -198,6 +198,6 @@ export default function TeacherPage() {
 - Add edit mode for existing videos/papers
 - Add bulk upload for videos
 - Add paper templates
-- Add preview mode before submission
+- Add thumbnail mode before submission
 - Add auto-save for drafts
 - Add keyboard shortcuts (Esc to close)

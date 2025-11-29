@@ -26,7 +26,7 @@ const storage = multer.diskStorage({
     let subDir = '';
     if (file.fieldname === 'video') {
       subDir = 'files';
-    } else if (file.fieldname === 'previewImage') {
+    } else if (file.fieldname === 'thumbnail') {
       subDir = 'images';
     } else {
       subDir = 'files';
@@ -51,7 +51,7 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
     } else {
       cb(new Error('Invalid video file type'));
     }
-  } else if (file.fieldname === 'previewImage') {
+  } else if (file.fieldname === 'thumbnail') {
     // Image files
     const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (allowedMimes.includes(file.mimetype)) {

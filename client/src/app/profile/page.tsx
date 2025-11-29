@@ -81,8 +81,8 @@ export default function ProfilePage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>("");
-  const [frontPreviewUrl, setFrontPreviewUrl] = useState<string | null>(null);
-  const [backPreviewUrl, setBackPreviewUrl] = useState<string | null>(null);
+  const [frontThumbnailUrl, setFrontThumbnailUrl] = useState<string | null>(null);
+  const [backThumbnailUrl, setBackThumbnailUrl] = useState<string | null>(null);
   const [institutes, setInstitutes] = useState<Institute[]>([]);
   const [years, setYears] = useState<Year[]>([]);
   const [loadingInstitutesYears, setLoadingInstitutesYears] = useState(true);
@@ -178,7 +178,7 @@ export default function ProfilePage() {
 
         const { userData, userId } = validationResult;
         setUser(userData);
-        
+
         // Load form data immediately
         setFormData({
           username: userData.username || "",
@@ -197,12 +197,12 @@ export default function ProfilePage() {
           confirmPassword: "",
         });
 
-        // Set image preview URLs if images exist
+        // Set image thumbnail URLs if images exist
         if (userData.idCardFrontImage) {
-          setFrontPreviewUrl(`${API_URL}${userData.idCardFrontImage}`);
+          setFrontThumbnailUrl(`${API_URL}${userData.idCardFrontImage}`);
         }
         if (userData.idCardBackImage) {
-          setBackPreviewUrl(`${API_URL}${userData.idCardBackImage}`);
+          setBackThumbnailUrl(`${API_URL}${userData.idCardBackImage}`);
         }
 
         // Fetch fresh profile data
@@ -251,7 +251,7 @@ export default function ProfilePage() {
         `${API_URL}/auth/me`,
         { headers }
       );
-      
+
       const userData = response.data.user || response.data;
       if (!userData) {
         throw new Error("No user data received from server");
@@ -259,7 +259,7 @@ export default function ProfilePage() {
 
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
-      
+
       setFormData({
         username: userData.username || "",
         email: userData.email || "",
@@ -276,7 +276,7 @@ export default function ProfilePage() {
         newPassword: "",
         confirmPassword: "",
       });
-      
+
     } catch (error) {
       console.error("Error fetching current user profile:", error);
       throw error;
@@ -292,11 +292,11 @@ export default function ProfilePage() {
         `${API_URL}/auth/users/${userId}`,
         { headers }
       );
-      
+
       const userData = response.data.user || response.data;
       setUser(userData);
       localStorage.setItem("user", JSON.stringify(userData));
-      
+
       setFormData({
         username: userData.username || "",
         email: userData.email || "",
@@ -314,12 +314,12 @@ export default function ProfilePage() {
         confirmPassword: "",
       });
 
-      // Set image preview URLs if images exist
+      // Set image thumbnail URLs if images exist
       if (userData.idCardFrontImage) {
-        setFrontPreviewUrl(`${API_URL}${userData.idCardFrontImage}`);
+        setFrontThumbnailUrl(`${API_URL}${userData.idCardFrontImage}`);
       }
       if (userData.idCardBackImage) {
-        setBackPreviewUrl(`${API_URL}${userData.idCardBackImage}`);
+        setBackThumbnailUrl(`${API_URL}${userData.idCardBackImage}`);
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
@@ -380,7 +380,7 @@ export default function ProfilePage() {
       if (formData.newPassword.length < 6) {
         newErrors.newPassword = "Password must be at least 6 characters";
       }
-      
+
       if (!formData.confirmPassword) {
         newErrors.confirmPassword = "Please confirm your new password";
       } else if (formData.newPassword !== formData.confirmPassword) {
@@ -406,7 +406,7 @@ export default function ProfilePage() {
     try {
       setSaving(true);
       setError("");
-      
+
       const updateFormData = new FormData();
       updateFormData.append('username', formData.username.trim());
       updateFormData.append('email', formData.email.trim());
@@ -441,7 +441,7 @@ export default function ProfilePage() {
       const response = await axios.put(
         `${API_URL}/auth/users/${userId}`,
         updateFormData,
-        { 
+        {
           headers: {
             ...headers,
             "Content-Type": "multipart/form-data",
@@ -453,10 +453,10 @@ export default function ProfilePage() {
       if (!updatedUser) {
         throw new Error("No data received from update");
       }
-      
+
       setUser(updatedUser);
       localStorage.setItem("user", JSON.stringify(updatedUser));
-      
+
       // Reset password fields and image files after successful update
       setFormData(prev => ({
         ...prev,
@@ -466,26 +466,26 @@ export default function ProfilePage() {
         confirmPassword: "",
       }));
 
-      // Update image preview URLs from the updated user data with cache-busting
+      // Update image thumbnail URLs from the updated user data with cache-busting
       const timestamp = new Date().getTime();
       if (updatedUser.idCardFrontImage) {
-        setFrontPreviewUrl(`${API_URL}${updatedUser.idCardFrontImage}?t=${timestamp}`);
+        setFrontThumbnailUrl(`${API_URL}${updatedUser.idCardFrontImage}?t=${timestamp}`);
       } else {
-        setFrontPreviewUrl(null);
+        setFrontThumbnailUrl(null);
       }
       if (updatedUser.idCardBackImage) {
-        setBackPreviewUrl(`${API_URL}${updatedUser.idCardBackImage}?t=${timestamp}`);
+        setBackThumbnailUrl(`${API_URL}${updatedUser.idCardBackImage}?t=${timestamp}`);
       } else {
-        setBackPreviewUrl(null);
+        setBackThumbnailUrl(null);
       }
-      
+
       setIsEditing(false);
       setError("");
       alert("Profile updated successfully!");
-      
+
     } catch (error) {
       console.error("Error updating profile:", error);
-      
+
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
           redirectToLogin("Session expired");
@@ -509,11 +509,11 @@ export default function ProfilePage() {
 
   const handleInputChange = (field: keyof FormData, value: string | File | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: "" }));
     }
-    
+
     if (error) {
       setError("");
     }
@@ -523,7 +523,7 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (file) {
       handleInputChange("idCardFront", file);
-      setFrontPreviewUrl(URL.createObjectURL(file));
+      setFrontThumbnailUrl(URL.createObjectURL(file));
     }
   };
 
@@ -531,19 +531,19 @@ export default function ProfilePage() {
     const file = e.target.files?.[0];
     if (file) {
       handleInputChange("idCardBack", file);
-      setBackPreviewUrl(URL.createObjectURL(file));
+      setBackThumbnailUrl(URL.createObjectURL(file));
     }
   };
 
   const removeImage = (type: 'front' | 'back') => {
     if (type === 'front') {
       handleInputChange("idCardFront", null);
-      setFrontPreviewUrl(null);
+      setFrontThumbnailUrl(null);
       // Also clear the user's stored image if it exists
       if (user) setUser(prev => prev ? { ...prev, idCardFrontImage: undefined } : null);
     } else {
       handleInputChange("idCardBack", null);
-      setBackPreviewUrl(null);
+      setBackThumbnailUrl(null);
       // Also clear the user's stored image if it exists
       if (user) setUser(prev => prev ? { ...prev, idCardBackImage: undefined } : null);
     }
@@ -551,7 +551,7 @@ export default function ProfilePage() {
 
   const handleCancelEdit = () => {
     if (!user) return;
-    
+
     setFormData({
       username: user.username || "",
       email: user.email || "",
@@ -568,17 +568,17 @@ export default function ProfilePage() {
       newPassword: "",
       confirmPassword: "",
     });
-    
+
     // Reset image previews
     if (user.idCardFrontImage) {
-      setFrontPreviewUrl(`${API_URL}${user.idCardFrontImage}`);
+      setFrontThumbnailUrl(`${API_URL}${user.idCardFrontImage}`);
     } else {
-      setFrontPreviewUrl(null);
+      setFrontThumbnailUrl(null);
     }
     if (user.idCardBackImage) {
-      setBackPreviewUrl(`${API_URL}${user.idCardBackImage}`);
+      setBackThumbnailUrl(`${API_URL}${user.idCardBackImage}`);
     } else {
-      setBackPreviewUrl(null);
+      setBackThumbnailUrl(null);
     }
 
     setErrors({});
@@ -985,174 +985,174 @@ export default function ProfilePage() {
 
               {activeTab === 'id' && (
                 <div className="space-y-6">
-                                {activeTab === 'id' && (
-                                  <div className="space-y-6">
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        ID Card Front Image
-                                      </label>
-                                      {!frontPreviewUrl && !user?.idCardFrontImage ? (
-                                        <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
-                                          <input
-                                            type="file"
-                                            id="idCardFront"
-                                            accept="image/*"
-                                            onChange={handleFrontImageChange}
-                                            className="hidden"
-                                            disabled={!isEditing || saving}
-                                          />
-                                          <label htmlFor="idCardFront" className="cursor-pointer block">
-                                            <div className="mx-auto w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
-                                              <User size={20} className="text-blue-500" />
-                                            </div>
-                                            <p className="text-gray-600 text-sm">Upload Front</p>
-                                          </label>
-                                        </div>
-                                      ) : (
-                                                                <div className="relative w-full max-h-32 border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
-                                                                  <Image
-                                                                    src={frontPreviewUrl || `${API_URL}${user?.idCardFrontImage}`}
-                                                                    alt="ID Card Front Preview"
-                                                                    width={200} // Example width, adjust as needed
-                                                                    height={120} // Example height, adjust as needed
-                                                                    objectFit="contain"
-                                                                  />                                          {isEditing && (
-                                            <Button
-                                              type="button"
-                                              onClick={() => removeImage("front")}
-                                              className="absolute top-1 right-1 p-1 h-auto w-auto bg-red-500 hover:bg-red-600 text-white rounded-full"
-                                              disabled={saving}
-                                            >
-                                              <X size={14} />
-                                            </Button>
-                                          )}
-                                        </div>
-                                      )}
-                                      {errors.idCardFront && (
-                                        <p className="text-red-500 text-xs mt-1">{errors.idCardFront}</p>
-                                      )}
-                                    </div>
-                  
-                                    <div>
-                                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        ID Card Back Image
-                                      </label>
-                                      {!backPreviewUrl && !user?.idCardBackImage ? (
-                                        <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
-                                          <input
-                                            type="file"
-                                            id="idCardBack"
-                                            accept="image/*"
-                                            onChange={handleBackImageChange}
-                                            className="hidden"
-                                            disabled={!isEditing || saving}
-                                          />
-                                          <label htmlFor="idCardBack" className="cursor-pointer block">
-                                            <div className="mx-auto w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
-                                              <User size={20} className="text-blue-500" />
-                                            </div>
-                                            <p className="text-gray-600 text-sm">Upload Back</p>
-                                          </label>
-                                        </div>
-                                      ) : (
-                                                              <div className="relative w-full max-h-32 border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
-                                                                <Image
-                                                                  src={backPreviewUrl || `${API_URL}${user?.idCardBackImage}`}
-                                                                  alt="ID Card Back Preview"
-                                                                  width={200} // Example width, adjust as needed
-                                                                  height={120} // Example height, adjust as needed
-                                                                  objectFit="contain"
-                                                                />                                          {isEditing && (
-                                            <Button
-                                              type="button"
-                                              onClick={() => removeImage("back")}
-                                              className="absolute top-1 right-1 p-1 h-auto w-auto bg-red-500 hover:bg-red-600 text-white rounded-full"
-                                              disabled={saving}
-                                            >
-                                              <X size={14} />
-                                            </Button>
-                                          )}
-                                        </div>
-                                      )}
-                                      {errors.idCardBack && (
-                                        <p className="text-red-500 text-xs mt-1">{errors.idCardBack}</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}                </div>
+                  {activeTab === 'id' && (
+                    <div className="space-y-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          ID Card Front Image
+                        </label>
+                        {!frontThumbnailUrl && !user?.idCardFrontImage ? (
+                          <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                            <input
+                              type="file"
+                              id="idCardFront"
+                              accept="image/*"
+                              onChange={handleFrontImageChange}
+                              className="hidden"
+                              disabled={!isEditing || saving}
+                            />
+                            <label htmlFor="idCardFront" className="cursor-pointer block">
+                              <div className="mx-auto w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
+                                <User size={20} className="text-blue-500" />
+                              </div>
+                              <p className="text-gray-600 text-sm">Upload Front</p>
+                            </label>
+                          </div>
+                        ) : (
+                          <div className="relative w-full max-h-32 border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+                            <Image
+                              src={frontThumbnailUrl || `${API_URL}${user?.idCardFrontImage}`}
+                              alt="ID Card Front Thumbnail"
+                              width={200} // Example width, adjust as needed
+                              height={120} // Example height, adjust as needed
+                              objectFit="contain"
+                            />                                          {isEditing && (
+                              <Button
+                                type="button"
+                                onClick={() => removeImage("front")}
+                                className="absolute top-1 right-1 p-1 h-auto w-auto bg-red-500 hover:bg-red-600 text-white rounded-full"
+                                disabled={saving}
+                              >
+                                <X size={14} />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                        {errors.idCardFront && (
+                          <p className="text-red-500 text-xs mt-1">{errors.idCardFront}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          ID Card Back Image
+                        </label>
+                        {!backThumbnailUrl && !user?.idCardBackImage ? (
+                          <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                            <input
+                              type="file"
+                              id="idCardBack"
+                              accept="image/*"
+                              onChange={handleBackImageChange}
+                              className="hidden"
+                              disabled={!isEditing || saving}
+                            />
+                            <label htmlFor="idCardBack" className="cursor-pointer block">
+                              <div className="mx-auto w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-2">
+                                <User size={20} className="text-blue-500" />
+                              </div>
+                              <p className="text-gray-600 text-sm">Upload Back</p>
+                            </label>
+                          </div>
+                        ) : (
+                          <div className="relative w-full max-h-32 border border-gray-200 rounded-lg overflow-hidden flex items-center justify-center">
+                            <Image
+                              src={backThumbnailUrl || `${API_URL}${user?.idCardBackImage}`}
+                              alt="ID Card Back Thumbnail"
+                              width={200} // Example width, adjust as needed
+                              height={120} // Example height, adjust as needed
+                              objectFit="contain"
+                            />                                          {isEditing && (
+                              <Button
+                                type="button"
+                                onClick={() => removeImage("back")}
+                                className="absolute top-1 right-1 p-1 h-auto w-auto bg-red-500 hover:bg-red-600 text-white rounded-full"
+                                disabled={saving}
+                              >
+                                <X size={14} />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                        {errors.idCardBack && (
+                          <p className="text-red-500 text-xs mt-1">{errors.idCardBack}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}                </div>
               )}
 
               {activeTab === 'security' && (
                 <div className="space-y-6">
-                                {activeTab === 'security' && (
-                                  <div className="space-y-6">
-                                    <div>
-                                      <h4 className="font-medium text-gray-900 mb-4">
-                                        <Lock size={18} className="inline mr-2" />
-                                        Change Password
-                                      </h4>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            New Password
-                                          </label>
-                                          <div className="relative">
-                                            <Input
-                                              type={showNewPassword ? "text" : "password"}
-                                              value={formData.newPassword}
-                                              onChange={(e) => handleInputChange("newPassword", e.target.value)}
-                                              placeholder="Enter new password"
-                                              disabled={!isEditing || saving}
-                                              className={errors.newPassword ? "border-red-500 pr-10" : "pr-10"}
-                                            />
-                                            <button
-                                              type="button"
-                                              onClick={() => setShowNewPassword(!showNewPassword)}
-                                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
-                                              disabled={!isEditing || saving}
-                                            >
-                                              {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                            </button>
-                                          </div>
-                                          {errors.newPassword && (
-                                            <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>
-                                          )}
-                                        </div>
-                  
-                                        <div>
-                                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Confirm New Password
-                                          </label>
-                                          <div className="relative">
-                                            <Input
-                                              type={showConfirmPassword ? "text" : "password"}
-                                              value={formData.confirmPassword}
-                                              onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                                              placeholder="Confirm new password"
-                                              disabled={!isEditing || saving}
-                                              className={errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"}
-                                            />
-                                            <button
-                                              type="button"
-                                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
-                                              disabled={!isEditing || saving}
-                                            >
-                                              {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                            </button>
-                                          </div>
-                                          {errors.confirmPassword && (
-                                            <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
-                                          )}
-                                        </div>
-                                      </div>
-                  
-                                      <p className="text-sm text-gray-500 mt-2">
-                                        Leave password fields empty if you do not want to change your password.
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}                </div>
+                  {activeTab === 'security' && (
+                    <div className="space-y-6">
+                      <div>
+                        <h4 className="font-medium text-gray-900 mb-4">
+                          <Lock size={18} className="inline mr-2" />
+                          Change Password
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              New Password
+                            </label>
+                            <div className="relative">
+                              <Input
+                                type={showNewPassword ? "text" : "password"}
+                                value={formData.newPassword}
+                                onChange={(e) => handleInputChange("newPassword", e.target.value)}
+                                placeholder="Enter new password"
+                                disabled={!isEditing || saving}
+                                className={errors.newPassword ? "border-red-500 pr-10" : "pr-10"}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
+                                disabled={!isEditing || saving}
+                              >
+                                {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                              </button>
+                            </div>
+                            {errors.newPassword && (
+                              <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              Confirm New Password
+                            </label>
+                            <div className="relative">
+                              <Input
+                                type={showConfirmPassword ? "text" : "password"}
+                                value={formData.confirmPassword}
+                                onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                                placeholder="Confirm new password"
+                                disabled={!isEditing || saving}
+                                className={errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed"
+                                disabled={!isEditing || saving}
+                              >
+                                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                              </button>
+                            </div>
+                            {errors.confirmPassword && (
+                              <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <p className="text-sm text-gray-500 mt-2">
+                          Leave password fields empty if you do not want to change your password.
+                        </p>
+                      </div>
+                    </div>
+                  )}                </div>
               )}
 
               {/* Save Button - Only when editing */}

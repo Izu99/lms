@@ -19,43 +19,85 @@ const storage = multer.diskStorage({
    * - 'id-card': For ID card images.
    */
   destination: (req, file, cb) => {
-    // Attempt to get uploadType from query string first, then from body, default to 'misc'
+    console.log('📁 [MULTER] Processing file upload:');
+    console.log('  - fieldname:', file.fieldname);
+    console.log('  - mimetype:', file.mimetype);
+    console.log('  - originalname:', file.originalname);
+
+    // Get uploadType from req.uploadType (set by route middleware)
     const uploadType = (req as any).uploadType || 'misc';
+    console.log('  - uploadType from req:', uploadType);
     let subDir = '';
+
     switch (uploadType) {
-      case 'paper':
-        subDir = 'paper';
+      case 'mcq-question':
+        subDir = 'papers/mcq/questions';
         break;
-      case 'question':
-        subDir = 'paper/questions';
+      case 'mcq-option':
+        subDir = 'papers/mcq/options';
         break;
-      case 'option':
-        subDir = 'paper/answers'; // Mapping 'option' to 'answers'
+      case 'mcq-explanation':
+        subDir = 'papers/mcq/explanations';
         break;
-      case 'explanation':
-        subDir = 'paper/explanations';
+      case 'structure-question-paper':
+        subDir = 'papers/structure-essay/question-papers';
+        break;
+      case 'structure-student-answer':
+        subDir = 'papers/structure-essay/student-answers';
+        break;
+      case 'structure-teacher-review':
+        subDir = 'papers/structure-essay/teacher-reviews';
+        break;
+      case 'paper-thumbnail':
+        // Check paperType from form body to determine subfolder
+        const paperType = (req as any).body?.paperType;
+        if (paperType === 'MCQ') {
+          subDir = 'papers/mcq/thumbnails';
+        } else if (paperType === 'Structure-Essay') {
+          subDir = 'papers/structure-essay/thumbnails';
+        } else {
+          subDir = 'papers/thumbnails'; // fallback
+        }
         break;
       case 'id-card':
         subDir = 'id-cards';
         break;
-      case 'paper-preview': // New case for paper preview images
-        subDir = 'paper/previews';
-        break;
       default:
-        // Fallback for unknown types to a generic 'misc' folder
-        subDir = 'misc';
+        // Fallback: check fieldname
+        if (file.fieldname === 'thumbnail') {
+          // Check paperType to route to correct thumbnail folder
+          const paperType = (req as any).body?.paperType;
+          if (paperType === 'MCQ') {
+            subDir = 'papers/mcq/thumbnails';
+          } else if (paperType === 'Structure-Essay') {
+            subDir = 'papers/structure-essay/thumbnails';
+          } else {
+            subDir = 'papers/thumbnails'; // fallback
+          }
+        } else if (file.fieldname === 'file' && file.mimetype === 'application/pdf') {
+          // Default for question papers if no uploadType specified
+          subDir = 'papers/structure-essay/question-papers';
+        } else {
+          subDir = 'misc';
+        }
         break;
     }
 
     // Construct the full directory path
     const dir = path.join(UPLOAD_BASE_DIR, subDir);
+    console.log('  - Calculated subDir:', subDir);
+    console.log('  - Full directory path:', dir);
 
     // Create the directory if it doesn't exist
     if (!fs.existsSync(dir)) {
+      console.log('  - Creating directory:', dir);
       fs.mkdirSync(dir, { recursive: true });
+    } else {
+      console.log('  - Directory already exists');
     }
 
     // Pass the destination directory to multer
+    console.log('✅ [MULTER] File will be saved to:', dir);
     cb(null, dir);
   },
   filename: (req, file, cb) => {

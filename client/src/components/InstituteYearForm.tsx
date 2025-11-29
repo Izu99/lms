@@ -57,7 +57,7 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     setLoading(true);
     try {
       if (mode === "institute") {
@@ -103,8 +103,8 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
                   ? "Edit Institute"
                   : "Add New Institute"
                 : yearData
-                ? "Edit Year"
-                : "Add New Year"}
+                  ? "Edit Year"
+                  : "Add New Year"}
             </h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -156,10 +156,10 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
                 </p>
               </div>
 
-              {/* Preview */}
+              {/* Thumbnail */}
               {instituteFormData.name && instituteFormData.location && (
                 <div className="border-t border-[var(--theme-border)] pt-6">
-                  <h3 className="text-sm font-medium text-[var(--theme-text-secondary)] mb-3">Preview</h3>
+                  <h3 className="text-sm font-medium text-[var(--theme-text-secondary)] mb-3">Card Preview</h3>
                   <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
@@ -200,10 +200,10 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
                 </p>
               </div>
 
-              {/* Preview */}
+              {/* Thumbnail */}
               {yearFormData.year && (
                 <div className="border-t border-[var(--theme-border)] pt-6">
-                  <h3 className="text-sm font-medium text-[var(--theme-text-secondary)] mb-3">Preview</h3>
+                  <h3 className="text-sm font-medium text-[var(--theme-text-secondary)] mb-3">Card Preview</h3>
                   <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
@@ -237,8 +237,8 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
                       ? "Updating Institute..."
                       : "Creating Institute..."
                     : yearData
-                    ? "Updating Year..."
-                    : "Creating Year..."}
+                      ? "Updating Year..."
+                      : "Creating Year..."}
                 </div>
               ) : (
                 mode === "institute"
@@ -246,8 +246,8 @@ export default function InstituteYearForm({ instituteData, yearData, onSaveInsti
                     ? "Update Institute"
                     : "Create Institute"
                   : yearData
-                  ? "Update Year"
-                  : "Create Year"
+                    ? "Update Year"
+                    : "Create Year"
               )}
             </Button>
           </div>
