@@ -224,12 +224,12 @@ const ProgressChart = ({ data }: ProgressChartProps) => {
           <AreaChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
             <defs>
               <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
               </linearGradient>
               <linearGradient id="colorPaperAverage" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(128, 128, 128, 0.2)" />
@@ -291,7 +291,7 @@ const ResultCard = ({ result, index }: ResultCardProps) => {
           <div className={`px-4 py-1.5 rounded-full font-bold text-lg ${grade.bg} ${grade.color}`}>
             {grade.letter}
           </div>
-          <Link href={`/student/papers/answers/${result._id}`}>
+          <Link href={`/student/papers/answers/${result.paperId._id}`}>
             <Button variant="outline">
               {result.paperId.paperType === 'Structure-Essay' ? 'View Details' : 'See Answers'}
             </Button>
@@ -313,8 +313,9 @@ const ResultCard = ({ result, index }: ResultCardProps) => {
                 initial={{ width: 0 }}
                 animate={{ width: `${result.percentage}%` }}
                 transition={{ duration: 1, delay: index * 0.2 + 0.2 }}
-                className={`h-full rounded-full ${result.percentage >= 60 ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-gradient-to-r from-red-500 to-orange-500'
-                  }`}
+                className={`h-full rounded-full ${
+                  result.percentage >= 60 ? 'bg-gradient-to-r from-blue-500 to-indigo-500' : 'bg-gradient-to-r from-red-500 to-orange-500'
+                }`}
               />
             </div>
           </div>
@@ -374,7 +375,7 @@ export default function MyResultsPage() {
           window.location.href = "/login";
           return;
         }
-
+        
         const headers = { 'Authorization': `Bearer ${token}` };
         const response = await axios.get(`${API_URL}/papers/results/my-results`, { headers });
         setResults(response.data.results || []);
@@ -461,4 +462,4 @@ export default function MyResultsPage() {
       )}
     </StudentLayout>
   );
-} 
+}

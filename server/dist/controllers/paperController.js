@@ -730,7 +730,7 @@ const getAttemptById = async (req, res) => {
         if (!mongoose_1.default.Types.ObjectId.isValid(attemptId)) {
             return res.status(400).json({ message: 'Invalid attempt ID' });
         }
-        const attempt = await StudentAttempt_1.StudentAttempt.findById(attemptId).populate('paperId', 'title description');
+        const attempt = await StudentAttempt_1.StudentAttempt.findById(attemptId).populate('paperId', 'title description deadline paperType');
         if (!attempt) {
             return res.status(404).json({ message: 'Attempt not found' });
         }
@@ -740,6 +740,20 @@ const getAttemptById = async (req, res) => {
             requestingUser.role !== 'paper_manager' &&
             attempt.studentId.toString() !== requestingUser.id.toString()) {
             return res.status(403).json({ message: 'Access denied. You can only view your own attempts.' });
+        }
+        // Deadline check for students
+        if (requestingUser.role === 'student') {
+            const paper = attempt.paperId;
+            if (paper.deadline) {
+                const now = new Date();
+                const deadline = new Date(paper.deadline);
+                if (now < deadline) {
+                    return res.status(403).json({
+                        message: `Answers will be available after the deadline: ${deadline.toLocaleString()}`,
+                        deadline: deadline // Send deadline in response for frontend handling
+                    });
+                }
+            }
         }
         res.json({ attempt });
     }

@@ -39,7 +39,7 @@ router.post('/upload/id-card', (req, res, next) => {
 }, multer_1.upload.single('image'), imageUploadController_1.uploadIdCardImage);
 // Route for uploading paper content images
 router.post('/upload/paper-content', (req, res, next) => {
-    req.uploadType = 'paper'; // Maps to uploads/paper
+    req.uploadType = 'mcq-content'; // Maps to uploads/papers/mcq/content
     next();
 }, multer_1.upload.single('image'), imageUploadController_1.uploadPaperContentImage);
 // Route for deleting an image
