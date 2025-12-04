@@ -63,19 +63,49 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function Sidebar({ children, className, ...props }: SidebarProps) {
-  const { isCollapsed } = useSidebar();
+  const { isCollapsed, toggleCollapse } = useSidebar();
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-0 z-40 h-screen transition-all duration-300 ease-in-out shadow-lg flex flex-col overflow-hidden sidebar-themed",
-        isCollapsed ? "w-20" : "w-72",
-        className
+    <>
+      {/* Mobile backdrop */}
+      {isMobile && !isCollapsed && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 md:hidden"
+          onClick={toggleCollapse}
+        />
       )}
-      {...props}
-    >
-      {children}
-    </aside>
+
+      <aside
+        className={cn(
+          "fixed left-0 top-0 h-screen transition-all duration-300 ease-in-out shadow-lg flex flex-col overflow-hidden sidebar-themed",
+          // Mobile: full screen when open, hidden when collapsed
+          isMobile
+            ? isCollapsed
+              ? "-translate-x-full w-0"
+              : "w-full z-40"
+            // Desktop: normal sidebar behavior
+            : isCollapsed
+              ? "w-20 z-40"
+              : "w-72 z-40",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </aside>
+    </>
   );
 }
 

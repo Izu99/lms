@@ -409,12 +409,6 @@ export default function LoginPage() {
                 </Link>
               </div>
             </div>
-
-            <div className="mt-8 text-center">
-              <Link href="/privacy-policy" className="text-xs text-gray-500 hover:text-blue-600 transition-colors">
-                Privacy Policy
-              </Link>
-            </div>
           </div>
         </div>
       </div>

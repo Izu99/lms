@@ -125,6 +125,7 @@ export function StudentSidebar({ user, onLogout }: StudentSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Navigation Menu */}
         <SidebarMenu>
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -151,19 +152,21 @@ export function StudentSidebar({ user, onLogout }: StudentSidebarProps) {
             );
           })}
         </SidebarMenu>
-      </SidebarContent>
 
-      <SidebarFooter>
-        <div className={cn("space-y-3", isCollapsed && "flex flex-col items-center")}>
+        {/* Spacer to push footer items to bottom when sidebar is long enough */}
+        <div className="flex-1 min-h-4" />
+
+        {/* Footer Items - Now inside scrollable area */}
+        <div className={cn("px-3 pb-4 space-y-3", isCollapsed && "flex flex-col items-center")}>
           {/* Theme Toggle */}
           {!isCollapsed && (
-            <div className="flex items-center justify-between px-3 py-2">
+            <div className="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               <span className="text-sm font-medium theme-text-secondary">Dark Mode</span>
               <ThemeToggle />
             </div>
           )}
 
-          {/* User Profile - Show first when expanded */}
+          {/* User Profile */}
           {!isCollapsed && (
             <div
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
@@ -205,7 +208,7 @@ export function StudentSidebar({ user, onLogout }: StudentSidebarProps) {
             )}
           </button>
         </div>
-      </SidebarFooter>
+      </SidebarContent>
     </Sidebar>
   );
 }
