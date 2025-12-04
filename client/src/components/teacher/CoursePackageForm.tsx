@@ -304,8 +304,9 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
       return;
     }
 
+    // Validation: At least ONE of videos, papers, or tutes is required (not all)
     if (formData.videos.length === 0 && formData.papers.length === 0 && formData.tutes.length === 0) {
-      toast.error("Please select at least one video, paper, or tute");
+      toast.error("Please select at least one item: video, paper, or tute (not all required)");
       return;
     }
 
@@ -374,8 +375,9 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
           type="number"
           min="0"
           step="0.01"
-          value={formData.price}
-          onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+          value={formData.price === 0 ? "" : formData.price}
+          onChange={(e) => setFormData({ ...formData, price: e.target.value === "" ? 0 : parseFloat(e.target.value) })}
+          placeholder="Enter price"
           required
         />
       </div>
@@ -480,7 +482,7 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2 theme-text-primary">Select Videos</label>
+        <label className="block text-sm font-medium mb-2 theme-text-primary">Select Videos (Optional)</label>
         <SearchableMultiSelect
           options={availableVideos.map(v => ({ label: v.title, value: v._id }))}
           selected={formData.videos}
@@ -491,7 +493,7 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2 theme-text-primary">Select Papers</label>
+        <label className="block text-sm font-medium mb-2 theme-text-primary">Select Papers (Optional)</label>
         <SearchableMultiSelect
           options={availablePapers.map(p => ({ label: p.title, value: p._id }))}
           selected={formData.papers}
@@ -502,7 +504,7 @@ export function CoursePackageForm({ initialData, onSuccess, onCancel }: CoursePa
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2 theme-text-primary">Select Tutes</label>
+        <label className="block text-sm font-medium mb-2 theme-text-primary">Select Tutes (Optional)</label>
         <SearchableMultiSelect
           options={availableTutes.map(t => ({ label: t.title, value: t._id }))}
           selected={formData.tutes}

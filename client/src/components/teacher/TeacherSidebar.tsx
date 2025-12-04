@@ -133,6 +133,7 @@ export function TeacherSidebar({ user, onLogout }: TeacherSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Navigation Menu */}
         <SidebarMenu>
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -159,11 +160,15 @@ export function TeacherSidebar({ user, onLogout }: TeacherSidebarProps) {
             );
           })}
         </SidebarMenu>
-      </SidebarContent>
 
-      <SidebarFooter>
-        <TeacherFooter user={user} onLogout={onLogout} />
-      </SidebarFooter>
+        {/* Spacer to push footer items to bottom */}
+        <div className="flex-1 min-h-4" />
+
+        {/* Footer Items - Now inside scrollable area */}
+        <div className="px-3 pb-4">
+          <TeacherFooter user={user} onLogout={onLogout} />
+        </div>
+      </SidebarContent>
     </Sidebar>
   );
 }
