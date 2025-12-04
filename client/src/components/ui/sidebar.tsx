@@ -79,7 +79,7 @@ export function Sidebar({ children, className, ...props }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile backdrop */}
+      {/* Mobile backdrop - Only when expanded */}
       {isMobile && !isCollapsed && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 md:hidden"
@@ -89,16 +89,16 @@ export function Sidebar({ children, className, ...props }: SidebarProps) {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen transition-all duration-300 ease-in-out shadow-lg flex flex-col overflow-hidden sidebar-themed",
-          // Mobile: full screen when open, hidden when collapsed
+          "fixed left-0 top-0 h-screen transition-all duration-300 ease-in-out shadow-lg flex flex-col overflow-hidden sidebar-themed z-40",
+          // Mobile behavior
           isMobile
             ? isCollapsed
-              ? "-translate-x-full w-0"
-              : "w-full z-40"
-            // Desktop: normal sidebar behavior
+              ? "w-20" // Collapsed on mobile shows icons
+              : "w-full" // Expanded on mobile is full-screen
+            // Desktop behavior (unchanged)
             : isCollapsed
-              ? "w-20 z-40"
-              : "w-72 z-40",
+              ? "w-20"
+              : "w-72",
           className
         )}
         {...props}
