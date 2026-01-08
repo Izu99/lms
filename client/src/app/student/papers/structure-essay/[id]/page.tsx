@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useRouter, usePathname } from "next/navigation";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
+import { getFileUrl } from "@/lib/fileUtils";
 import { toast } from "sonner";
 import { FileUpload } from "@/components/ui/file-upload";
 
@@ -183,7 +184,7 @@ export default function StructureEssayPaperPage() {
             <p className="theme-text-secondary">Click the button to download the paper PDF.</p>
           </div>
           <a
-            href={`${API_BASE_URL}${paper.fileUrl}`}
+            href={getFileUrl(paper.fileUrl, 'paper')}
             download
             rel="noopener noreferrer"
             onClick={() => {

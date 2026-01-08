@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_URL, API_BASE_URL } from "@/lib/constants";
+import { getFileUrl } from "@/lib/fileUtils";
 import Link from "next/link";
 import { StudentLayout } from "@/components/student/StudentLayout";
 import { Video, Eye, Clock, Plus, Search, Play, School, GraduationCap } from "lucide-react";
@@ -225,13 +226,13 @@ export default function VideosPage() {
                     <div className="relative w-full h-48 bg-gray-900 cursor-pointer group overflow-hidden">
                       {video.thumbnailUrl ? (
                         <img
-                          src={`${API_BASE_URL}${video.thumbnailUrl}`}
+                          src={getFileUrl(video.thumbnailUrl, 'video-thumbnail')}
                           alt={video.title}
                           className="w-full h-full object-cover"
                         />
                       ) : (
                         <video
-                          src={`${API_BASE_URL}/uploads/${video.videoUrl}`}
+                          src={getFileUrl(video.videoUrl, 'video')}
                           className="w-full h-full object-cover"
                           preload="metadata"
                         />

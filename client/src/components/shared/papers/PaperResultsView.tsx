@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { API_URL, API_BASE_URL } from "@/lib/constants";
+import { getFileUrl } from "@/lib/fileUtils";
 import Cookies from "js-cookie";
 import { StudentDetailsModal } from "@/components/teacher/modals/StudentDetailsModal";
 import { GradePaperModal } from "@/components/teacher/modals/GradePaperModal";
@@ -132,7 +133,7 @@ export function PaperResultsView({ basePath }: PaperResultsViewProps) {
     };
 
     const handleDownloadAnswer = (answerFileUrl: string) => {
-        window.open(`${API_BASE_URL}${answerFileUrl}`, "_blank");
+        window.open(getFileUrl(answerFileUrl, 'image'), "_blank");
     };
 
     const handleOpenGradeModal = (attemptId: string, initialPercentage: number) => {
@@ -402,7 +403,7 @@ export function PaperResultsView({ basePath }: PaperResultsViewProps) {
                                                                 variant="outline"
                                                                 onClick={() =>
                                                                     window.open(
-                                                                        `${API_BASE_URL}${result.teacherReviewFileUrl!}`,
+                                                                        getFileUrl(result.teacherReviewFileUrl!, 'image'),
                                                                         "_blank"
                                                                     )
                                                                 }

@@ -25,6 +25,7 @@ interface VideoData {
     title: string;
     description: string;
     videoUrl: string;
+    thumbnailUrl?: string;
     uploadedBy: {
         _id: string;
         username: string;
@@ -253,6 +254,7 @@ export function VideoPlayerView({ basePath }: VideoPlayerViewProps) {
                         controlsList="noremoteplayback"
                         onPlay={handleVideoPlay}
                         onPause={() => setIsPlaying(false)}
+                        poster={video.thumbnailUrl ? getFileUrl(video.thumbnailUrl, 'video-thumbnail') : undefined}
                     >
                         <source
                             src={getFileUrl(video.videoUrl, 'video')}

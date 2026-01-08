@@ -20,13 +20,17 @@ import {
   School,
   MapPin,
   GraduationCap,
+  Lock,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
 import { API_URL, API_BASE_URL } from "@/lib/constants";
+import { getFileUrl } from "@/lib/fileUtils";
 import { StudentLayout } from "@/components/student/StudentLayout";
+import { PayHereButton } from "@/components/payment/PayHereButton";
 
 interface VideoData {
   _id: string;
@@ -71,6 +75,12 @@ export default function StudentVideoViewPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showDescription, setShowDescription] = useState(true);
   const [hasViewCounted, setHasViewCounted] = useState(false);
+  const [paymentRequired, setPaymentRequired] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<{
+    price: number;
+    videoTitle: string;
+    videoId: string;
+  } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -116,10 +126,15 @@ export default function StudentVideoViewPage() {
       setVideo(response.data.video || response.data);
     } catch (error) {
       console.error("Error fetching video:", error);
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        window.location.href = "/login";
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "/login";
+        } else if (error.response?.status === 402) {
+          setPaymentRequired(true);
+          setPaymentDetails(error.response.data);
+        }
       }
     } finally {
       setLoading(false);
@@ -239,6 +254,48 @@ export default function StudentVideoViewPage() {
     );
   }
 
+  if (paymentRequired && paymentDetails) {
+    return (
+      <StudentLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl max-w-md w-full border theme-border">
+            <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock className="text-yellow-600 dark:text-yellow-400" size={32} />
+            </div>
+            <h2 className="text-2xl font-bold theme-text-primary mb-2">
+              Payment Required
+            </h2>
+            <p className="theme-text-secondary mb-6">
+              To access{" "}
+              <span className="font-semibold text-blue-600">
+                {paymentDetails.videoTitle}
+              </span>
+              , a payment of{" "}
+              <span className="font-bold">
+                LKR {paymentDetails.price?.toFixed(2)}
+              </span>{" "}
+              is required.
+            </p>
+
+            <PayHereButton
+              itemId={paymentDetails.videoId}
+              itemModel="Video"
+              amount={paymentDetails.price}
+              title={paymentDetails.videoTitle}
+              className="w-full mb-4"
+            />
+
+            <Link href="/student/videos" className="block">
+              <Button variant="ghost" className="w-full">
+                Back to Videos
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </StudentLayout>
+    );
+  }
+
   if (!user || !video) {
     return (
       <StudentLayout>
@@ -285,7 +342,7 @@ export default function StudentVideoViewPage() {
                 preload="metadata"
               >
                 <source
-                  src={`${API_BASE_URL}/uploads/${video.videoUrl}`}
+                  src={getFileUrl(video.videoUrl, 'video')}
                   type="video/mp4"
                 />
                 Your browser does not support the video tag.
@@ -454,7 +511,7 @@ export default function StudentVideoViewPage() {
                           preload="metadata"
                         >
                           <source
-                            src={`${API_BASE_URL}/uploads/${relatedVideo.videoUrl}`}
+                            src={getFileUrl(relatedVideo.videoUrl, 'video')}
                           />
                         </video>
                         <div className="absolute top-1 left-1 bg-gray-900 text-white text-xs px-1 rounded">

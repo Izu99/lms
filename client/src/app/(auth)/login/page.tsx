@@ -11,6 +11,7 @@ import {
   BookOpen,
   Target,
 } from "lucide-react";
+import { PrivacyPolicyModal } from "@/components/modals/PrivacyPolicyModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -27,6 +28,7 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [currentQuote, setCurrentQuote] = useState(0);
   const [floatingElementStyles, setFloatingElementStyles] = useState<React.CSSProperties[]>([]);
+  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
 
   const motivationalQuotes = [
     {
@@ -126,6 +128,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
+      <PrivacyPolicyModal open={isPrivacyModalOpen} onOpenChange={setIsPrivacyModalOpen} />
       {/* Left side - Enhanced Branding with Motivational Content */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
         {/* Animated Background Elements */}
@@ -407,6 +410,16 @@ export default function LoginPage() {
                   Create New Account
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 group-hover:w-full transition-all duration-300"></span>
                 </Link>
+              </div>
+
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsPrivacyModalOpen(true)}
+                  className="text-xs text-gray-500 hover:text-blue-600 hover:underline transition-colors"
+                >
+                  Privacy Policy
+                </button>
               </div>
             </div>
           </div>

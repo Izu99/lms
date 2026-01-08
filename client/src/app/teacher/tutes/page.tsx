@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import CommonFilter from "@/components/common/CommonFilter";
 import { useInstitutesAndYears } from "@/modules/teacher/hooks/useInstitutesAndYears";
 import { GridSkeleton } from "@/components/teacher/skeletons/GridSkeleton";
+import { getFileUrl } from "@/lib/fileUtils";
 import { ClientLayoutProvider } from "@/components/common/ClientLayoutProvider";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
@@ -238,13 +239,13 @@ function TutesPageContent() {
               >
                 {tute.thumbnailUrl ? (
                   <img
-                    src={`${API_BASE_URL}${tute.thumbnailUrl}`}
+                    src={getFileUrl(tute.thumbnailUrl, 'image')}
                     alt={tute.title}
                     className="w-full h-48 object-cover border-b border-border"
                   />
                 ) : tute.fileType === 'image' && tute.fileUrl ? (
                   <img
-                    src={`${API_BASE_URL}${tute.fileUrl}`}
+                    src={getFileUrl(tute.fileUrl, 'image')}
                     alt={tute.title}
                     className="w-full h-48 object-cover border-b border-border"
                   />

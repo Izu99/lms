@@ -52,8 +52,8 @@ export const uploadVideo = async (req: Request, res: Response) => {
     const newVideo = new Video({
       title,
       description,
-      videoUrl: videoFile.filename,
-      thumbnailUrl: thumbnailFile ? `/uploads/videos/images/${thumbnailFile.filename}` : undefined,
+      videoUrl: `videos/files/${videoFile.filename}`,
+      thumbnailUrl: thumbnailFile ? `videos/images/${thumbnailFile.filename}` : undefined,
       uploadedBy: userId,
       institute: instituteId,
       year: yearId,
@@ -120,12 +120,14 @@ export const updateVideo = async (req: Request, res: Response) => {
       const prev = await Video.findById(req.params.id);
       if (prev && prev.videoUrl) {
         try {
-          fs.unlinkSync(path.join(__dirname, '../../', 'uploads/videos/files', prev.videoUrl));
+          // Check if previous url was full path or relative
+          const oldFilename = prev.videoUrl.split('/').pop();
+          fs.unlinkSync(path.join(__dirname, '../../', 'uploads/videos/files', oldFilename!));
         } catch (e) {
           console.log("Old video file not found, continuing...");
         }
       }
-      update.videoUrl = videoFile.filename;
+      update.videoUrl = `videos/files/${videoFile.filename}`;
     }
 
     // Handle new thumbnail image if uploaded
@@ -133,14 +135,13 @@ export const updateVideo = async (req: Request, res: Response) => {
       const prev = await Video.findById(req.params.id);
       if (prev && prev.thumbnailUrl) {
         try {
-          // Extract filename from path if it's a full path
-          const oldFilename = prev.thumbnailUrl.includes('/') ? prev.thumbnailUrl.split('/').pop() : prev.thumbnailUrl;
+          const oldFilename = prev.thumbnailUrl.split('/').pop();
           fs.unlinkSync(path.join(__dirname, '../../', 'uploads/videos/images', oldFilename!));
         } catch (e) {
           console.log("Old thumbnail image not found, continuing...");
         }
       }
-      update.thumbnailUrl = `/uploads/videos/images/${thumbnailFile.filename}`;
+      update.thumbnailUrl = `videos/images/${thumbnailFile.filename}`;
     }
 
     const video = await Video.findByIdAndUpdate(
@@ -202,6 +203,9 @@ export const deleteVideo = async (req: Request, res: Response) => {
 };
 
 // Get single video
+// Get single video
+import { Payment } from '../models/Payment'; // Import Payment model
+
 export const getVideoById = async (req: Request, res: Response) => {
   try {
     const video = await Video.findById(req.params.id)
@@ -237,12 +241,25 @@ export const getVideoById = async (req: Request, res: Response) => {
     }
 
     if (paymentRequired) {
-      return res.status(402).json({
-        message: 'Payment required to access this video.',
-        price: video.price,
-        videoTitle: video.title,
-        videoId: video._id
+      // Check if user has already paid
+      const payment = await Payment.findOne({
+        userId: requestingUser.id,
+        itemId: video._id,
+        status: 'PAID'
       });
+
+      if (payment) {
+        hasAccess = true;
+        paymentRequired = false; // Override payment requirement since they paid
+      } else {
+        return res.status(402).json({
+          message: 'Payment required to access this video.',
+          price: video.price,
+          videoTitle: video.title,
+          videoId: video._id,
+          currency: 'LKR' // Send currency for frontend button
+        });
+      }
     }
 
     if (!hasAccess) {

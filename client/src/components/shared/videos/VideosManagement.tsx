@@ -18,6 +18,7 @@ import { Video, Plus, Search, Eye, Trash2, Edit, School, GraduationCap, Play } f
 import { CreateVideoModal } from "@/components/modals";
 import axios from "axios";
 import { API_URL, API_BASE_URL } from "@/lib/constants";
+import { getFileUrl } from "@/lib/fileUtils";
 import Cookies from "js-cookie";
 import { Pagination } from "@/components/ui/pagination";
 import {
@@ -67,13 +68,13 @@ const VideoCard = ({
         >
             {video.thumbnailUrl ? (
                 <img
-                    src={`${API_BASE_URL}${video.thumbnailUrl}`}
+                    src={getFileUrl(video.thumbnailUrl, 'video-thumbnail')}
                     alt={video.title}
                     className="w-full h-full object-cover"
                 />
             ) : (
                 <video
-                    src={`${API_BASE_URL}/uploads/videos/files/${video.videoUrl}`}
+                    src={getFileUrl(video.videoUrl, 'video')}
                     className="w-full h-full object-cover"
                     preload="metadata"
                 />

@@ -1,6 +1,7 @@
 import React from "react";
 import { Video, FileText, Edit, Trash2, School, Eye } from "lucide-react";
 import { API_BASE_URL } from "@/lib/constants";
+import { getFileUrl } from "@/lib/fileUtils";
 import { useRouter } from "next/navigation";
 import { CoursePackageData } from "@/modules/shared/types/course-package.types";
 
@@ -15,7 +16,7 @@ export function CoursePackageCard({ pkg, onEdit, onDelete }: CoursePackageCardPr
   const router = useRouter();
   // Default cosmic background image
   const defaultBackground = "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800&q=80";
-  const backgroundImage = pkg.backgroundImage ? `${API_BASE_URL}/${pkg.backgroundImage}` : defaultBackground;
+  const backgroundImage = pkg.backgroundImage ? getFileUrl(pkg.backgroundImage, 'image') : defaultBackground;
 
   return (
     <div className="relative w-full h-[600px] rounded-xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]">

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { API_URL, API_BASE_URL } from '@/lib/constants';
+import { getFileUrl } from '@/lib/fileUtils';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -471,10 +472,10 @@ export default function PaperAttempt() {
                         key={index}
                         onClick={() => goToQuestion(index)}
                         className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center ${currentQuestion === index
-                            ? 'bg-blue-600 text-white shadow-md ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 ring-blue-500'
-                            : answers[paper.questions[index]._id]
-                              ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/60'
-                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          ? 'bg-blue-600 text-white shadow-md ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 ring-blue-500'
+                          : answers[paper.questions[index]._id]
+                            ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/60'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                           }`}
                       >
                         {index + 1}
@@ -509,7 +510,7 @@ export default function PaperAttempt() {
                           <div className="mt-6 flex justify-center">
                             <div className="relative p-2 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl">
                               <img
-                                src={`${API_BASE_URL}${currentQuestionData.imageUrl}`}
+                                src={getFileUrl(currentQuestionData.imageUrl, 'image')}
                                 alt="Question illustration"
                                 className="rounded-lg max-w-full h-auto max-h-[400px] object-contain"
                               />
@@ -528,8 +529,8 @@ export default function PaperAttempt() {
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: optionIndex * 0.1 }}
                               className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer ${answers[currentQuestionData._id] === option._id
-                                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-md'
-                                  : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-gray-50 dark:hover:bg-gray-800/40'
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-md'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-gray-50 dark:hover:bg-gray-800/40'
                                 }`}
                             >
                               <input
@@ -541,8 +542,8 @@ export default function PaperAttempt() {
                                 className="sr-only" // Hide the default radio button
                               />
                               <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-base font-bold flex-shrink-0 transition-colors ${answers[currentQuestionData._id] === option._id
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
                                 }`}>
                                 {optionIndex + 1}
                               </div>
@@ -550,7 +551,7 @@ export default function PaperAttempt() {
                                 {option.imageUrl ? (
                                   <div className="flex items-center gap-4">
                                     <img
-                                      src={`${API_BASE_URL}${option.imageUrl}`}
+                                      src={getFileUrl(option.imageUrl, 'image')}
                                       alt={`Option ${optionIndex + 1}`}
                                       className="rounded-md h-16 w-16 object-cover bg-gray-100 dark:bg-gray-800 p-1 border border-gray-200 dark:border-gray-700"
                                     />

@@ -32,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
+import { getFileUrl } from "@/lib/fileUtils";
 import { toast } from "sonner";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
@@ -793,7 +794,7 @@ export function PaperForm({ mode, paperId, basePath }: PaperFormProps) {
                                                 src={
                                                     thumbnail
                                                         ? URL.createObjectURL(thumbnail)
-                                                        : `${API_BASE_URL}${currentThumbnailUrl}`
+                                                        : getFileUrl(currentThumbnailUrl, 'paper-thumbnail')
                                                 }
                                                 alt="Thumbnail"
                                                 className="mx-auto max-h-48 object-contain rounded-lg shadow-md"

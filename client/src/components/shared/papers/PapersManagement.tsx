@@ -49,6 +49,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CommonFilter from "@/components/common/CommonFilter";
 import { useInstitutesAndYears } from "@/modules/teacher/hooks/useInstitutesAndYears";
 import { API_BASE_URL } from "@/lib/constants";
+import { getFileUrl } from "@/lib/fileUtils";
 import { GridSkeleton } from "@/components/teacher/skeletons/GridSkeleton";
 
 // Paper Card Component - Reusable
@@ -82,7 +83,7 @@ const PaperCard = ({
         >
             {paper.thumbnailUrl ? (
                 <img
-                    src={`${API_BASE_URL}${paper.thumbnailUrl}`}
+                    src={getFileUrl(paper.thumbnailUrl, 'paper-thumbnail')}
                     alt={paper.title}
                     className="w-full h-full object-cover"
                 />

@@ -23,17 +23,26 @@ export const getFileUrl = (filename: string | undefined | null, type: FileType):
 
     switch (type) {
         case 'video':
-            // Videos are stored in uploads/videos/files/
+            // If the filename already contains the relative path (e.g. "videos/files/"), just prepend /uploads/
+            if (cleanFilename.includes('videos/files/')) {
+                return `${API_BASE_URL}/uploads/${cleanFilename}`;
+            }
+            // Fallback for legacy filenames that are just 'filename.mp4'
             return `${API_BASE_URL}/uploads/videos/files/${cleanFilename}`;
 
         case 'video-thumbnail':
-            // Video thumbnails are stored in uploads/videos/images/
-            // Note: Some legacy data might have different paths, but this is the standard
+            // Handle if it already has the full relative path
+            if (cleanFilename.includes('videos/images/')) {
+                return `${API_BASE_URL}/uploads/${cleanFilename}`;
+            }
+            // Standard fallback
             return `${API_BASE_URL}${filename.startsWith('/uploads') ? filename : `/uploads/videos/images/${cleanFilename}`}`;
 
         case 'paper':
             // Papers are stored in uploads/paper/pdf-papers/
-            // Check if it already has the full path (legacy) or just filename
+            if (cleanFilename.includes('paper/')) { // Broadened to include any paper subfolder
+                return `${API_BASE_URL}/uploads/${cleanFilename}`;
+            }
             if (cleanFilename.includes('uploads/')) {
                 return `${API_BASE_URL}/${cleanFilename}`;
             }
@@ -41,11 +50,19 @@ export const getFileUrl = (filename: string | undefined | null, type: FileType):
 
         case 'paper-thumbnail':
             // Paper thumbnails
+            if (cleanFilename.includes('paper/')) {
+                return `${API_BASE_URL}/uploads/${cleanFilename}`;
+            }
             return `${API_BASE_URL}${filename.startsWith('/uploads') ? filename : `/uploads/paper/images/${cleanFilename}`}`;
 
         case 'image':
         default:
-            // Generic fallback or direct path
-            return `${API_BASE_URL}/${cleanFilename}`;
+            // Generic fallback
+            if (cleanFilename.startsWith('uploads/')) {
+                return `${API_BASE_URL}/${cleanFilename}`;
+            }
+            // Add /uploads/ prefix if not present for all other relative paths (tutes, profile, etc.)
+            // New standardized relative paths will hit this.
+            return `${API_BASE_URL}/uploads/${cleanFilename}`;
     }
 };

@@ -158,7 +158,7 @@ export const register = async (req: Request, res: Response) => {
 
           if (fs.existsSync(oldFrontPath)) {
             fs.renameSync(oldFrontPath, newFrontPath);
-            idCardFrontImage = `/uploads/id-cards/${user._id}/front${frontExtension}`;
+            idCardFrontImage = `id-cards/${user._id}/front${frontExtension}`;
             console.log(`✅ ID card front image saved: ${user._id}/front${frontExtension}`);
           }
         }
@@ -171,7 +171,7 @@ export const register = async (req: Request, res: Response) => {
 
           if (fs.existsSync(oldBackPath)) {
             fs.renameSync(oldBackPath, newBackPath);
-            idCardBackImage = `/uploads/id-cards/${user._id}/back${backExtension}`;
+            idCardBackImage = `id-cards/${user._id}/back${backExtension}`;
             console.log(`✅ ID card back image saved: ${user._id}/back${backExtension}`);
           }
         }
@@ -471,7 +471,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
           if (fs.existsSync(oldFrontPath)) {
             fs.renameSync(oldFrontPath, newFrontPath);
-            idCardFrontImage = `/uploads/id-cards/${user._id}/front${frontExtension}`;
+            idCardFrontImage = `id-cards/${user._id}/front${frontExtension}`;
             user.idCardFrontImage = idCardFrontImage;
             console.log(`✅ ID card front image updated: ${user._id}/front${frontExtension}`);
           }
@@ -494,7 +494,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
           if (fs.existsSync(oldBackPath)) {
             fs.renameSync(oldBackPath, newBackPath);
-            idCardBackImage = `/uploads/id-cards/${user._id}/back${backExtension}`;
+            idCardBackImage = `id-cards/${user._id}/back${backExtension}`;
             user.idCardBackImage = idCardBackImage;
             console.log(`✅ ID card back image updated: ${user._id}/back${backExtension}`);
           }

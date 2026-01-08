@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import axios from "axios";
 import Link from "next/link";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
+import { getFileUrl } from "@/lib/fileUtils";
 import { ConfirmationDialog } from "@/components/ConfirmationDialog";
 import { InfoDialog } from "@/components/InfoDialog";
 import CommonFilter from "@/components/common/CommonFilter";
@@ -405,7 +406,7 @@ export default function StudentPapersPage() {
                   {/* Thumbnail/Thumbnail */}
                   {paper.thumbnailUrl ? (
                     <img
-                      src={`${API_BASE_URL}${paper.thumbnailUrl}`}
+                      src={getFileUrl(paper.thumbnailUrl, 'paper-thumbnail')}
                       alt={paper.title}
                       className="w-full h-48 object-cover border-b theme-border"
                     />

@@ -42,6 +42,7 @@ import { protect } from './modules/shared/middleware/auth';
 import studentRoutes from './modules/student/routes';
 import teacherRoutes from './modules/teacher/routes';
 import activityRoutes from './routes/activityRoutes';
+import paymentRoutes from './routes/paymentRoutes';
 
 const app = express();
 
@@ -114,6 +115,7 @@ app.use('/api/teacher', protect, teacherRoutes);
 app.use('/api/activity', activityRoutes); // New route
 app.use('/api/course-packages', coursePackageRoutes); // New course package routes
 app.use('/api/employees', employeeRoutes); // Employee management routes (teacher-only)
+app.use('/api/payments', paymentRoutes); // Secure payment routes
 
 // Health check endpoint
 app.get('/health', (req, res) => {

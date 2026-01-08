@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Download, FileText, Presentation, Search } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
+import { getFileUrl } from "@/lib/fileUtils";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import CommonFilter from "@/components/common/CommonFilter";
@@ -62,7 +63,7 @@ export default function StudentTutesPage() {
   };
 
   const handleDownload = (fileUrl: string, title: string) => {
-    const fullUrl = `${API_BASE_URL}${fileUrl}`;
+    const fullUrl = getFileUrl(fileUrl, 'image'); // image type handles generic /uploads prefix
     const link = document.createElement('a');
     link.href = fullUrl;
     link.download = title;
@@ -154,13 +155,13 @@ export default function StudentTutesPage() {
                 {/* Thumbnail/Thumbnail */}
                 {tute.thumbnailUrl ? (
                   <img
-                    src={`${API_BASE_URL}${tute.thumbnailUrl}`}
+                    src={getFileUrl(tute.thumbnailUrl, 'image')}
                     alt={tute.title}
                     className="w-full h-48 object-cover border-b theme-border"
                   />
                 ) : tute.fileType === 'image' && tute.fileUrl ? (
                   <img
-                    src={`${API_BASE_URL}${tute.fileUrl}`}
+                    src={getFileUrl(tute.fileUrl, 'image')}
                     alt={tute.title}
                     className="w-full h-48 object-cover border-b theme-border"
                   />
