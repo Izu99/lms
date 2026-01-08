@@ -14,6 +14,12 @@ interface PayHereButtonProps {
     onSuccess?: () => void;
 }
 
+interface PayHereResponse {
+    success: boolean;
+    payhereUrl: string;
+    payload: any;
+}
+
 export function PayHereButton({ itemId, itemModel, amount, title, className, onSuccess }: PayHereButtonProps) {
     const [loading, setLoading] = useState(false);
     const [payhereData, setPayhereData] = useState<{ url: string, payload: any } | null>(null);
@@ -22,7 +28,7 @@ export function PayHereButton({ itemId, itemModel, amount, title, className, onS
         try {
             setLoading(true);
             // Initiate payment session with backend
-            const response = await api.post('/payments/initiate', {
+            const response = await api.post<PayHereResponse>('/payments/initiate', {
                 itemId,
                 itemModel,
                 amount,

@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useState, Suspense } from 'react';
+type PaymentStatusResponse = {
+    status: 'PAID' | 'FAILED' | string;
+    currency?: string;
+    amount?: number;
+    // add other fields as needed
+};
 import { useSearchParams, useRouter } from 'next/navigation';
 import { api } from "@/lib/api-client";
 import { CheckCircle, XCircle, Loader2, ArrowRight } from "lucide-react";
@@ -30,7 +36,7 @@ function PaymentStatusContent() {
         const checkStatus = async () => {
             try {
                 const response = await api.get(`/payments/status?orderId=${orderId}`);
-                const data = response.data;
+                const data = response.data as PaymentStatusResponse;
                 setDetails(data);
 
                 if (data.status === 'PAID') {

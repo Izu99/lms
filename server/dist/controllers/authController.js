@@ -143,7 +143,7 @@ const register = async (req, res) => {
                     const newFrontPath = path.join(userDir, `front${frontExtension}`);
                     if (fs.existsSync(oldFrontPath)) {
                         fs.renameSync(oldFrontPath, newFrontPath);
-                        idCardFrontImage = `/uploads/id-cards/${user._id}/front${frontExtension}`;
+                        idCardFrontImage = `id-cards/${user._id}/front${frontExtension}`;
                         console.log(`✅ ID card front image saved: ${user._id}/front${frontExtension}`);
                     }
                 }
@@ -154,7 +154,7 @@ const register = async (req, res) => {
                     const newBackPath = path.join(userDir, `back${backExtension}`);
                     if (fs.existsSync(oldBackPath)) {
                         fs.renameSync(oldBackPath, newBackPath);
-                        idCardBackImage = `/uploads/id-cards/${user._id}/back${backExtension}`;
+                        idCardBackImage = `id-cards/${user._id}/back${backExtension}`;
                         console.log(`✅ ID card back image saved: ${user._id}/back${backExtension}`);
                     }
                 }
@@ -428,7 +428,7 @@ const updateUserProfile = async (req, res) => {
                     }
                     if (fs.existsSync(oldFrontPath)) {
                         fs.renameSync(oldFrontPath, newFrontPath);
-                        idCardFrontImage = `/uploads/id-cards/${user._id}/front${frontExtension}`;
+                        idCardFrontImage = `id-cards/${user._id}/front${frontExtension}`;
                         user.idCardFrontImage = idCardFrontImage;
                         console.log(`✅ ID card front image updated: ${user._id}/front${frontExtension}`);
                     }
@@ -448,7 +448,7 @@ const updateUserProfile = async (req, res) => {
                     }
                     if (fs.existsSync(oldBackPath)) {
                         fs.renameSync(oldBackPath, newBackPath);
-                        idCardBackImage = `/uploads/id-cards/${user._id}/back${backExtension}`;
+                        idCardBackImage = `id-cards/${user._id}/back${backExtension}`;
                         user.idCardBackImage = idCardBackImage;
                         console.log(`✅ ID card back image updated: ${user._id}/back${backExtension}`);
                     }

@@ -41,8 +41,8 @@ const createTute = async (req, res) => {
         else {
             return res.status(400).json({ message: 'Invalid main file type. Only PDF, PowerPoint, and image files are allowed.' });
         }
-        const fileUrl = `/${mainFile.path.replace(/\\/g, '/')}`;
-        let thumbnailUrl = thumbnailFile ? `/${thumbnailFile.path.replace(/\\/g, '/')}` : undefined;
+        const fileUrl = mainFile.path.replace(/\\/g, '/').split('uploads/').pop();
+        let thumbnailUrl = thumbnailFile ? thumbnailFile.path.replace(/\\/g, '/').split('uploads/').pop() : undefined;
         // If the main file is an image and no specific thumbnail is set, use the main file for preview
         if (fileType === 'image' && !thumbnailUrl) {
             thumbnailUrl = fileUrl;
@@ -174,7 +174,7 @@ const updateTute = async (req, res) => {
             else {
                 return res.status(400).json({ message: 'Invalid main file type' });
             }
-            tute.fileUrl = `${baseUrl}/${mainFile.path.replace(/\\/g, '/')}`;
+            tute.fileUrl = mainFile.path.replace(/\\/g, '/').split('uploads/').pop();
             tute.fileType = fileType;
         }
         // If new thumbnail image is uploaded, delete old and update
@@ -190,7 +190,7 @@ const updateTute = async (req, res) => {
                 }
             }
             // Update with new thumbnail image
-            tute.thumbnailUrl = `${baseUrl}/${thumbnailFile.path.replace(/\\/g, '/')}`;
+            tute.thumbnailUrl = thumbnailFile.path.replace(/\\/g, '/').split('uploads/').pop();
         }
         // If the main file is an image and no specific thumbnail is set, use the main file for preview
         if (tute.fileType === 'image' && !thumbnailFile) {
