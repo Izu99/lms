@@ -232,7 +232,8 @@ export const getPaymentStatus = async (req: Request, res: Response) => {
             status: payment.status,
             amount: payment.amount,
             currency: payment.currency,
-            itemModel: payment.itemModel
+            itemModel: payment.itemModel,
+            itemId: payment.itemId
         });
     } catch (error) {
         console.error('Get payment status error:', error);

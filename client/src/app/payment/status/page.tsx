@@ -52,6 +52,35 @@ function PaymentStatusContent() {
         checkStatus();
     }, [orderId, canceled]);
 
+    // Logic to determine the redirect path
+    const getRedirectPath = () => {
+        if (!details) return "/student/dashboard";
+
+        const { itemModel, itemId } = details;
+        switch (itemModel) {
+            case 'Video':
+                return `/student/videos/${itemId}`;
+            case 'Paper':
+                return `/student/papers/${itemId}`;
+            case 'Tute':
+                return `/student/tutes/${itemId}`;
+            case 'CoursePackage':
+                return `/student/course-packages/${itemId}`;
+            default:
+                return "/student/dashboard";
+        }
+    };
+
+    // Auto-redirect on success after a short delay
+    useEffect(() => {
+        if (status === 'success') {
+            const timer = setTimeout(() => {
+                router.push(getRedirectPath());
+            }, 3000); // 3 second delay to show success message
+            return () => clearTimeout(timer);
+        }
+    }, [status, details]);
+
     if (status === 'loading') {
         const [showBypass, setShowBypass] = useState(false);
         const [verifyingManually, setVerifyingManually] = useState(false);
@@ -154,7 +183,7 @@ function PaymentStatusContent() {
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
                 <p className="text-gray-600 mb-6">
-                    Thank you for your purchase. You now have full access to this content.
+                    Thank you for your purchase. Redirecting you to your content in a few seconds...
                 </p>
 
                 {details && (
@@ -170,9 +199,9 @@ function PaymentStatusContent() {
                     </div>
                 )}
 
-                <Link href="/">
+                <Link href={getRedirectPath()}>
                     <Button className="w-full bg-green-600 hover:bg-green-700 h-12 text-lg">
-                        Start Learning <ArrowRight className="ml-2 w-4 h-4" />
+                        Start Learning Now <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                 </Link>
             </div>
