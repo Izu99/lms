@@ -24,7 +24,11 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Image as ImageIcon,
+  Upload,
+  FileText,
 } from "lucide-react";
+import { getFileUrl } from "@/lib/fileUtils";
 
 interface UserProfile {
   _id: string;
@@ -41,6 +45,8 @@ interface UserProfile {
   institute?: { _id: string; name: string; location?: string };
   year?: { _id: string; name: string; year?: number };
   alOrOl?: "AL" | "OL";
+  idCardFrontImage?: string;
+  idCardBackImage?: string;
 }
 
 interface InstituteData {
@@ -74,6 +80,17 @@ export default function StudentProfilePage() {
     newPassword: "",
     confirmNewPassword: "",
   });
+  const [newDocs, setNewDocs] = useState<{
+    idCardFront: File | null;
+    idCardBack: File | null;
+  }>({ idCardFront: null, idCardBack: null });
+  const [docPreviews, setDocPreviews] = useState<{
+    idCardFront: string | null;
+    idCardBack: string | null;
+  }>({ idCardFront: null, idCardBack: null });
+
+  const fileInputFrontRef = useRef<HTMLInputElement>(null);
+  const fileInputBackRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading && !authUser) {
@@ -124,6 +141,19 @@ export default function StudentProfilePage() {
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPasswordFields((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, field: 'idCardFront' | 'idCardBack') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewDocs(prev => ({ ...prev, [field]: file }));
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setDocPreviews(prev => ({ ...prev, [field]: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmitPersonal = async (e: React.FormEvent) => {
@@ -259,6 +289,43 @@ export default function StudentProfilePage() {
     }
   };
 
+  const handleSubmitDocuments = async () => {
+    if (!profileData) return;
+    setIsSaving(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append('uploadType', 'id-card');
+
+      if (newDocs.idCardFront) {
+        formData.append('idCardFront', newDocs.idCardFront);
+      }
+      if (newDocs.idCardBack) {
+        formData.append('idCardBack', newDocs.idCardBack);
+      }
+
+      const response = await api.put<{ user: UserProfile }>(`/auth/users/${profileData._id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setProfileData(response.data.user);
+      setNewDocs({ idCardFront: null, idCardBack: null });
+      setDocPreviews({ idCardFront: null, idCardBack: null });
+      toast.success("Identity documents updated successfully!");
+    } catch (err) {
+      console.error("Error updating identity documents:", err);
+      if (axios.isAxiosError(err)) {
+        toast.error(err.response?.data?.message || "Failed to update identity documents.");
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (authLoading || isLoadingProfile) {
     // Only show loading component during initial fetch when not covered by global LoadingScreen
     // The global loading screen covers the very initial load.
@@ -306,39 +373,47 @@ export default function StudentProfilePage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="card rounded-lg mb-6">
-          <div className="flex border-b border-gray-700 overflow-x-auto">
+        <div className="card rounded-lg mb-6 overflow-hidden">
+          <div className="flex border-b border-gray-700 overflow-x-auto no-scrollbar scroll-smooth">
             <button
               onClick={() => setActiveTab("personal")}
-              className={`tab-button px-6 py-4 text-sm font-medium text-gray-400 whitespace-nowrap ${activeTab === "personal" ? "active" : ""
+              className={`tab-button flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-all ${activeTab === "personal" ? "active text-blue-500" : "text-gray-400 hover:text-gray-200"
                 }`}
-              data-tab="personal"
             >
-              Personal Details
+              <UserIcon size={18} />
+              <span>Personal Details</span>
             </button>
             <button
               onClick={() => setActiveTab("academic")}
-              className={`tab-button px-6 py-4 text-sm font-medium text-gray-400 whitespace-nowrap ${activeTab === "academic" ? "active" : ""
+              className={`tab-button flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-all ${activeTab === "academic" ? "active text-blue-500" : "text-gray-400 hover:text-gray-200"
                 }`}
-              data-tab="academic"
             >
-              Academic Information
+              <GraduationCap size={18} />
+              <span>Academic Information</span>
             </button>
             <button
               onClick={() => setActiveTab("contact")}
-              className={`tab-button px-6 py-4 text-sm font-medium text-gray-400 whitespace-nowrap ${activeTab === "contact" ? "active" : ""
+              className={`tab-button flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-all ${activeTab === "contact" ? "active text-blue-500" : "text-gray-400 hover:text-gray-200"
                 }`}
-              data-tab="contact"
             >
-              Contact & Social
+              <MessageCircle size={18} />
+              <span>Contact & Social</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("documents")}
+              className={`tab-button flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-all ${activeTab === "documents" ? "active text-blue-500" : "text-gray-400 hover:text-gray-200"
+                }`}
+            >
+              <FileText size={18} />
+              <span>Identity Documents</span>
             </button>
             <button
               onClick={() => setActiveTab("security")}
-              className={`tab-button px-6 py-4 text-sm font-medium text-gray-400 whitespace-nowrap ${activeTab === "security" ? "active" : ""
+              className={`tab-button flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-all ${activeTab === "security" ? "active text-blue-500" : "text-gray-400 hover:text-gray-200"
                 }`}
-              data-tab="security"
             >
-              Security
+              <Lock size={18} />
+              <span>Security</span>
             </button>
           </div>
         </div>
@@ -491,6 +566,104 @@ export default function StudentProfilePage() {
             </form>
           </div>
 
+          {/* Identity Documents Tab */}
+          <div id="documents" className={`tab-content ${activeTab === "documents" ? "active" : ""}`}>
+            <h2 className="text-xl font-semibold theme-text-primary mb-2">Identity Documents</h2>
+            <p className="theme-text-secondary mb-8 text-sm">Update your ID card images for verification purposes</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Front ID Card */}
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-300">ID Card (Front)</label>
+                <div
+                  className="relative group rounded-xl overflow-hidden border-2 border-dashed border-gray-700 bg-gray-800/30 transition-all hover:border-blue-500/50"
+                  style={{ aspectRatio: '16/10' }}
+                >
+                  {docPreviews.idCardFront || profileData.idCardFrontImage ? (
+                    <img
+                      src={docPreviews.idCardFront || getFileUrl(profileData.idCardFrontImage, 'image')}
+                      alt="ID Front"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-500">
+                      <ImageIcon size={48} className="mb-2 opacity-20" />
+                      <p className="text-xs">No image uploaded</p>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => fileInputFrontRef.current?.click()}
+                    >
+                      <Upload size={16} className="mr-2" />
+                      {profileData.idCardFrontImage ? "Replace" : "Upload"}
+                    </Button>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  className="hidden"
+                  ref={fileInputFrontRef}
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, 'idCardFront')}
+                />
+              </div>
+
+              {/* Back ID Card */}
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-gray-300">ID Card (Back)</label>
+                <div
+                  className="relative group rounded-xl overflow-hidden border-2 border-dashed border-gray-700 bg-gray-800/30 transition-all hover:border-blue-500/50"
+                  style={{ aspectRatio: '16/10' }}
+                >
+                  {docPreviews.idCardBack || profileData.idCardBackImage ? (
+                    <img
+                      src={docPreviews.idCardBack || getFileUrl(profileData.idCardBackImage, 'image')}
+                      alt="ID Back"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-500">
+                      <ImageIcon size={48} className="mb-2 opacity-20" />
+                      <p className="text-xs">No image uploaded</p>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => fileInputBackRef.current?.click()}
+                    >
+                      <Upload size={16} className="mr-2" />
+                      {profileData.idCardBackImage ? "Replace" : "Upload"}
+                    </Button>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  className="hidden"
+                  ref={fileInputBackRef}
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e, 'idCardBack')}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-8">
+              <Button
+                onClick={handleSubmitDocuments}
+                className="px-6 py-2.5 rounded-lg font-medium"
+                disabled={isSaving || (!newDocs.idCardFront && !newDocs.idCardBack)}
+              >
+                {isSaving ? "Saving..." : "Update Identity Documents"}
+              </Button>
+            </div>
+          </div>
+
           {/* Security Tab */}
           <div id="security" className={`tab-content ${activeTab === "security" ? "active" : ""}`}>
             <h2 className="text-xl font-semibold theme-text-primary mb-6">Security Settings</h2>
@@ -550,23 +723,33 @@ export default function StudentProfilePage() {
           min-height: 100vh;
         }
 
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+
         .tab-button {
           position: relative;
-          transition: all 0.3s ease;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .tab-button.active {
           color: #3b82f6;
+          background: rgba(59, 130, 246, 0.05);
         }
 
         .tab-button.active::after {
           content: '';
           position: absolute;
-          bottom: -2px;
+          bottom: 0;
           left: 0;
           right: 0;
           height: 2px;
           background: #3b82f6;
+          box-shadow: 0 -2px 10px rgba(59, 130, 246, 0.5);
         }
 
         .input-field {

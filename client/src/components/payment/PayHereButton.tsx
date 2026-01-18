@@ -22,7 +22,7 @@ export function PayHereButton({ itemId, itemModel, amount, title, className, onS
         try {
             setLoading(true);
             // Initiate payment session with backend
-            const response = await api.post('/payments/initiate', {
+            const response = await api.post<any>('/payments/initiate', {
                 itemId,
                 itemModel,
                 amount,

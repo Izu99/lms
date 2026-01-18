@@ -379,6 +379,7 @@ export default function RegisterPage() {
 
     const formData = new FormData();
     formData.append('username', data.username);
+    formData.append('uploadType', 'id-card');
     formData.append('password', data.password);
     formData.append('firstName', data.firstName);
     formData.append('lastName', data.lastName);
@@ -1055,9 +1056,12 @@ export default function RegisterPage() {
                     {/* Only show ID card upload for AL Physical students */}
                     {data.academicLevel === 'AL' && data.studentType === 'Physical' && (
                       <>
-                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-                          <p className="text-sm text-blue-800">
-                            <strong>Note:</strong> ID card upload is required for AL Physical students only.
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+                          <p className="text-sm text-amber-800">
+                            <strong>Note:</strong> Verification is required for AL Physical students.
+                          </p>
+                          <p className="text-xs text-amber-700 mt-1">
+                            If you don't have a Government ID, please upload your <strong>Class ID card</strong> or a clear <strong>Face Photo</strong> in both upload boxes below.
                           </p>
                         </div>
 

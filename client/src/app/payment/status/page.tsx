@@ -29,7 +29,7 @@ function PaymentStatusContent() {
 
         const checkStatus = async () => {
             try {
-                const response = await api.get(`/payments/status?orderId=${orderId}`);
+                const response = await api.get<any>(`/payments/status?orderId=${orderId}`);
                 const data = response.data;
                 setDetails(data);
 
@@ -53,11 +53,58 @@ function PaymentStatusContent() {
     }, [orderId, canceled]);
 
     if (status === 'loading') {
+        const [showBypass, setShowBypass] = useState(false);
+        const [verifyingManually, setVerifyingManually] = useState(false);
+
+        useEffect(() => {
+            const timer = setTimeout(() => setShowBypass(true), 5000); // Show bypass after 5 seconds
+            return () => clearTimeout(timer);
+        }, []);
+
+        const handleManualVerify = async () => {
+            if (!orderId) return;
+            setVerifyingManually(true);
+            try {
+                await api.post<any>('/payments/verify-sandbox', { orderId });
+                // Immediately check status again
+                const response = await api.get<any>(`/payments/status?orderId=${orderId}`);
+                if (response.data.status === 'PAID') {
+                    setDetails(response.data);
+                    setStatus('success');
+                }
+            } catch (error) {
+                console.error('Manual verification failed:', error);
+            } finally {
+                setVerifyingManually(false);
+            }
+        };
+
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-4">
                 <Loader2 className="w-16 h-16 text-blue-600 animate-spin mb-4" />
                 <h1 className="text-2xl font-bold text-gray-800">Verifying Payment...</h1>
-                <p className="text-gray-600 mt-2">Please wait while we confirm your transaction.</p>
+                <p className="text-gray-600 mt-2 text-center max-w-md">
+                    Please wait while we confirm your transaction with PayHere.
+                </p>
+
+                {showBypass && (
+                    <div className="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-100 text-center max-w-sm">
+                        <p className="text-sm text-blue-800 mb-4">
+                            Verification taking too long? If you already completed the payment in sandbox, you can manually verify it.
+                        </p>
+                        <Button
+                            onClick={handleManualVerify}
+                            disabled={verifyingManually}
+                            className="bg-blue-600 hover:bg-blue-700"
+                        >
+                            {verifyingManually ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying...</>
+                            ) : (
+                                "Manually Verify (Sandbox Only)"
+                            )}
+                        </Button>
+                    </div>
+                )}
             </div>
         );
     }

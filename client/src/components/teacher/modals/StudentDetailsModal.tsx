@@ -8,6 +8,7 @@ import { API_URL, API_BASE_URL } from "@/lib/constants";
 import { getFileUrl } from "@/lib/fileUtils";
 import Cookies from "js-cookie";
 import { ImageViewerModal } from "./ImageViewerModal";
+import { toast } from "sonner";
 
 interface StudentData {
   _id: string;
@@ -33,14 +34,38 @@ interface StudentDetailsModalProps {
   studentId: string | null;
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export function StudentDetailsModal({ studentId, isOpen, onClose }: StudentDetailsModalProps) {
+export function StudentDetailsModal({ studentId, isOpen, onClose, onSuccess }: StudentDetailsModalProps) {
   const [student, setStudent] = useState<StudentData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [currentImageToView, setCurrentImageToView] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!student || student.status === newStatus) return;
+
+    try {
+      setUpdatingStatus(true);
+      const token = Cookies.get("token");
+      await axios.put(
+        `${API_URL}/auth/students/${student._id}/status`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setStudent({ ...student, status: newStatus });
+      if (onSuccess) onSuccess();
+      toast.success("Student status updated successfully");
+    } catch (err) {
+      console.error("Error updating student status:", err);
+      toast.error("Failed to update status.");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen && studentId) {
@@ -153,7 +178,41 @@ export function StudentDetailsModal({ studentId, isOpen, onClose }: StudentDetai
                     <DetailItem icon={<Calendar size={16} />} label="Academic Year" value={student.year?.name} />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-border pt-6 bg-muted/20 p-4 rounded-lg">
-                    <DetailItem icon={<ShieldCheck size={16} />} label="Status" value={student.status} />
+                    <div className="flex items-start gap-4">
+                      <div className="text-muted-foreground mt-1"><ShieldCheck size={16} /></div>
+                      <div className="w-full">
+                        <p className="text-sm text-muted-foreground">Status</p>
+                        <div className="relative mt-1">
+                          <select
+                            value={student.status}
+                            onChange={(e) => handleStatusChange(e.target.value)}
+                            disabled={updatingStatus}
+                            className={`appearance-none block w-full pl-3 pr-10 py-1.5 text-sm font-bold border-none focus:ring-2 focus:ring-primary rounded-full cursor-pointer disabled:opacity-50 transition-colors ${
+                              student.status === 'active' ? 'bg-green-500/10 text-green-500' : 
+                              student.status === 'paid' ? 'bg-blue-500/10 text-blue-500' : 
+                              student.status === 'pending' ? 'bg-yellow-500/10 text-yellow-500' : 
+                              student.status === 'unpaid' ? 'bg-orange-500/10 text-orange-500' : 
+                              'bg-red-500/10 text-red-500'}`}
+                          >
+                            <option value="active" className="bg-background text-foreground">Active</option>
+                            <option value="pending" className="bg-background text-foreground">Pending</option>
+                            <option value="inactive" className="bg-background text-foreground">Inactive</option>
+                            <option value="paid" className="bg-background text-foreground">Paid</option>
+                            <option value="unpaid" className="bg-background text-foreground">Unpaid</option>
+                          </select>
+                          <div className={`absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${
+                            student.status === 'pending' ? 'text-yellow-600' : 
+                            student.status === 'active' ? 'text-green-600' : 
+                            student.status === 'paid' ? 'text-blue-600' : 
+                            student.status === 'unpaid' ? 'text-orange-600' : 
+                            'text-red-600'}`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     <DetailItem icon={<User size={16} />} label="Student Type" value={student.studentType} />
                     <DetailItem icon={<Calendar size={16} />} label="Joined On" value={new Date(student.createdAt).toLocaleDateString()} />
                   </div>

@@ -34,6 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { PayHereButton } from "@/components/payment/PayHereButton";
 
 interface Option {
   _id: string;

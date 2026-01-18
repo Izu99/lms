@@ -30,6 +30,8 @@ interface CommonFilterProps {
   onInstituteChange?: (instituteId: string) => void;
   onYearChange?: (yearId: string) => void;
   onAcademicLevelChange?: (academicLevelId: string) => void;
+  selectedStatus?: string;
+  onStatusChange?: (status: string) => void;
   isLoadingInstitutes?: boolean;
   isLoadingYears?: boolean;
   isLoadingAcademicLevels?: boolean;
@@ -45,6 +47,8 @@ const CommonFilter: React.FC<CommonFilterProps> = ({
   onInstituteChange,
   onYearChange,
   onAcademicLevelChange,
+  selectedStatus,
+  onStatusChange,
   isLoadingInstitutes,
   isLoadingYears,
   isLoadingAcademicLevels,
@@ -52,12 +56,14 @@ const CommonFilter: React.FC<CommonFilterProps> = ({
   const hasActiveFilters =
     (selectedInstitute && selectedInstitute !== "all") ||
     (selectedYear && selectedYear !== "all") ||
-    (selectedAcademicLevel && selectedAcademicLevel !== "all");
+    (selectedAcademicLevel && selectedAcademicLevel !== "all") ||
+    (selectedStatus && selectedStatus !== "all");
 
   const handleClearFilters = () => {
     if (onInstituteChange) onInstituteChange("all");
     if (onYearChange) onYearChange("all");
     if (onAcademicLevelChange) onAcademicLevelChange("all");
+    if (onStatusChange) onStatusChange("all");
   };
 
   return (
@@ -130,6 +136,30 @@ const CommonFilter: React.FC<CommonFilterProps> = ({
                   {level.name}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {onStatusChange && (
+        <div className="flex-1 w-full">
+          <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Status
+          </label>
+          <Select
+            value={selectedStatus || "all"}
+            onValueChange={onStatusChange}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="unpaid">Unpaid</SelectItem>
             </SelectContent>
           </Select>
         </div>

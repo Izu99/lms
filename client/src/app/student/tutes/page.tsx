@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import CommonFilter from "@/components/common/CommonFilter";
 import { StudentGridSkeleton } from "@/components/student/skeletons/StudentGridSkeleton";
 import { useStudentFilters } from "@/modules/student/hooks/useStudentFilters";
+import { PayHereButton } from "@/components/payment/PayHereButton";
 
 interface Tute {
   _id: string;
@@ -29,6 +30,7 @@ interface Tute {
     firstName: string;
     lastName: string;
   };
+  hasAccess: boolean;
   createdAt: string;
 }
 
@@ -205,6 +207,8 @@ export default function StudentTutesPage() {
                         </span>
                       )}
                     </div>
+                  </div>
+                  {tute.hasAccess ? (
                     <Button
                       onClick={() => handleDownload(tute.fileUrl, tute.title)}
                       size="sm"
@@ -213,7 +217,15 @@ export default function StudentTutesPage() {
                       <Download size={16} className="mr-2" />
                       Download
                     </Button>
-                  </div>
+                  ) : (
+                    <PayHereButton
+                      itemId={tute._id}
+                      itemModel="Tute"
+                      amount={tute.price}
+                      title={tute.title}
+                      className="h-9 px-3 text-xs"
+                    />
+                  )}
                 </div>
               </motion.div>
             ))}

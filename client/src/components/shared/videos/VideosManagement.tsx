@@ -66,18 +66,23 @@ const VideoCard = ({
             onClick={() => onView(video._id)}
             className="relative w-full h-48 bg-gray-900 cursor-pointer group overflow-hidden"
         >
-            {video.thumbnailUrl ? (
+            {video.thumbnailUrl && getFileUrl(video.thumbnailUrl, 'video-thumbnail') ? (
                 <img
                     src={getFileUrl(video.thumbnailUrl, 'video-thumbnail')}
                     alt={video.title}
                     className="w-full h-full object-cover"
                 />
-            ) : (
+            ) : video.videoUrl && getFileUrl(video.videoUrl, 'video') ? (
                 <video
                     src={getFileUrl(video.videoUrl, 'video')}
                     className="w-full h-full object-cover"
                     preload="metadata"
                 />
+            ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-gray-700 bg-gray-800">
+                    <Video size={48} className="mb-2 opacity-20" />
+                    <span className="text-xs">No preview available</span>
+                </div>
             )}
             <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg opacity-0 group-hover:opacity-100">

@@ -15,6 +15,7 @@ import { Video, FileText, School, GraduationCap, Play } from "lucide-react";
 import { LoadingComponent } from "@/components/common/LoadingComponent";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { API_BASE_URL } from "@/lib/constants";
+import { PayHereButton } from "@/components/payment/PayHereButton";
 
 interface CoursePackageDetailsPageProps {
   params: Promise<{
@@ -59,15 +60,6 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
       fetchCoursePackage();
     }
   }, [id]);
-
-  const handlePurchase = async () => {
-    if (!coursePackage) return;
-    // Implement purchase logic here
-    toast.info(`Attempting to purchase "${coursePackage.title}" for LKR ${coursePackage.price?.toFixed(2) ?? '0.00'}`);
-    // Example: await CoursePackageService.purchaseCoursePackage(coursePackage._id);
-    // On success: toast.success("Purchase successful!");
-    // On failure: toast.error("Purchase failed.");
-  };
 
   const handleVideoClick = (videoUrl: string, title: string) => {
     setCurrentVideoUrl(`${API_BASE_URL}/api/uploads/${videoUrl}`);
@@ -126,9 +118,13 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
             )}
           </div>
 
-          <Button className="w-full sm:w-auto bg-brand-primary hover:bg-brand-primary-dark text-white text-lg py-3 px-6" onClick={handlePurchase}>
-            Purchase Package
-          </Button>
+          <PayHereButton
+            itemId={coursePackage._id}
+            itemModel="CoursePackage"
+            amount={coursePackage.price || 0}
+            title={coursePackage.title}
+            className="w-full sm:w-auto text-lg py-3 px-6 h-auto"
+          />
         </div>
 
         {/* Videos Section */}
@@ -206,9 +202,13 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
 
         {/* Purchase Button at the bottom */}
         <div className="theme-card p-6 flex justify-center">
-          <Button className="w-full sm:w-auto bg-brand-primary hover:bg-brand-primary-dark text-white text-lg py-3 px-6" onClick={handlePurchase}>
-            Purchase Package
-          </Button>
+          <PayHereButton
+            itemId={coursePackage._id}
+            itemModel="CoursePackage"
+            amount={coursePackage.price || 0}
+            title={coursePackage.title}
+            className="w-full sm:w-auto text-lg py-3 px-6 h-auto"
+          />
         </div>
       </div>
 
