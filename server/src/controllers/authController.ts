@@ -11,7 +11,7 @@ const deleteUploadedFile = (filename: string) => {
   try {
     const fs = require('fs');
     const path = require('path');
-    const filePath = path.join(__dirname, '..', '..', 'uploads', 'id-cards', 'temp', filename);
+    const filePath = path.join(__dirname, '..', '..', 'uploads', 'id-cards', filename);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
       console.log(`🗑️ Deleted temp file: ${filename}`);
@@ -128,6 +128,7 @@ export const register = async (req: Request, res: Response) => {
       academicLevel,
       studentType,
       role: 'student',
+      status: (academicLevel === 'AL' && studentType === 'Physical') ? 'pending' : 'active',
     });
 
     await user.save();
@@ -152,12 +153,11 @@ export const register = async (req: Request, res: Response) => {
       try {
         // Move and rename front image
         if (frontFile) {
-          const oldFrontPath = path.join(__dirname, '..', '..', 'uploads', 'id-cards', 'temp', frontFile.filename);
           const frontExtension = path.extname(frontFile.originalname);
           const newFrontPath = path.join(userDir, `front${frontExtension}`);
 
-          if (fs.existsSync(oldFrontPath)) {
-            fs.renameSync(oldFrontPath, newFrontPath);
+          if (fs.existsSync(frontFile.path)) {
+            fs.renameSync(frontFile.path, newFrontPath);
             idCardFrontImage = `id-cards/${user._id}/front${frontExtension}`;
             console.log(`✅ ID card front image saved: ${user._id}/front${frontExtension}`);
           }
@@ -165,12 +165,11 @@ export const register = async (req: Request, res: Response) => {
 
         // Move and rename back image
         if (backFile) {
-          const oldBackPath = path.join(__dirname, '..', '..', 'uploads', 'id-cards', 'temp', backFile.filename);
           const backExtension = path.extname(backFile.originalname);
           const newBackPath = path.join(userDir, `back${backExtension}`);
 
-          if (fs.existsSync(oldBackPath)) {
-            fs.renameSync(oldBackPath, newBackPath);
+          if (fs.existsSync(backFile.path)) {
+            fs.renameSync(backFile.path, newBackPath);
             idCardBackImage = `id-cards/${user._id}/back${backExtension}`;
             console.log(`✅ ID card back image saved: ${user._id}/back${backExtension}`);
           }
@@ -456,21 +455,20 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       try {
         // Move and rename front image
         if (frontFile) {
-          const oldFrontPath = path.join(__dirname, '..', '..', 'uploads', 'id-cards', 'temp', frontFile.filename);
           const frontExtension = path.extname(frontFile.originalname);
           const newFrontPath = path.join(userDir, `front${frontExtension}`);
 
           // Delete old front image if it exists
           if (user.idCardFrontImage) {
-            const oldImageFullPath = path.join(__dirname, '..', '..', user.idCardFrontImage);
+            const oldImageFullPath = path.join(__dirname, '..', '..', 'uploads', user.idCardFrontImage);
             if (fs.existsSync(oldImageFullPath)) {
               fs.unlinkSync(oldImageFullPath);
               console.log(`🗑️ Deleted old ID card front image for user ${user._id}`);
             }
           }
 
-          if (fs.existsSync(oldFrontPath)) {
-            fs.renameSync(oldFrontPath, newFrontPath);
+          if (fs.existsSync(frontFile.path)) {
+            fs.renameSync(frontFile.path, newFrontPath);
             idCardFrontImage = `id-cards/${user._id}/front${frontExtension}`;
             user.idCardFrontImage = idCardFrontImage;
             console.log(`✅ ID card front image updated: ${user._id}/front${frontExtension}`);
@@ -479,21 +477,20 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
         // Move and rename back image
         if (backFile) {
-          const oldBackPath = path.join(__dirname, '..', '..', 'uploads', 'id-cards', 'temp', backFile.filename);
           const backExtension = path.extname(backFile.originalname);
           const newBackPath = path.join(userDir, `back${backExtension}`);
 
           // Delete old back image if it exists
           if (user.idCardBackImage) {
-            const oldImageFullPath = path.join(__dirname, '..', '..', user.idCardBackImage);
+            const oldImageFullPath = path.join(__dirname, '..', '..', 'uploads', user.idCardBackImage);
             if (fs.existsSync(oldImageFullPath)) {
               fs.unlinkSync(oldImageFullPath);
               console.log(`🗑️ Deleted old ID card back image for user ${user._id}`);
             }
           }
 
-          if (fs.existsSync(oldBackPath)) {
-            fs.renameSync(oldBackPath, newBackPath);
+          if (fs.existsSync(backFile.path)) {
+            fs.renameSync(backFile.path, newBackPath);
             idCardBackImage = `id-cards/${user._id}/back${backExtension}`;
             user.idCardBackImage = idCardBackImage;
             console.log(`✅ ID card back image updated: ${user._id}/back${backExtension}`);
@@ -564,7 +561,9 @@ export const getAllStudents = async (req: Request, res: Response) => {
     const students = await User.find(
       { role: 'student' },
       '-password' // Exclude password field
-    ).sort({ createdAt: -1 }); // Sort by newest first
+    ).populate('institute', 'name location')
+      .populate('year', 'name year')
+      .sort({ createdAt: -1 }); // Sort by newest first
 
     res.json({
       students,
@@ -605,14 +604,20 @@ export const updateStudentStatus = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'User is not a student' });
     }
 
-    // Update status and notes
-    if (status) student.status = status;
-    if (notes !== undefined) student.notes = notes;
+    // Update status and notes using findByIdAndUpdate for efficiency and to avoid validation issues with unrelated fields
+    const updateData: any = {};
+    if (status) updateData.status = status;
+    if (notes !== undefined) updateData.notes = notes;
 
-    await student.save();
+    const updatedStudent = await User.findByIdAndUpdate(
+      studentId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select('-password');
 
-    // Return updated student without password
-    const updatedStudent = await User.findById(studentId).select('-password');
+    if (!updatedStudent) {
+      return res.status(404).json({ message: 'Student not found after update' });
+    }
 
     res.json({
       message: 'Student status updated successfully',
@@ -621,7 +626,10 @@ export const updateStudentStatus = async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error('Update student status error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      message: 'Server error', 
+      error: error instanceof Error ? error.message : String(error)
+    });
   }
 };
 

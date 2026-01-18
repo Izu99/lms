@@ -88,21 +88,38 @@ const createCoursePackage = async (req, res) => {
         availability, institute, year, academicLevel, // Add academicLevel
          } = req.body;
         const backgroundImage = req.file ? req.file.path : undefined;
-        if (!title || price === undefined || !Array.isArray(videos) || !Array.isArray(papers) || !Array.isArray(tutes) || !availability) {
-            return res.status(400).json({ message: 'Title, price, videos (array), papers (array), tutes (array), and availability are required' });
+        // Basic validation: title, price, availability required
+        if (!title || price === undefined || !availability) {
+            return res.status(400).json({ message: 'Title, price, and availability are required' });
         }
-        // Validate video, paper, and tute IDs
-        const existingVideos = await Video_1.Video.find({ _id: { $in: videos } });
-        if (existingVideos.length !== videos.length) {
-            return res.status(400).json({ message: 'One or more video IDs are invalid' });
+        // Ensure arrays are provided (can be empty)
+        const videosList = Array.isArray(videos) ? videos : [];
+        const papersList = Array.isArray(papers) ? papers : [];
+        const tutesList = Array.isArray(tutes) ? tutes : [];
+        // At least ONE of videos, papers, or tutes must be provided
+        if (videosList.length === 0 && papersList.length === 0 && tutesList.length === 0) {
+            return res.status(400).json({ message: 'Please select at least one item: video, paper, or tute (not all required)' });
         }
-        const existingPapers = await Paper_1.Paper.find({ _id: { $in: papers } });
-        if (existingPapers.length !== papers.length) {
-            return res.status(400).json({ message: 'One or more paper IDs are invalid' });
+        // Validate video IDs if provided
+        if (videosList.length > 0) {
+            const existingVideos = await Video_1.Video.find({ _id: { $in: videosList } });
+            if (existingVideos.length !== videosList.length) {
+                return res.status(400).json({ message: 'One or more video IDs are invalid' });
+            }
         }
-        const existingTutes = await Tute_1.Tute.find({ _id: { $in: tutes } });
-        if (existingTutes.length !== tutes.length) {
-            return res.status(400).json({ message: 'One or more tute IDs are invalid' });
+        // Validate paper IDs if provided
+        if (papersList.length > 0) {
+            const existingPapers = await Paper_1.Paper.find({ _id: { $in: papersList } });
+            if (existingPapers.length !== papersList.length) {
+                return res.status(400).json({ message: 'One or more paper IDs are invalid' });
+            }
+        }
+        // Validate tute IDs if provided
+        if (tutesList.length > 0) {
+            const existingTutes = await Tute_1.Tute.find({ _id: { $in: tutesList } });
+            if (existingTutes.length !== tutesList.length) {
+                return res.status(400).json({ message: 'One or more tute IDs are invalid' });
+            }
         }
         const createdBy = req.user.id;
         const newCoursePackage = new CoursePackage_1.CoursePackage({
@@ -110,9 +127,9 @@ const createCoursePackage = async (req, res) => {
             description,
             price,
             backgroundImage,
-            videos,
-            papers,
-            tutes, // Include tutes
+            videos: videosList,
+            papers: papersList,
+            tutes: tutesList, // Include tutes
             availability,
             institute: institute || undefined,
             year: year || undefined,

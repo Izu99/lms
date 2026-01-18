@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Tute } from '../models/Tute';
 import { User } from '../models/User';
+import { Payment } from '../models/Payment';
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -251,22 +252,37 @@ export const getStudentTutes = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    // Filter based on student type
-    const query: any = {};
-    if (student.studentType === 'Physical') {
-      // Physical students can access all tutes except paid ones (unless purchased, but logic here is for list)
-      // Assuming 'paid' tutes shouldn't be in the free list or handled separately
-      query.availability = { $in: ['all', 'physical'] };
-    } else {
-      // Online students can only access 'all' tutes
-      query.availability = 'all';
-    }
-
-    const tutes = await Tute.find(query)
+    // List all tutes (all, physical, and paid)
+    // We want the student to see everything available so they can choose to buy.
+    const tutes = await Tute.find({})
       .populate('teacherId', 'firstName lastName')
       .sort({ createdAt: -1 });
 
-    res.status(200).json(tutes);
+    // Check which ones are purchased/accessible
+    const tutesWithAccess = await Promise.all(tutes.map(async (tute) => {
+      let hasAccess = false;
+
+      if (tute.availability === 'all') {
+        hasAccess = true;
+      } else if (tute.availability === 'physical' && student.studentType === 'Physical') {
+        hasAccess = true;
+      } else if (tute.price !== undefined && tute.price > 0) {
+        // Check for payment
+        const payment = await Payment.findOne({
+          userId: studentId,
+          itemId: tute._id,
+          status: 'PAID'
+        });
+        if (payment) hasAccess = true;
+      }
+
+      return {
+        ...tute.toObject(),
+        hasAccess
+      };
+    }));
+
+    res.status(200).json(tutesWithAccess);
   } catch (error) {
     console.error('Error fetching student tutes:', error);
     res.status(500).json({ message: 'Failed to fetch tutes' });

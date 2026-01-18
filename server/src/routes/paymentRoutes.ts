@@ -1,11 +1,12 @@
 import express from 'express';
-import { initiatePayment, handleNotify, getPaymentStatus } from '../controllers/paymentController';
+import { initiatePayment, handleNotify, getPaymentStatus, verifySandboxPayment } from '../controllers/paymentController';
 import { protect } from '../modules/shared/middleware/auth';
 
 const router = express.Router();
 
 // Protected: User must be logged in to pay
 router.post('/initiate', protect, initiatePayment);
+router.post('/verify-sandbox', protect, verifySandboxPayment);
 
 // Public: PayHere server calls this (Webhook)
 router.post('/notify', handleNotify);

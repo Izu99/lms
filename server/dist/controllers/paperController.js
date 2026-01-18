@@ -68,9 +68,9 @@ const createPaper = async (req, res) => {
             console.log('Main File Path:', mainFile.path);
             console.log('Split Result:', mainFile.path.split('uploads/'));
         }
-        const fileUrl = mainFile ? `/uploads/${mainFile.path.replace(/\\/g, '/').split('uploads/').pop()}` : undefined;
+        const fileUrl = mainFile ? mainFile.path.replace(/\\/g, '/').split('uploads/').pop() : undefined;
         console.log('Generated fileUrl:', fileUrl);
-        const thumbnailUrl = thumbnailFile ? `/uploads/${thumbnailFile.path.replace(/\\/g, '/').split('uploads/').pop()}` : undefined;
+        const thumbnailUrl = thumbnailFile ? thumbnailFile.path.replace(/\\/g, '/').split('uploads/').pop() : undefined;
         if (paperType === 'MCQ') {
             if (!Array.isArray(questions) || questions.length === 0) {
                 return res.status(400).json({ message: 'At least one question is required for an MCQ paper' });
@@ -544,9 +544,9 @@ const updatePaper = async (req, res) => {
         if (mainFile) {
             console.log('Update Main File Path:', mainFile.path);
         }
-        const newFileUrl = mainFile ? `/uploads/${mainFile.path.replace(/\\/g, '/').split('uploads/').pop()}` : undefined;
+        const newFileUrl = mainFile ? mainFile.path.replace(/\\/g, '/').split('uploads/').pop() : undefined;
         console.log('Update Generated newFileUrl:', newFileUrl);
-        const newThumbnailUrl = thumbnailFile ? `/uploads/${thumbnailFile.path.replace(/\\/g, '/').split('uploads/').pop()}` : undefined;
+        const newThumbnailUrl = thumbnailFile ? thumbnailFile.path.replace(/\\/g, '/').split('uploads/').pop() : undefined;
         // Prepare update data
         const updateData = {
             title,

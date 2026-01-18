@@ -14,20 +14,25 @@ import { upload } from '../config/multer'; // Import the centralized multer inst
 
 const router = express.Router();
 
-router.post('/register', upload.fields([ // Use the centralized upload instance
+const setIdCardUpload = (req: any, res: any, next: any) => {
+  req.uploadType = 'id-card';
+  next();
+};
+
+router.post('/register', setIdCardUpload, upload.fields([ // Use the centralized upload instance
   { name: 'idCardFront', maxCount: 1 },
   { name: 'idCardBack', maxCount: 1 }
-]), register); // Client must send 'uploadType: 'id-card' in the form data
+]), register); // uploadType is now set by middleware
 router.post('/login', login);
 router.post('/check-username', checkUsername);
 router.get('/me', protect, getCurrentUser);
 
 // Profile endpoints
 router.get('/users/:id', protect, getUserProfile);
-router.put('/users/:id', protect, upload.fields([ // Use the centralized upload instance
+router.put('/users/:id', protect, setIdCardUpload, upload.fields([ // Use the centralized upload instance
   { name: 'idCardFront', maxCount: 1 },
   { name: 'idCardBack', maxCount: 1 }
-]), updateUserProfile); // Client must send 'uploadType: 'id-card' in the form data
+]), updateUserProfile); // uploadType is now set by middleware
 
 // Student management endpoints (Teachers only)
 router.get('/students', protect, getAllStudents);

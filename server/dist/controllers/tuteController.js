@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getStudentTutes = exports.deleteTute = exports.updateTute = exports.getTuteById = exports.getTeacherTutes = exports.createTute = void 0;
 const Tute_1 = require("../models/Tute");
 const User_1 = require("../models/User");
+const Payment_1 = require("../models/Payment");
 const path_1 = __importDefault(require("path"));
 const promises_1 = __importDefault(require("fs/promises"));
 // Create a new tute
@@ -41,8 +42,8 @@ const createTute = async (req, res) => {
         else {
             return res.status(400).json({ message: 'Invalid main file type. Only PDF, PowerPoint, and image files are allowed.' });
         }
-        const fileUrl = `/${mainFile.path.replace(/\\/g, '/')}`;
-        let thumbnailUrl = thumbnailFile ? `/${thumbnailFile.path.replace(/\\/g, '/')}` : undefined;
+        const fileUrl = mainFile.path.replace(/\\/g, '/').split('uploads/').pop();
+        let thumbnailUrl = thumbnailFile ? thumbnailFile.path.replace(/\\/g, '/').split('uploads/').pop() : undefined;
         // If the main file is an image and no specific thumbnail is set, use the main file for preview
         if (fileType === 'image' && !thumbnailUrl) {
             thumbnailUrl = fileUrl;
@@ -174,7 +175,7 @@ const updateTute = async (req, res) => {
             else {
                 return res.status(400).json({ message: 'Invalid main file type' });
             }
-            tute.fileUrl = `${baseUrl}/${mainFile.path.replace(/\\/g, '/')}`;
+            tute.fileUrl = mainFile.path.replace(/\\/g, '/').split('uploads/').pop();
             tute.fileType = fileType;
         }
         // If new thumbnail image is uploaded, delete old and update
@@ -190,7 +191,7 @@ const updateTute = async (req, res) => {
                 }
             }
             // Update with new thumbnail image
-            tute.thumbnailUrl = `${baseUrl}/${thumbnailFile.path.replace(/\\/g, '/')}`;
+            tute.thumbnailUrl = thumbnailFile.path.replace(/\\/g, '/').split('uploads/').pop();
         }
         // If the main file is an image and no specific thumbnail is set, use the main file for preview
         if (tute.fileType === 'image' && !thumbnailFile) {
@@ -251,21 +252,36 @@ const getStudentTutes = async (req, res) => {
         if (!student) {
             return res.status(404).json({ message: 'Student not found' });
         }
-        // Filter based on student type
-        const query = {};
-        if (student.studentType === 'Physical') {
-            // Physical students can access all tutes except paid ones (unless purchased, but logic here is for list)
-            // Assuming 'paid' tutes shouldn't be in the free list or handled separately
-            query.availability = { $in: ['all', 'physical'] };
-        }
-        else {
-            // Online students can only access 'all' tutes
-            query.availability = 'all';
-        }
-        const tutes = await Tute_1.Tute.find(query)
+        // List all tutes (all, physical, and paid)
+        // We want the student to see everything available so they can choose to buy.
+        const tutes = await Tute_1.Tute.find({})
             .populate('teacherId', 'firstName lastName')
             .sort({ createdAt: -1 });
-        res.status(200).json(tutes);
+        // Check which ones are purchased/accessible
+        const tutesWithAccess = await Promise.all(tutes.map(async (tute) => {
+            let hasAccess = false;
+            if (tute.availability === 'all') {
+                hasAccess = true;
+            }
+            else if (tute.availability === 'physical' && student.studentType === 'Physical') {
+                hasAccess = true;
+            }
+            else if (tute.price !== undefined && tute.price > 0) {
+                // Check for payment
+                const payment = await Payment_1.Payment.findOne({
+                    userId: studentId,
+                    itemId: tute._id,
+                    status: 'PAID'
+                });
+                if (payment)
+                    hasAccess = true;
+            }
+            return {
+                ...tute.toObject(),
+                hasAccess
+            };
+        }));
+        res.status(200).json(tutesWithAccess);
     }
     catch (error) {
         console.error('Error fetching student tutes:', error);

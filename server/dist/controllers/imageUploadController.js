@@ -6,8 +6,8 @@ const uploadPaperOptionImage = (req, res) => {
         return res.status(400).json({ message: 'No image file provided.' });
     }
     // req.file.path contains the full path, e.g., "uploads/paper/answers/123.jpg"
-    // Normalize path separators to forward slashes for URL compatibility
-    const imageUrl = `/${req.file.path.replace(/\\/g, '/')}`;
+    // Normalize path separators and remove the leading uploads/
+    const imageUrl = req.file.path.replace(/\\/g, '/').replace(/^uploads\//, '');
     res.status(200).json({ imageUrl, message: 'Option image uploaded successfully.' });
 };
 exports.uploadPaperOptionImage = uploadPaperOptionImage;
@@ -15,9 +15,7 @@ const uploadExplanationImage = (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No explanation image file provided.' });
     }
-    // req.file.path contains the full path, e.g., "uploads/paper/explanations/123.jpg"
-    // Normalize path separators to forward slashes for URL compatibility
-    const imageUrl = `/${req.file.path.replace(/\\/g, '/')}`;
+    const imageUrl = req.file.path.replace(/\\/g, '/').replace(/^uploads\//, '');
     res.status(200).json({
         imageUrl,
         message: 'Explanation image uploaded successfully.',
@@ -29,9 +27,7 @@ const uploadIdCardImage = (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No image file provided.' });
     }
-    // req.file.path contains the full path, e.g., "uploads/id-cards/123.jpg"
-    // Normalize path separators to forward slashes for URL compatibility
-    const imageUrl = `/${req.file.path.replace(/\\/g, '/')}`;
+    const imageUrl = req.file.path.replace(/\\/g, '/').replace(/^uploads\//, '');
     res.status(200).json({ imageUrl, message: 'Image uploaded successfully.' });
 };
 exports.uploadIdCardImage = uploadIdCardImage;
@@ -39,9 +35,7 @@ const uploadPaperContentImage = (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No image file provided.' });
     }
-    // req.file.path contains the full path, e.g., "uploads/paper/questions/123.jpg"
-    // Normalize path separators to forward slashes for URL compatibility
-    const imageUrl = `/${req.file.path.replace(/\\/g, '/')}`;
+    const imageUrl = req.file.path.replace(/\\/g, '/').replace(/^uploads\//, '');
     res.status(200).json({ imageUrl, message: 'Image uploaded successfully.' });
 };
 exports.uploadPaperContentImage = uploadPaperContentImage;

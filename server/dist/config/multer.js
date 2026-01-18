@@ -137,7 +137,7 @@ exports.upload = (0, multer_1.default)({
     storage,
     fileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB max file size
+        fileSize: 10 * 1024 * 1024, // 10MB max file size
     }
 });
 // Separate upload instance for PDFs (papers, documents)

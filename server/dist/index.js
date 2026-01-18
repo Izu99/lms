@@ -41,6 +41,7 @@ const auth_1 = require("./modules/shared/middleware/auth");
 const routes_1 = __importDefault(require("./modules/student/routes"));
 const routes_2 = __importDefault(require("./modules/teacher/routes"));
 const activityRoutes_1 = __importDefault(require("./routes/activityRoutes"));
+const paymentRoutes_1 = __importDefault(require("./routes/paymentRoutes"));
 const app = (0, express_1.default)();
 // ✅ SECURITY: Add security headers
 app.use((req, res, next) => {
@@ -104,6 +105,7 @@ app.use('/api/teacher', auth_1.protect, routes_2.default);
 app.use('/api/activity', activityRoutes_1.default); // New route
 app.use('/api/course-packages', coursePackageRoutes_1.default); // New course package routes
 app.use('/api/employees', employeeRoutes_1.default); // Employee management routes (teacher-only)
+app.use('/api/payments', paymentRoutes_1.default); // Secure payment routes
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({
