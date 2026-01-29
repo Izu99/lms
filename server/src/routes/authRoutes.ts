@@ -7,7 +7,8 @@ import {
   getUserProfile, 
   updateUserProfile,
   getAllStudents,
-  updateStudentStatus
+  updateStudentStatus,
+  deleteStudent
 } from '../controllers/authController';
 import { protect } from '../modules/shared/middleware/auth';
 import { upload } from '../config/multer'; // Import the centralized multer instance
@@ -37,5 +38,6 @@ router.put('/users/:id', protect, setIdCardUpload, upload.fields([ // Use the ce
 // Student management endpoints (Teachers only)
 router.get('/students', protect, getAllStudents);
 router.put('/students/:studentId/status', protect, updateStudentStatus);
+router.delete('/students/:studentId', protect, deleteStudent);
 
 export default router;

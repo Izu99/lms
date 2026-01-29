@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { TeacherLayout } from "@/components/teacher/TeacherLayout";
-import { Users, Search, Mail, Phone, Award } from "lucide-react";
+import { Users, Search, Mail, Phone, Award, Eye, Trash2 } from "lucide-react";
 import { StudentDetailsModal } from "@/components/teacher/modals/StudentDetailsModal";
 import { Pagination } from "@/components/ui/pagination";
 import { useTeacherStudents } from "@/modules/teacher/hooks/useTeacherStudents";
@@ -114,6 +114,23 @@ function TeacherStudentsPageContent() {
     setIsModalOpen(true);
   };
 
+  const handleDeleteStudent = async (studentId: string) => {
+    if (!studentId) return;
+    const ok = window.confirm('Are you sure you want to delete this student? This action will remove the student and associated assets.');
+    if (!ok) return;
+    try {
+      const token = Cookies.get("token");
+      await axios.delete(`${API_URL}/auth/students/${studentId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Student deleted successfully');
+      refetch();
+    } catch (err) {
+      console.error('Failed to delete student:', err);
+      toast.error('Failed to delete student');
+    }
+  };
+
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   const handleStatusChange = async (studentId: string, newStatus: string) => {
@@ -167,19 +184,19 @@ function TeacherStudentsPageContent() {
           <table className="w-full">
             <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                <th className="px-3 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-foreground">
                   Student
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                <th className="hidden md:table-cell px-6 py-4 text-left text-sm font-semibold text-foreground">
                   Contact
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                <th className="px-3 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-foreground">
                   Status
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                <th className="hidden sm:table-cell px-6 py-4 text-left text-sm font-semibold text-foreground">
                   Performance
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                <th className="px-3 sm:px-6 py-4 text-left text-xs sm:text-sm font-semibold text-foreground">
                   Actions
                 </th>
               </tr>
@@ -187,20 +204,20 @@ function TeacherStudentsPageContent() {
             <tbody className="divide-y divide-border">
               {paginatedStudents.map((student) => (
                 <tr key={student._id} className="bg-student-table-row hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                  <td className="px-3 sm:px-6 py-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold shadow-md shrink-0">
                         {getInitials(student)}
                       </div>
-                      <div>
-                        <p className="font-semibold text-foreground">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground text-xs sm:text-sm truncate">
                           {getDisplayName(student)}
                         </p>
-                        <p className="text-sm text-muted-foreground">@{student.username}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">@{student.username}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="hidden md:table-cell px-6 py-4">
                     <div className="space-y-1">
                       {student.email && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -216,13 +233,13 @@ function TeacherStudentsPageContent() {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 sm:px-6 py-4">
                     <div className="relative group/status inline-block">
                       <select
                         value={student.status || "active"}
                         onChange={(e) => handleStatusChange(student._id, e.target.value)}
                         disabled={updatingStatus === student._id}
-                        className={`appearance-none inline-flex items-center pl-3 pr-8 py-1 rounded-full text-xs font-bold transition-all duration-200 border border-transparent hover:border-current focus:ring-2 focus:ring-offset-2 focus:ring-primary cursor-pointer active:scale-95 disabled:opacity-50 ${getStatusColor(
+                        className={`appearance-none inline-flex items-center pl-2 sm:pl-3 pr-6 sm:pr-8 py-1 rounded-full text-[10px] sm:text-xs font-bold transition-all duration-200 border border-transparent hover:border-current focus:ring-2 focus:ring-offset-2 focus:ring-primary cursor-pointer active:scale-95 disabled:opacity-50 ${getStatusColor(
                           student.status
                         )}`}
                       >
@@ -232,19 +249,19 @@ function TeacherStudentsPageContent() {
                         <option value="paid" className="bg-background text-foreground">Paid</option>
                         <option value="unpaid" className="bg-background text-foreground">Unpaid</option>
                       </select>
-                      <div className={`absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none transition-transform group-hover/status:translate-y-[calc(-50%+1px)] ${student.status === 'pending' ? 'text-yellow-600' : student.status === 'active' ? 'text-green-600' : student.status === 'paid' ? 'text-blue-600' : student.status === 'unpaid' ? 'text-orange-600' : 'text-red-600'}`}>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className={`absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 pointer-events-none transition-transform group-hover/status:translate-y-[calc(-50%+1px)] ${student.status === 'pending' ? 'text-yellow-600' : student.status === 'active' ? 'text-green-600' : student.status === 'paid' ? 'text-blue-600' : student.status === 'unpaid' ? 'text-orange-600' : 'text-red-600'}`}>
+                        <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
                       {updatingStatus === student._id && (
-                        <div className="absolute -right-6 top-1/2 -translate-y-1/2">
-                          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <div className="absolute -right-4 sm:-right-6 top-1/2 -translate-y-1/2">
+                          <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                         </div>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="hidden sm:table-cell px-6 py-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 text-sm text-green-500">
                         <Award className="w-4 h-4" />
@@ -253,17 +270,27 @@ function TeacherStudentsPageContent() {
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {student.completedPapers || 0} papers completed
+                        {student.completedPapers || 0} papers
                       </p>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => handleViewDetails(student._id)}
-                      className="text-primary hover:underline text-sm font-medium"
-                    >
-                      View Details
-                    </button>
+                  <td className="px-3 sm:px-6 py-4">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <button
+                        onClick={() => handleViewDetails(student._id)}
+                        className="p-1.5 sm:p-2 text-primary hover:bg-primary/10 rounded-full transition-colors"
+                        title="View Details"
+                      >
+                        <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteStudent(student._id)}
+                        className="p-1.5 sm:p-2 text-destructive hover:bg-destructive/10 rounded-full transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

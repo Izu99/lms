@@ -577,6 +577,61 @@ export const getAllStudents = async (req: Request, res: Response) => {
   }
 };
 
+// Delete a student (Teachers/Admins only)
+export const deleteStudent = async (req: Request, res: Response) => {
+  try {
+    const { studentId } = req.params;
+    const requestingUser = (req as any).user;
+
+    // Only teachers and admins can delete students
+    if (requestingUser?.role !== 'teacher' && requestingUser?.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Only teachers or admins can delete students.' });
+    }
+
+    // Ensure target is a student
+    const UserModel = require('../models/User').User;
+    const student = await UserModel.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+    if (student.role !== 'student') {
+      return res.status(400).json({ message: 'User is not a student' });
+    }
+
+    // Capture potential asset paths before deletion
+    const frontImagePath = student.idCardFrontImage;
+    const backImagePath = student.idCardBackImage;
+
+    // Delete the student document
+    await UserModel.findByIdAndDelete(studentId);
+
+    // Delete id-card assets folder for the student (folder is id-cards/<studentId> and should be safe to remove)
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const studentDir = path.join(__dirname, '..', '..', 'uploads', 'id-cards', studentId);
+      if (fs.existsSync(studentDir)) {
+        // Prefer modern rmSync with recurse; fallback to rimraf if available
+        if (typeof fs.rmSync === 'function') {
+          fs.rmSync(studentDir, { recursive: true, force: true });
+          console.log(`🗑️ Deleted assets directory: ${studentDir}`);
+        } else if (typeof fs.rmdirSync === 'function') {
+          // Node versions without rmSync
+          fs.rmdirSync(studentDir, { recursive: true });
+          console.log(`🗑️ Deleted assets directory: ${studentDir}`);
+        }
+      }
+    } catch (assetErr) {
+      console.error('Error deleting student assets directory:', assetErr);
+    }
+
+    res.json({ message: 'Student deleted successfully' });
+  } catch (error) {
+    console.error('Delete student error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Update student status (Teachers/Admin only)
 export const updateStudentStatus = async (req: Request, res: Response) => {
   try {

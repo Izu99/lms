@@ -200,7 +200,8 @@ const getPaymentStatus = async (req, res) => {
             status: payment.status,
             amount: payment.amount,
             currency: payment.currency,
-            itemModel: payment.itemModel
+            itemModel: payment.itemModel,
+            itemId: payment.itemId
         });
     }
     catch (error) {
