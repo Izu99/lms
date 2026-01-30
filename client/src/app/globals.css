@@ -668,3 +668,36 @@ button.sidebar-icon-logout:hover {
 [data-radix-portal] {
   z-index: 9999 !important;
 }
+
+/* ✅ Auth Pages - Light Theme Form Inputs (Override Dark Theme) */
+.form-input {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+  border-width: 1px;
+  border-style: solid;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.form-input:focus {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #3b82f6 !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-input::placeholder {
+  color: #9ca3af !important;
+}
+
+.form-label {
+  display: block;
+  color: #374151 !important;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}

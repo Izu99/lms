@@ -72,7 +72,7 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    setTheme('dark');
+    setTheme('light');
   }, [setTheme]);
 
   // Fixed login function with proper form handling
@@ -311,7 +311,12 @@ export default function LoginPage() {
                     onChange={(e) =>
                       setData({ ...data, identifier: e.target.value })
                     }
-                    className="pl-12 h-14 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-lg font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200"
+                    className="pl-12 h-14 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-lg font-medium placeholder-gray-500 transition-all duration-200 !bg-white !text-gray-900"
+                    style={{
+                      backgroundColor: '#ffffff !important',
+                      color: '#111827 !important',
+                      borderColor: '#d1d5db',
+                    }}
                     required
                   />
                 </div>
@@ -336,7 +341,12 @@ export default function LoginPage() {
                     onChange={(e) =>
                       setData({ ...data, password: e.target.value })
                     }
-                    className="pl-12 pr-14 h-14 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-lg font-medium bg-white text-gray-900 placeholder-gray-500 transition-all duration-200"
+                    className="pl-12 pr-14 h-14 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-lg font-medium placeholder-gray-500 transition-all duration-200 !bg-white !text-gray-900"
+                    style={{
+                      backgroundColor: '#ffffff !important',
+                      color: '#111827 !important',
+                      borderColor: '#d1d5db',
+                    }}
                     required
                   />
                   <button

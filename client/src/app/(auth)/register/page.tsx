@@ -1,5 +1,6 @@
 "use client"; 
 import { useState, useEffect, useRef } from "react";
+import { useTheme } from 'next-themes';
 import { api } from "@/lib/api-client";
 import Link from "next/link";
 import {
@@ -133,6 +134,7 @@ interface RegisterData {
 }
 
 export default function RegisterPage() {
+  const { setTheme } = useTheme();
   const [step, setStep] = useState(1);
   const [data, setData] = useState<RegisterData>({
     firstName: "",
@@ -313,6 +315,10 @@ export default function RegisterPage() {
     }, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    setTheme('light');
+  }, [setTheme]);
 
   const nextStep = () => {
     const newErrors: Partial<Record<keyof RegisterData, string>> = {};
