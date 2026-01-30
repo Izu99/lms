@@ -33,6 +33,7 @@ function PaymentStatusContent() {
             try {
                 const response = await api.get<any>(`/payments/status?orderId=${orderId}`);
                 const data = response.data;
+                console.log('Payment status response:', data);
                 setDetails(data);
 
                 if (data.status === 'PAID') {
@@ -190,9 +191,15 @@ function PaymentStatusContent() {
 
                 {details && (
                     <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left text-sm">
+                        {details.itemTitle && (
+                            <div className="flex justify-between mb-2">
+                                <span className="text-gray-500">Item:</span>
+                                <span className="font-semibold">{details.itemTitle}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between mb-2">
                             <span className="text-gray-500">Amount Paid:</span>
-                            <span className="font-semibold">{details.currency} {details.amount}</span>
+                            <span className="font-semibold">{details.currency} {details.amount?.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-500">Order ID:</span>

@@ -19,6 +19,11 @@ export function PayHereButton({ itemId, itemModel, amount, title, className, onS
     const [payhereData, setPayhereData] = useState<{ url: string, payload: any } | null>(null);
 
     const handlePayment = async () => {
+        if (!amount || amount <= 0 || isNaN(amount)) {
+            alert('Invalid payment amount.');
+            return;
+        }
+
         try {
             setLoading(true);
             // Initiate payment session with backend

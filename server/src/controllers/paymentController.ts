@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
 import { Payment } from '../models/Payment';
 import { User } from '../models/User';
+import { Video } from '../models/Video';
+import { Paper } from '../models/Paper';
+import { Tute } from '../models/Tute';
+import { CoursePackage } from '../models/CoursePackage';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 
@@ -19,15 +23,45 @@ const md5 = (str: string) => crypto.createHash('md5').update(str).digest('hex').
 export const initiatePayment = async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
-        const { itemId, itemModel, amount, title } = req.body;
+        const { itemId, itemModel } = req.body;
+        let { amount, title } = req.body;
 
         // 1. Validation
-        if (!userId || !itemId || !itemModel || !amount) {
+        if (!userId || !itemId || !itemModel) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
 
-        if (!['Video', 'Paper', 'Tute', 'CoursePackage'].includes(itemModel)) {
-            return res.status(400).json({ message: 'Invalid item model' });
+        // Fetch actual price and title from DB if not provided or for security
+        let item: any = null;
+        switch (itemModel) {
+            case 'Video':
+                item = await Video.findById(itemId);
+                break;
+            case 'Paper':
+                item = await Paper.findById(itemId);
+                break;
+            case 'Tute':
+                item = await Tute.findById(itemId);
+                break;
+            case 'CoursePackage':
+                item = await CoursePackage.findById(itemId);
+                break;
+            default:
+                return res.status(400).json({ message: 'Invalid item model' });
+        }
+
+        if (!item) {
+            return res.status(404).json({ message: 'Item not found' });
+        }
+
+        // Override amount and title from DB to ensure accuracy
+        amount = item.price;
+        title = item.title;
+
+        const amountNum = Number(amount);
+        if (isNaN(amountNum) || amountNum <= 0) {
+             console.error(`Invalid amount for item ${itemId}: ${amount}`);
+             return res.status(400).json({ message: 'This item is free or has no price set' });
         }
 
         // 2. User Details for PayHere (Pre-fill)
@@ -40,14 +74,16 @@ export const initiatePayment = async (req: Request, res: Response) => {
         // Format: LMS-{Timestamp}-{Random}
         const orderId = `LMS-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
         const currency = 'LKR';
-        const formattedAmount = Number(amount).toFixed(2); // PayHere expects 2 decimal places
+        const formattedAmount = amountNum.toFixed(2); // PayHere expects 2 decimal places
+
+        console.log(`Starting payment initiation. Item: ${title}, Amount: ${amountNum}, OrderID: ${orderId}`);
 
         // 4. Create Pending Payment Record
-        await Payment.create({
+        const payment = await Payment.create({
             userId,
             itemId,
             itemModel,
-            amount: Number(amount),
+            amount: amountNum,
             currency,
             orderId,
             status: 'PENDING',
@@ -57,6 +93,8 @@ export const initiatePayment = async (req: Request, res: Response) => {
                 userAgent: req.headers['user-agent']
             }
         });
+        
+        console.log(`Payment record created: ${payment._id}, Amount: ${payment.amount}`);
 
         // 5. Hash Generation (Optional for simple checkout, but good practice if using Hash-based auth)
         // For standard Checkout API, the hash is generated CLIENT-SIDE or using the hidden fields.
@@ -225,15 +263,19 @@ export const getPaymentStatus = async (req: Request, res: Response) => {
 
         const payment = await Payment.findOne({ orderId: orderId as string });
         if (!payment) {
+            console.warn(`Payment status check failed: Order ${orderId} not found`);
             return res.status(404).json({ message: 'Order not found' });
         }
+
+        console.log(`Payment status check for ${orderId}: Status=${payment.status}, Amount=${payment.amount}`);
 
         return res.json({
             status: payment.status,
             amount: payment.amount,
             currency: payment.currency,
             itemModel: payment.itemModel,
-            itemId: payment.itemId
+            itemId: payment.itemId,
+            itemTitle: payment.metadata?.itemTitle
         });
     } catch (error) {
         console.error('Get payment status error:', error);
