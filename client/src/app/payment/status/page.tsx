@@ -15,6 +15,8 @@ function PaymentStatusContent() {
 
     const [status, setStatus] = useState<'loading' | 'success' | 'failed' | 'canceled'>('loading');
     const [details, setDetails] = useState<any>(null);
+    const [showBypass, setShowBypass] = useState(false);
+    const [verifyingManually, setVerifyingManually] = useState(false);
 
     useEffect(() => {
         if (canceled) {
@@ -81,33 +83,33 @@ function PaymentStatusContent() {
         }
     }, [status, details]);
 
-    if (status === 'loading') {
-        const [showBypass, setShowBypass] = useState(false);
-        const [verifyingManually, setVerifyingManually] = useState(false);
-
-        useEffect(() => {
+    // Show bypass button after 5 seconds if still loading
+    useEffect(() => {
+        if (status === 'loading') {
             const timer = setTimeout(() => setShowBypass(true), 5000); // Show bypass after 5 seconds
             return () => clearTimeout(timer);
-        }, []);
+        }
+    }, [status]);
 
-        const handleManualVerify = async () => {
-            if (!orderId) return;
-            setVerifyingManually(true);
-            try {
-                await api.post<any>('/payments/verify-sandbox', { orderId });
-                // Immediately check status again
-                const response = await api.get<any>(`/payments/status?orderId=${orderId}`);
-                if (response.data.status === 'PAID') {
-                    setDetails(response.data);
-                    setStatus('success');
-                }
-            } catch (error) {
-                console.error('Manual verification failed:', error);
-            } finally {
-                setVerifyingManually(false);
+    const handleManualVerify = async () => {
+        if (!orderId) return;
+        setVerifyingManually(true);
+        try {
+            await api.post<any>('/payments/verify-sandbox', { orderId });
+            // Immediately check status again
+            const response = await api.get<any>(`/payments/status?orderId=${orderId}`);
+            if (response.data.status === 'PAID') {
+                setDetails(response.data);
+                setStatus('success');
             }
-        };
+        } catch (error) {
+            console.error('Manual verification failed:', error);
+        } finally {
+            setVerifyingManually(false);
+        }
+    };
 
+    if (status === 'loading') {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-4">
                 <Loader2 className="w-16 h-16 text-blue-600 animate-spin mb-4" />

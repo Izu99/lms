@@ -221,7 +221,7 @@ export const getAllPapers = async (req: Request, res: Response) => {
 // Get paper by ID (Students get questions without correct answers)
 export const getPaperById = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { showAnswers } = req.query; // New query parameter for answers view
     const requestingUser = (req as any).user;
 
@@ -327,7 +327,7 @@ export const getPaperById = async (req: Request, res: Response) => {
 // Submit paper attempt (Students only)
 export const submitPaper = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { answers, timeSpent, answerFileUrl } = req.body;
     const requestingUser = (req as any).user;
 
@@ -483,7 +483,7 @@ export const getStudentResults = async (req: Request, res: Response) => {
 // Get paper results (Teachers only)
 export const getPaperResults = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const requestingUser = (req as any).user;
 
     if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin' && requestingUser.role !== 'paper_manager') {
@@ -534,7 +534,7 @@ export const getPaperResults = async (req: Request, res: Response) => {
 // Update Paper (Teachers only)
 export const updatePaper = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const requestingUser = (req as any).user;
 
     if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin' && requestingUser.role !== 'paper_manager') {
@@ -692,7 +692,7 @@ export const updatePaper = async (req: Request, res: Response) => {
 // Delete Paper (Teachers only)
 export const deletePaper = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const requestingUser = (req as any).user;
 
     if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin' && requestingUser.role !== 'paper_manager') {
@@ -762,7 +762,7 @@ export const getAllPapersForStudent = async (req: Request, res: Response) => {
 // Get a single student attempt for a paper
 export const getStudentAttemptForPaper = async (req: Request, res: Response) => {
   try {
-    const { paperId } = req.params;
+    const paperId = req.params.paperId as string;
     const requestingUser = (req as any).user;
 
     if (requestingUser.role !== 'student') {
@@ -824,7 +824,7 @@ export const uploadPaperPdf = (req: Request, res: Response) => {
 // Get a single student attempt by its ID
 export const getAttemptById = async (req: Request, res: Response) => {
   try {
-    const { attemptId } = req.params;
+    const attemptId = req.params.attemptId as string;
     const requestingUser = (req as any).user;
 
     if (!mongoose.Types.ObjectId.isValid(attemptId)) {
@@ -873,7 +873,7 @@ export const getAttemptById = async (req: Request, res: Response) => {
 // Uploads a teacher's reviewed PDF for a student attempt
 export const uploadTeacherReviewFile = async (req: Request, res: Response) => {
   try {
-    const { attemptId } = req.params;
+    const attemptId = req.params.attemptId as string;
     const requestingUser = (req as any).user;
 
     if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin' && requestingUser.role !== 'paper_manager') {
@@ -924,7 +924,7 @@ export const uploadTeacherReviewFile = async (req: Request, res: Response) => {
 
 export const downloadStudentAttemptFile = async (req: Request, res: Response) => {
   try {
-    const { attemptId } = req.params;
+    const attemptId = req.params.attemptId as string;
     const requestingUser = (req as any).user;
 
     if (requestingUser.role !== 'teacher' && requestingUser.role !== 'admin' && requestingUser.role !== 'paper_manager') {
@@ -968,7 +968,7 @@ export const downloadStudentAttemptFile = async (req: Request, res: Response) =>
 
 export const updateStudentAttemptMarks = async (req: Request, res: Response) => {
   try {
-    const { attemptId } = req.params;
+    const attemptId = req.params.attemptId as string;
     const { score } = req.body;
     const requestingUser = (req as any).user;
 
