@@ -2,8 +2,8 @@
 
 import { SelfHostedVideoPlayerModal } from "@/components/common/SelfHostedVideoPlayerModal";
 import { StudentLayout } from "@/components/student/StudentLayout";
-import { useRouter } from "next/navigation";
-import { use, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { use, useEffect, useState, Suspense } from "react";
 import { CoursePackageData } from "@/modules/shared/types/course-package.types";
 import { VideoData } from "@/modules/shared/types/video.types";
 import { PaperData } from "@/modules/shared/types/paper.types";
@@ -23,15 +23,26 @@ interface CoursePackageDetailsPageProps {
   }>;
 }
 
-export default function CoursePackageDetailsPage({ params }: CoursePackageDetailsPageProps) {
+function CoursePackageDetailsContent({ params }: CoursePackageDetailsPageProps) {
   const { id } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [coursePackage, setCoursePackage] = useState<CoursePackageData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState("");
   const [currentVideoTitle, setCurrentVideoTitle] = useState("");
+
+  useEffect(() => {
+    if (searchParams.get('payment_success') === 'true') {
+      toast.success("Payment Successful!", {
+        description: "You now have full access to this course package.",
+        duration: 5000,
+      });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchCoursePackage = async () => {
@@ -66,8 +77,6 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
     setCurrentVideoTitle(title);
     setIsModalOpen(true);
   };
-
-
 
   if (error) {
     return (
@@ -219,5 +228,13 @@ export default function CoursePackageDetailsPage({ params }: CoursePackageDetail
         title={currentVideoTitle}
       />
     </StudentLayout>
+  );
+}
+
+export default function CoursePackageDetailsPage({ params }: CoursePackageDetailsPageProps) {
+  return (
+    <Suspense fallback={<LoadingComponent />}>
+      <CoursePackageDetailsContent params={params} />
+    </Suspense>
   );
 }

@@ -74,13 +74,13 @@ function PaymentStatusContent() {
         }
     };
 
-    // Auto-redirect on success after a short delay
+    // Auto-redirect on success IMMEDIATELY
     useEffect(() => {
         if (status === 'success') {
-            const timer = setTimeout(() => {
-                router.push(getRedirectPath());
-            }, 3000); // 3 second delay to show success message
-            return () => clearTimeout(timer);
+            const path = getRedirectPath();
+            // Append success flag so the destination page can show a toast
+            const separator = path.includes('?') ? '&' : '?';
+            router.push(`${path}${separator}payment_success=true`);
         }
     }, [status, details]);
 
@@ -110,16 +110,20 @@ function PaymentStatusContent() {
         }
     };
 
-    if (status === 'loading') {
+    if (status === 'loading' || status === 'success') {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-4">
                 <Loader2 className="w-16 h-16 text-blue-600 animate-spin mb-4" />
-                <h1 className="text-2xl font-bold text-gray-800">Verifying Payment...</h1>
+                <h1 className="text-2xl font-bold text-gray-800">
+                    {status === 'success' ? 'Payment Confirmed!' : 'Verifying Payment...'}
+                </h1>
                 <p className="text-gray-600 mt-2 text-center max-w-md">
-                    Please wait while we confirm your transaction with PayHere.
+                    {status === 'success' 
+                        ? 'Redirecting you to your content...' 
+                        : 'Please wait while we confirm your transaction with PayHere.'}
                 </p>
 
-                {showBypass && (
+                {showBypass && status === 'loading' && (
                     <div className="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-100 text-center max-w-sm">
                         <p className="text-sm text-blue-800 mb-4">
                             Verification taking too long? If you already completed the payment in sandbox, you can manually verify it.
@@ -178,44 +182,7 @@ function PaymentStatusContent() {
         );
     }
 
-    return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
-            <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle className="w-10 h-10 text-green-600" />
-                </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Payment Successful!</h1>
-                <p className="text-gray-600 mb-6">
-                    Thank you for your purchase. Redirecting you to your content in a few seconds...
-                </p>
-
-                {details && (
-                    <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left text-sm">
-                        {details.itemTitle && (
-                            <div className="flex justify-between mb-2">
-                                <span className="text-gray-500">Item:</span>
-                                <span className="font-semibold">{details.itemTitle}</span>
-                            </div>
-                        )}
-                        <div className="flex justify-between mb-2">
-                            <span className="text-gray-500">Amount Paid:</span>
-                            <span className="font-semibold">{details.currency} {details.amount?.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-gray-500">Order ID:</span>
-                            <span className="font-mono">{orderId}</span>
-                        </div>
-                    </div>
-                )}
-
-                <Link href={getRedirectPath()}>
-                    <Button className="w-full bg-green-600 hover:bg-green-700 h-12 text-lg">
-                        Start Learning Now <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
-                </Link>
-            </div>
-        </div>
-    );
+    return null; // Should not be reached due to status checks above
 }
 
 export default function PaymentStatusPage() {

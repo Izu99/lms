@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -65,10 +65,23 @@ interface User {
   role: 'student' | 'teacher' | 'admin';
 }
 
-export default function PaperAttempt() {
+function PaperAttemptContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const pathname = usePathname();
   const paperId = pathname.split('/').pop();
+
+  // Show success toast after payment redirect
+  useEffect(() => {
+    if (searchParams.get('payment_success') === 'true') {
+      toast.success("Payment Successful!", {
+        description: "You now have full access to this paper.",
+        duration: 5000,
+      });
+      // Clean up URL without refreshing
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [searchParams]);
 
   // State management
   const [paper, setPaper] = useState<Paper | null>(null);
@@ -634,5 +647,13 @@ export default function PaperAttempt() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function PaperAttempt() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-screen"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>}>
+      <PaperAttemptContent />
+    </Suspense>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import {
   Play,
   Pause,
@@ -24,9 +24,10 @@ import {
   CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import axios from "axios";
+import { toast } from "sonner";
 import { API_URL, API_BASE_URL } from "@/lib/constants";
 import { getFileUrl } from "@/lib/fileUtils";
 import { StudentLayout } from "@/components/student/StudentLayout";
@@ -62,8 +63,9 @@ interface UserData {
   role: "student" | "teacher" | "admin";
 }
 
-export default function StudentVideoViewPage() {
+function VideoViewContent() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const videoId = params.id as string;
 
   const [user, setUser] = useState<UserData | null>(null);
@@ -82,6 +84,17 @@ export default function StudentVideoViewPage() {
     videoId: string;
   } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (searchParams.get('payment_success') === 'true') {
+      toast.success("Payment Successful!", {
+        description: "You now have full access to this video.",
+        duration: 5000,
+      });
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -565,5 +578,13 @@ export default function StudentVideoViewPage() {
         </div>
       </div>
     </StudentLayout>
+  );
+}
+
+export default function StudentVideoViewPage() {
+  return (
+    <Suspense fallback={<StudentLayout><div className="flex justify-center items-center h-64"><div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div></StudentLayout>}>
+      <VideoViewContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { StudentLayout } from "@/components/student/StudentLayout";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Download, FileText, Presentation, Search } from "lucide-react";
@@ -34,8 +35,20 @@ interface Tute {
   createdAt: string;
 }
 
-export default function StudentTutesPage() {
+function StudentTutesContent() {
+  const searchParams = useSearchParams();
   const [tutes, setTutes] = useState<Tute[]>([]);
+
+  useEffect(() => {
+    if (searchParams.get('payment_success') === 'true') {
+      toast.success("Payment Successful!", {
+        description: "You now have full access to your purchase.",
+        duration: 5000,
+      });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [searchParams]);
+
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -233,5 +246,13 @@ export default function StudentTutesPage() {
         )}
       </div>
     </StudentLayout>
+  );
+}
+
+export default function StudentTutesPage() {
+  return (
+    <Suspense fallback={<StudentGridSkeleton />}>
+      <StudentTutesContent />
+    </Suspense>
   );
 }

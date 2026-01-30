@@ -6,6 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.verifySandboxPayment = exports.getPaymentStatus = exports.handleNotify = exports.initiatePayment = void 0;
 const Payment_1 = require("../models/Payment");
 const User_1 = require("../models/User");
+const Video_1 = require("../models/Video");
+const Paper_1 = require("../models/Paper");
+const Tute_1 = require("../models/Tute");
+const CoursePackage_1 = require("../models/CoursePackage");
 const crypto_1 = __importDefault(require("crypto"));
 const PAYHERE_MERCHANT_ID = process.env.PAYHERE_MERCHANT_ID;
 const PAYHERE_MERCHANT_SECRET = process.env.PAYHERE_MERCHANT_SECRET;
@@ -20,13 +24,40 @@ const md5 = (str) => crypto_1.default.createHash('md5').update(str).digest('hex'
 const initiatePayment = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { itemId, itemModel, amount, title } = req.body;
+        const { itemId, itemModel } = req.body;
+        let { amount, title } = req.body;
         // 1. Validation
-        if (!userId || !itemId || !itemModel || !amount) {
+        if (!userId || !itemId || !itemModel) {
             return res.status(400).json({ message: 'Missing required fields' });
         }
-        if (!['Video', 'Paper', 'Tute', 'CoursePackage'].includes(itemModel)) {
-            return res.status(400).json({ message: 'Invalid item model' });
+        // Fetch actual price and title from DB if not provided or for security
+        let item = null;
+        switch (itemModel) {
+            case 'Video':
+                item = await Video_1.Video.findById(itemId);
+                break;
+            case 'Paper':
+                item = await Paper_1.Paper.findById(itemId);
+                break;
+            case 'Tute':
+                item = await Tute_1.Tute.findById(itemId);
+                break;
+            case 'CoursePackage':
+                item = await CoursePackage_1.CoursePackage.findById(itemId);
+                break;
+            default:
+                return res.status(400).json({ message: 'Invalid item model' });
+        }
+        if (!item) {
+            return res.status(404).json({ message: 'Item not found' });
+        }
+        // Override amount and title from DB to ensure accuracy
+        amount = item.price;
+        title = item.title;
+        const amountNum = Number(amount);
+        if (isNaN(amountNum) || amountNum <= 0) {
+            console.error(`Invalid amount for item ${itemId}: ${amount}`);
+            return res.status(400).json({ message: 'This item is free or has no price set' });
         }
         // 2. User Details for PayHere (Pre-fill)
         const user = await User_1.User.findById(userId);
@@ -37,13 +68,14 @@ const initiatePayment = async (req, res) => {
         // Format: LMS-{Timestamp}-{Random}
         const orderId = `LMS-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
         const currency = 'LKR';
-        const formattedAmount = Number(amount).toFixed(2); // PayHere expects 2 decimal places
+        const formattedAmount = amountNum.toFixed(2); // PayHere expects 2 decimal places
+        console.log(`Starting payment initiation. Item: ${title}, Amount: ${amountNum}, OrderID: ${orderId}`);
         // 4. Create Pending Payment Record
-        await Payment_1.Payment.create({
+        const payment = await Payment_1.Payment.create({
             userId,
             itemId,
             itemModel,
-            amount: Number(amount),
+            amount: amountNum,
             currency,
             orderId,
             status: 'PENDING',
@@ -53,6 +85,7 @@ const initiatePayment = async (req, res) => {
                 userAgent: req.headers['user-agent']
             }
         });
+        console.log(`Payment record created: ${payment._id}, Amount: ${payment.amount}`);
         // 5. Hash Generation (Optional for simple checkout, but good practice if using Hash-based auth)
         // For standard Checkout API, the hash is generated CLIENT-SIDE or using the hidden fields.
         // However, to follow the "Secure" requirement, we will generate the hash here if using 
@@ -194,14 +227,17 @@ const getPaymentStatus = async (req, res) => {
         }
         const payment = await Payment_1.Payment.findOne({ orderId: orderId });
         if (!payment) {
+            console.warn(`Payment status check failed: Order ${orderId} not found`);
             return res.status(404).json({ message: 'Order not found' });
         }
+        console.log(`Payment status check for ${orderId}: Status=${payment.status}, Amount=${payment.amount}`);
         return res.json({
             status: payment.status,
             amount: payment.amount,
             currency: payment.currency,
             itemModel: payment.itemModel,
-            itemId: payment.itemId
+            itemId: payment.itemId,
+            itemTitle: payment.metadata?.itemTitle
         });
     }
     catch (error) {
