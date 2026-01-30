@@ -72,7 +72,7 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    setTheme('light');
+    setTheme('dark');
   }, [setTheme]);
 
   // Fixed login function with proper form handling
