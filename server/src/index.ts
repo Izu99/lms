@@ -56,12 +56,16 @@ import {
 
 const app = express();
 
+// ✅ SECURITY: Trust proxy (required for rate limiting on Azure/Vercel)
+app.set('trust proxy', 1);
+
 // ✅ SECURITY: Modern CORS setup (100% Environment Driven)
 const getOrigins = () => {
   const rawOrigins = [
     process.env.CLIENT_ORIGIN,
     process.env.PRODUCTION_CLIENT_URL,
     process.env.VERCEL_CLIENT_URL,
+    'https://lms-server.scm.azurewebsites.net', // Azure management console
   ];
   
   // Support for a comma-separated list in ALLOWED_ORIGINS env var

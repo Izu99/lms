@@ -45,12 +45,15 @@ const activityRoutes_1 = __importDefault(require("./routes/activityRoutes"));
 // Import security middleware
 const security_1 = require("./middleware/security");
 const app = (0, express_1.default)();
+// ✅ SECURITY: Trust proxy (required for rate limiting on Azure/Vercel)
+app.set('trust proxy', 1);
 // ✅ SECURITY: Modern CORS setup (100% Environment Driven)
 const getOrigins = () => {
     const rawOrigins = [
         process.env.CLIENT_ORIGIN,
         process.env.PRODUCTION_CLIENT_URL,
         process.env.VERCEL_CLIENT_URL,
+        'https://lms-server.scm.azurewebsites.net', // Azure management console
     ];
     // Support for a comma-separated list in ALLOWED_ORIGINS env var
     if (process.env.ALLOWED_ORIGINS) {
