@@ -45,6 +45,45 @@ const activityRoutes_1 = __importDefault(require("./routes/activityRoutes"));
 // Import security middleware
 const security_1 = require("./middleware/security");
 const app = (0, express_1.default)();
+// ✅ SECURITY: Modern CORS setup (100% Environment Driven)
+const getOrigins = () => {
+    const rawOrigins = [
+        process.env.CLIENT_ORIGIN,
+        process.env.PRODUCTION_CLIENT_URL,
+        process.env.VERCEL_CLIENT_URL,
+    ];
+    // Support for a comma-separated list in ALLOWED_ORIGINS env var
+    if (process.env.ALLOWED_ORIGINS) {
+        rawOrigins.push(...process.env.ALLOWED_ORIGINS.split(','));
+    }
+    // Add local development origins
+    if (NODE_ENV === 'development') {
+        rawOrigins.push('http://localhost:3000', 'http://127.0.0.1:3000');
+    }
+    // Clean origins: remove whitespace and trailing slashes
+    const cleanedOrigins = rawOrigins
+        .filter(Boolean)
+        .map(origin => origin.trim().replace(/\/$/, ''));
+    return [...new Set(cleanedOrigins)];
+};
+const allowedOrigins = getOrigins();
+app.use((0, cors_1.default)({
+    origin: (origin, callback) => {
+        if (!origin)
+            return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true);
+        }
+        else {
+            logger_1.default.warn(`❌ CORS blocked origin: ${origin}`);
+            callback(null, false);
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    optionsSuccessStatus: 204
+}));
 // ✅ Security: Helmet for security headers
 app.use((0, helmet_1.default)({
     contentSecurityPolicy: {
@@ -72,30 +111,6 @@ if (NODE_ENV === 'development') {
         next();
     });
 }
-// ✅ CORS setup - Secure configuration
-const allowedOrigins = [
-    process.env.CLIENT_ORIGIN,
-    process.env.PRODUCTION_CLIENT_URL,
-    process.env.VERCEL_CLIENT_URL,
-    'https://www.ezyict.lk',
-    ...(NODE_ENV === 'development' ? ['http://localhost:3000'] : [])
-].filter(Boolean);
-app.use((0, cors_1.default)({
-    origin: (origin, callback) => {
-        if (!origin)
-            return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        }
-        else {
-            logger_1.default.warn(`❌ CORS blocked origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-}));
 logger_1.default.info(`✅ Allowed origins: ${allowedOrigins.join(', ')}`);
 // Static files
 app.use('/api/uploads', express_1.default.static(path_1.default.join(__dirname, '..', 'uploads')));
