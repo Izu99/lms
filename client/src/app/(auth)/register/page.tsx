@@ -1,4 +1,4 @@
-"use client";
+"use client"; 
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from 'next-themes';
 import { api } from "@/lib/api-client";

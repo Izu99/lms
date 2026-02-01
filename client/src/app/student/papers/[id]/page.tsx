@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Zap,
   Loader2,
+  Lock,
   Image as ImageIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
