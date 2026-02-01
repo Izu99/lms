@@ -15,7 +15,7 @@ import { Video, FileText, School, GraduationCap, Play } from "lucide-react";
 import { LoadingComponent } from "@/components/common/LoadingComponent";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { API_BASE_URL } from "@/lib/constants";
-import { PayHereButton } from "@/components/payment/PayHereButton";
+import { PaymentCheckout } from "@/components/payment/PaymentCheckout";
 
 interface CoursePackageDetailsPageProps {
   params: Promise<{
@@ -127,7 +127,7 @@ function CoursePackageDetailsContent({ params }: CoursePackageDetailsPageProps) 
             )}
           </div>
 
-          <PayHereButton
+          <PaymentCheckout
             itemId={coursePackage._id}
             itemModel="CoursePackage"
             amount={coursePackage.price || 0}
@@ -211,7 +211,7 @@ function CoursePackageDetailsContent({ params }: CoursePackageDetailsPageProps) 
 
         {/* Purchase Button at the bottom */}
         <div className="theme-card p-6 flex justify-center">
-          <PayHereButton
+          <PaymentCheckout
             itemId={coursePackage._id}
             itemModel="CoursePackage"
             amount={coursePackage.price || 0}

@@ -35,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { PayHereButton } from "@/components/payment/PayHereButton";
+import { PaymentCheckout } from "@/components/payment/PaymentCheckout";
 
 interface Option {
   _id: string;
@@ -348,29 +348,35 @@ function PaperAttemptContent() {
 
   if (paymentRequiredError && paymentDetails) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
-        <div className="text-center max-w-md p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
-          <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Lock className="text-yellow-600 dark:text-yellow-400" size={32} />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center p-4">
+        <div className="max-w-6xl w-full">
+          <div className="text-center mb-10">
+            <div className="w-20 h-20 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-yellow-500/10">
+              <Lock className="text-yellow-600 dark:text-yellow-400" size={40} />
+            </div>
+            <h2 className="text-4xl font-black theme-text-primary mb-3 tracking-tighter">
+              Examination Access
+            </h2>
+            <p className="theme-text-secondary text-lg max-w-2xl mx-auto">
+              To attempt <span className="font-bold text-blue-600">"{paymentDetails.paperTitle}"</span>, please complete the secure payment process.
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Payment Required</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            To access <span className="font-semibold text-blue-600">"{paymentDetails.paperTitle}"</span>, a payment of <span className="font-bold">LKR {paymentDetails.price?.toFixed(2)}</span> is required.
-          </p>
           
-          <PayHereButton
+          <PaymentCheckout
             itemId={paymentDetails.paperId}
             itemModel="Paper"
             amount={paymentDetails.price}
             title={paymentDetails.paperTitle}
-            className="w-full mb-4 h-12 text-lg"
+            className="w-full"
           />
 
-          <Link href="/student/papers" className="block">
-            <Button variant="ghost" className="w-full">
-              Back to Papers
-            </Button>
-          </Link>
+          <div className="mt-8 text-center">
+            <Link href="/student/papers">
+              <Button variant="ghost" className="text-muted-foreground hover:text-primary">
+                <ArrowLeft className="mr-2 w-4 h-4" /> Return to Paper Hub
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );

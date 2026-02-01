@@ -19,7 +19,7 @@ import { API_BASE_URL, API_URL } from "@/lib/constants";
 import { getFileUrl } from "@/lib/fileUtils";
 import { toast } from "sonner";
 import { FileUpload } from "@/components/ui/file-upload";
-import { PayHereButton } from "@/components/payment/PayHereButton";
+import { PaymentCheckout } from "@/components/payment/PaymentCheckout";
 import { Lock } from "lucide-react";
 
 interface Paper {
@@ -101,39 +101,35 @@ function StructureEssayContent() {
   if (paymentRequired && paymentDetails) {
     return (
       <StudentLayout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl max-w-md w-full border theme-border">
-            <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Lock className="text-yellow-600 dark:text-yellow-400" size={32} />
+        <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
+          <div className="max-w-6xl w-full">
+            <div className="text-center mb-10">
+              <div className="w-20 h-20 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-yellow-500/10">
+                <Lock className="text-yellow-600 dark:text-yellow-400" size={40} />
+              </div>
+              <h2 className="text-4xl font-black theme-text-primary mb-3 tracking-tighter">
+                Premium Paper Access
+              </h2>
+              <p className="theme-text-secondary text-lg max-w-2xl mx-auto">
+                To download and attempt <span className="font-bold text-blue-600">"{paymentDetails.paperTitle}"</span>, please complete the secure payment process.
+              </p>
             </div>
-            <h2 className="text-2xl font-bold theme-text-primary mb-2">
-              Payment Required
-            </h2>
-            <p className="theme-text-secondary mb-6">
-              To access{" "}
-              <span className="font-semibold text-blue-600">
-                {paymentDetails.paperTitle}
-              </span>
-              , a payment of{" "}
-              <span className="font-bold">
-                LKR {paymentDetails.price?.toFixed(2)}
-              </span>{" "}
-              is required.
-            </p>
 
-            <PayHereButton
+            <PaymentCheckout
               itemId={paymentDetails.paperId}
               itemModel="Paper"
               amount={paymentDetails.price}
               title={paymentDetails.paperTitle}
-              className="w-full mb-4"
+              className="w-full"
             />
 
-            <Link href="/student/papers" className="block">
-              <Button variant="ghost" className="w-full">
-                Back to Papers
-              </Button>
-            </Link>
+            <div className="mt-8 text-center">
+              <Link href="/student/papers">
+                <Button variant="ghost" className="text-muted-foreground hover:text-primary">
+                  <ArrowLeft className="mr-2 w-4 h-4" /> Return to Paper Gallery
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </StudentLayout>

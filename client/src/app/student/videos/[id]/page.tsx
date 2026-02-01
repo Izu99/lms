@@ -31,7 +31,7 @@ import { toast } from "sonner";
 import { API_URL, API_BASE_URL } from "@/lib/constants";
 import { getFileUrl } from "@/lib/fileUtils";
 import { StudentLayout } from "@/components/student/StudentLayout";
-import { PayHereButton } from "@/components/payment/PayHereButton";
+import { PaymentCheckout } from "@/components/payment/PaymentCheckout";
 
 interface VideoData {
   _id: string;
@@ -270,39 +270,35 @@ function VideoViewContent() {
   if (paymentRequired && paymentDetails) {
     return (
       <StudentLayout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl max-w-md w-full border theme-border">
-            <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Lock className="text-yellow-600 dark:text-yellow-400" size={32} />
+        <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
+          <div className="max-w-6xl w-full">
+            <div className="text-center mb-10">
+              <div className="w-20 h-20 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-yellow-500/10">
+                <Lock className="text-yellow-600 dark:text-yellow-400" size={40} />
+              </div>
+              <h2 className="text-4xl font-black theme-text-primary mb-3 tracking-tighter">
+                Premium Content Access
+              </h2>
+              <p className="theme-text-secondary text-lg max-w-2xl mx-auto">
+                To watch <span className="font-bold text-blue-600">"{paymentDetails.videoTitle}"</span>, please complete the secure payment below.
+              </p>
             </div>
-            <h2 className="text-2xl font-bold theme-text-primary mb-2">
-              Payment Required
-            </h2>
-            <p className="theme-text-secondary mb-6">
-              To access{" "}
-              <span className="font-semibold text-blue-600">
-                {paymentDetails.videoTitle}
-              </span>
-              , a payment of{" "}
-              <span className="font-bold">
-                LKR {paymentDetails.price?.toFixed(2)}
-              </span>{" "}
-              is required.
-            </p>
 
-            <PayHereButton
+            <PaymentCheckout
               itemId={paymentDetails.videoId}
               itemModel="Video"
               amount={paymentDetails.price}
               title={paymentDetails.videoTitle}
-              className="w-full mb-4"
+              className="w-full"
             />
 
-            <Link href="/student/videos" className="block">
-              <Button variant="ghost" className="w-full">
-                Back to Videos
-              </Button>
-            </Link>
+            <div className="mt-8 text-center">
+              <Link href="/student/videos">
+                <Button variant="ghost" className="text-muted-foreground hover:text-primary">
+                  <ChevronLeft className="mr-2 w-4 h-4" /> Return to Video Gallery
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </StudentLayout>
