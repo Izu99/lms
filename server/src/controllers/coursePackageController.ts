@@ -3,6 +3,7 @@ import { CoursePackage } from '../models/CoursePackage';
 import { Video } from '../models/Video';
 import { Paper } from '../models/Paper';
 import { Tute } from '../models/Tute'; // Import Tute model
+import { Payment } from '../models/Payment'; // Import Payment model
 import { Types } from 'mongoose';
 
 // Helper function to populate common fields
@@ -19,9 +20,6 @@ const populateCoursePackage = (query: any) => {
 // @desc    Get all course packages
 // @route   GET /api/course-packages
 // @access  Private (Teachers and Students)
-// @desc    Get all course packages
-// @route   GET /api/course-packages
-// @access  Private (Teachers and Students)
 export const getCoursePackages = async (req: Request, res: Response) => {
   try {
     const user = (req as any).user;
@@ -31,17 +29,6 @@ export const getCoursePackages = async (req: Request, res: Response) => {
     if (institute && institute !== 'all') query.institute = institute;
     if (year && year !== 'all') query.year = year;
     if (academicLevel && academicLevel !== 'all') query.academicLevel = academicLevel;
-
-    // No specific filtering for students for now, show all packages
-    // if (user.role === 'student') {
-    //   query = {
-    //     $or: [
-    //       { availability: 'all' },
-    //       { availability: 'physical', 'studentType': user.studentType },
-    //       { institute: user.institute, year: user.year },
-    //     ],
-    //   };
-    // }
 
     const coursePackages = await populateCoursePackage(CoursePackage.find(query)).sort({ createdAt: -1 });
     res.json({ coursePackages });
@@ -62,18 +49,55 @@ export const getCoursePackageById = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Course package not found' });
     }
 
-    // Basic authorization for students (can be expanded)
-    // const user = (req as any).user;
-    // if (user.role === 'student') {
-    //   const isAuthorized =
-    //     coursePackage.freeForAllInstituteYear ||
-    //     (coursePackage.freeForPhysicalStudents && user.studentType === 'Physical') ||
-    //     (coursePackage.institute?.equals(user.institute) && coursePackage.year?.equals(user.year));
+    const requestingUser = (req as any).user;
 
-    //   if (!isAuthorized) {
-    //     return res.status(403).json({ message: 'Not authorized to view this course package' });
-    //   }
-    // }
+    // If user is not a student, or is a teacher/admin, grant full access
+    if (!requestingUser || requestingUser.role !== 'student') {
+      return res.json({ coursePackage });
+    }
+
+    // Access control logic for students
+    const studentType = requestingUser.studentType;
+
+    let hasAccess = false;
+    let paymentRequired = false;
+
+    if (coursePackage.availability === 'all') {
+      hasAccess = true;
+    } else if (coursePackage.availability === 'physical' && studentType === 'Physical') {
+      hasAccess = true;
+    } else if (coursePackage.price && coursePackage.price > 0) {
+      paymentRequired = true;
+    } else {
+      hasAccess = true;
+    }
+
+    if (paymentRequired) {
+      // Check if user has already paid
+      const payment = await Payment.findOne({
+        userId: requestingUser.id,
+        itemId: coursePackage._id,
+        status: 'PAID'
+      });
+
+      if (payment) {
+        hasAccess = true;
+        paymentRequired = false;
+      } else {
+        return res.status(402).json({
+          message: 'Payment required to access this course package.',
+          price: coursePackage.price,
+          title: coursePackage.title,
+          itemId: coursePackage._id,
+          itemModel: 'CoursePackage',
+          currency: 'LKR'
+        });
+      }
+    }
+
+    if (!hasAccess) {
+      return res.status(403).json({ message: 'Access denied to this course package.' });
+    }
 
     res.json({ coursePackage });
   } catch (error) {

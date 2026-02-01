@@ -80,6 +80,11 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // ✅ SECURITY: Remove console logs in production
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+
   // ✅ PERFORMANCE: Enable experimental features
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts'],

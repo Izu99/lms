@@ -54,6 +54,15 @@ const initiatePayment = async (req, res) => {
         // Override amount and title from DB to ensure accuracy
         amount = item.price;
         title = item.title;
+        const metadata = {
+            itemTitle: title,
+            initiatedIp: req.ip,
+            userAgent: req.headers['user-agent']
+        };
+        // Add paperType for correct redirection
+        if (itemModel === 'Paper') {
+            metadata.paperType = item.paperType;
+        }
         const amountNum = Number(amount);
         if (isNaN(amountNum) || amountNum <= 0) {
             console.error(`Invalid amount for item ${itemId}: ${amount}`);
@@ -79,11 +88,7 @@ const initiatePayment = async (req, res) => {
             currency,
             orderId,
             status: 'PENDING',
-            metadata: {
-                itemTitle: title,
-                initiatedIp: req.ip,
-                userAgent: req.headers['user-agent']
-            }
+            metadata
         });
         console.log(`Payment record created: ${payment._id}, Amount: ${payment.amount}`);
         // 5. Hash Generation (Optional for simple checkout, but good practice if using Hash-based auth)
@@ -237,7 +242,8 @@ const getPaymentStatus = async (req, res) => {
             currency: payment.currency,
             itemModel: payment.itemModel,
             itemId: payment.itemId,
-            itemTitle: payment.metadata?.itemTitle
+            itemTitle: payment.metadata?.itemTitle,
+            paperType: payment.metadata?.paperType
         });
     }
     catch (error) {

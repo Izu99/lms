@@ -33,6 +33,7 @@ const tuteSchema = new mongoose.Schema<ITute>({
 
 // Index for faster queries
 tuteSchema.index({ teacherId: 1, createdAt: -1 });
+tuteSchema.index({ institute: 1, year: 1, createdAt: -1 }); // Added for student filtering
 tuteSchema.index({ availability: 1 });
 
 export const Tute = mongoose.model<ITute>('Tute', tuteSchema);

@@ -28,4 +28,9 @@ const videoSchema = new mongoose.Schema<IVideo>({
   price: { type: Number, default: 0 },
 }, { timestamps: true });
 
+// Indexes for performance
+videoSchema.index({ institute: 1, year: 1, createdAt: -1 }); // Common filter: Institute + Year
+videoSchema.index({ uploadedBy: 1, createdAt: -1 });         // Teacher dashboard: My Videos
+videoSchema.index({ availability: 1 });                      // Filter by free/paid
+
 export const Video = mongoose.model<IVideo>('Video', videoSchema);

@@ -81,11 +81,11 @@ function StructureEssayContent() {
         const hasDownloaded = localStorage.getItem(downloadKey) === 'true';
         setHasPaperDownloaded(hasDownloaded);
       } catch (error) {
-        console.error("Error fetching paper:", error);
         if (axios.isAxiosError(error) && error.response?.status === 402) {
           setPaymentRequired(true);
           setPaymentDetails(error.response.data);
         } else {
+          console.error("Error fetching paper:", error);
           setError("Failed to load paper");
         }
       } finally {

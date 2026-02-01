@@ -59,14 +59,17 @@ function PaymentStatusContent() {
     const getRedirectPath = () => {
         if (!details) return "/student/dashboard";
 
-        const { itemModel, itemId } = details;
+        const { itemModel, itemId, paperType } = details;
         switch (itemModel) {
             case 'Video':
                 return `/student/videos/${itemId}`;
             case 'Paper':
+                if (paperType === 'Structure-Essay') {
+                    return `/student/papers/structure-essay/${itemId}`;
+                }
                 return `/student/papers/${itemId}`;
             case 'Tute':
-                return `/student/tutes/${itemId}`;
+                return `/student/tutes`; // Tutes are usually a list view, but if single view exists, change here
             case 'CoursePackage':
                 return `/student/course-packages/${itemId}`;
             default:

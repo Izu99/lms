@@ -5,6 +5,7 @@ const CoursePackage_1 = require("../models/CoursePackage");
 const Video_1 = require("../models/Video");
 const Paper_1 = require("../models/Paper");
 const Tute_1 = require("../models/Tute"); // Import Tute model
+const Payment_1 = require("../models/Payment"); // Import Payment model
 // Helper function to populate common fields
 const populateCoursePackage = (query) => {
     return query
@@ -15,9 +16,6 @@ const populateCoursePackage = (query) => {
         .populate('year', 'name')
         .populate('createdBy', 'username');
 };
-// @desc    Get all course packages
-// @route   GET /api/course-packages
-// @access  Private (Teachers and Students)
 // @desc    Get all course packages
 // @route   GET /api/course-packages
 // @access  Private (Teachers and Students)
@@ -32,16 +30,6 @@ const getCoursePackages = async (req, res) => {
             query.year = year;
         if (academicLevel && academicLevel !== 'all')
             query.academicLevel = academicLevel;
-        // No specific filtering for students for now, show all packages
-        // if (user.role === 'student') {
-        //   query = {
-        //     $or: [
-        //       { availability: 'all' },
-        //       { availability: 'physical', 'studentType': user.studentType },
-        //       { institute: user.institute, year: user.year },
-        //     ],
-        //   };
-        // }
         const coursePackages = await populateCoursePackage(CoursePackage_1.CoursePackage.find(query)).sort({ createdAt: -1 });
         res.json({ coursePackages });
     }
@@ -60,17 +48,52 @@ const getCoursePackageById = async (req, res) => {
         if (!coursePackage) {
             return res.status(404).json({ message: 'Course package not found' });
         }
-        // Basic authorization for students (can be expanded)
-        // const user = (req as any).user;
-        // if (user.role === 'student') {
-        //   const isAuthorized =
-        //     coursePackage.freeForAllInstituteYear ||
-        //     (coursePackage.freeForPhysicalStudents && user.studentType === 'Physical') ||
-        //     (coursePackage.institute?.equals(user.institute) && coursePackage.year?.equals(user.year));
-        //   if (!isAuthorized) {
-        //     return res.status(403).json({ message: 'Not authorized to view this course package' });
-        //   }
-        // }
+        const requestingUser = req.user;
+        // If user is not a student, or is a teacher/admin, grant full access
+        if (!requestingUser || requestingUser.role !== 'student') {
+            return res.json({ coursePackage });
+        }
+        // Access control logic for students
+        const studentType = requestingUser.studentType;
+        let hasAccess = false;
+        let paymentRequired = false;
+        if (coursePackage.availability === 'all') {
+            hasAccess = true;
+        }
+        else if (coursePackage.availability === 'physical' && studentType === 'Physical') {
+            hasAccess = true;
+        }
+        else if (coursePackage.price && coursePackage.price > 0) {
+            paymentRequired = true;
+        }
+        else {
+            hasAccess = true;
+        }
+        if (paymentRequired) {
+            // Check if user has already paid
+            const payment = await Payment_1.Payment.findOne({
+                userId: requestingUser.id,
+                itemId: coursePackage._id,
+                status: 'PAID'
+            });
+            if (payment) {
+                hasAccess = true;
+                paymentRequired = false;
+            }
+            else {
+                return res.status(402).json({
+                    message: 'Payment required to access this course package.',
+                    price: coursePackage.price,
+                    title: coursePackage.title,
+                    itemId: coursePackage._id,
+                    itemModel: 'CoursePackage',
+                    currency: 'LKR'
+                });
+            }
+        }
+        if (!hasAccess) {
+            return res.status(403).json({ message: 'Access denied to this course package.' });
+        }
         res.json({ coursePackage });
     }
     catch (error) {

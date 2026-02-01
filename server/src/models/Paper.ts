@@ -83,4 +83,9 @@ paperSchema.pre('save', function (next) {
   next();
 });
 
+// Indexes for performance
+paperSchema.index({ institute: 1, year: 1, deadline: 1 });  // Student filter: Papers for my class due soon
+paperSchema.index({ teacherId: 1, createdAt: -1 });         // Teacher filter: My papers
+paperSchema.index({ paperType: 1, availability: 1 });       // Filter by type (MCQ/Essay) and access
+
 export const Paper = mongoose.model<IPaper>('Paper', paperSchema);

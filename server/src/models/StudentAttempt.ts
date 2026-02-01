@@ -43,7 +43,10 @@ const studentAttemptSchema = new mongoose.Schema<IStudentAttempt>({
   teacherReviewFileUrl: { type: String }
 }, { timestamps: true });
 
-// Ensure one attempt per student per paper
+// Ensure one attempt per student per paper (Critical for data integrity)
 studentAttemptSchema.index({ paperId: 1, studentId: 1 }, { unique: true });
+
+// Optimize "My Results" query
+studentAttemptSchema.index({ studentId: 1, submittedAt: -1 });
 
 export const StudentAttempt = mongoose.model<IStudentAttempt>('StudentAttempt', studentAttemptSchema);

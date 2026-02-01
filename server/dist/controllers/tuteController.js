@@ -7,6 +7,7 @@ exports.getStudentTutes = exports.deleteTute = exports.updateTute = exports.getT
 const Tute_1 = require("../models/Tute");
 const User_1 = require("../models/User");
 const Payment_1 = require("../models/Payment");
+const CoursePackage_1 = require("../models/CoursePackage");
 const path_1 = __importDefault(require("path"));
 const promises_1 = __importDefault(require("fs/promises"));
 // Create a new tute
@@ -106,6 +107,55 @@ const getTuteById = async (req, res) => {
         const tute = await Tute_1.Tute.findById(id).populate('teacherId', 'firstName lastName');
         if (!tute) {
             return res.status(404).json({ message: 'Tute not found' });
+        }
+        const requestingUser = req.user;
+        if (requestingUser && requestingUser.role === 'student') {
+            let hasAccess = false;
+            if (tute.availability === 'all') {
+                hasAccess = true;
+            }
+            else if (tute.availability === 'physical' && requestingUser.studentType === 'Physical') {
+                hasAccess = true;
+            }
+            else if (tute.price && tute.price > 0) {
+                // 1. Check direct payment
+                const payment = await Payment_1.Payment.findOne({
+                    userId: requestingUser.id,
+                    itemId: tute._id,
+                    status: 'PAID'
+                });
+                if (payment) {
+                    hasAccess = true;
+                }
+                else {
+                    // 2. Check package payment
+                    const packagesWithTute = await CoursePackage_1.CoursePackage.find({ tutes: tute._id }).select('_id');
+                    if (packagesWithTute.length > 0) {
+                        const packageIds = packagesWithTute.map(p => p._id);
+                        const packagePayment = await Payment_1.Payment.findOne({
+                            userId: requestingUser.id,
+                            status: 'PAID',
+                            itemModel: 'CoursePackage',
+                            itemId: { $in: packageIds }
+                        });
+                        if (packagePayment)
+                            hasAccess = true;
+                    }
+                }
+            }
+            else {
+                hasAccess = true;
+            }
+            if (!hasAccess) {
+                return res.status(402).json({
+                    message: 'Payment required to access this tute.',
+                    price: tute.price,
+                    title: tute.title,
+                    itemId: tute._id,
+                    itemModel: 'Tute',
+                    currency: 'LKR'
+                });
+            }
         }
         res.status(200).json(tute);
     }

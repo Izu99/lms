@@ -255,20 +255,22 @@ function PaperAttemptContent() {
       }
 
     } catch (error) {
-      console.error("Error fetching paper:", error);
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 402) {
-          setPaymentRequiredError(true);
-          setPaymentDetails(error.response.data);
-          setError("Payment required to access this paper.");
-        } else if (error.response?.data?.message?.includes('already attempted')) {
-          toast.info('You have already attempted this paper. Redirecting to your results...');
-          router.push('/student/papers/results');
-        } else {
-          setError(error.response?.data?.message || "Failed to load paper.");
-        }
+      if (axios.isAxiosError(error) && error.response?.status === 402) {
+        setPaymentRequiredError(true);
+        setPaymentDetails(error.response.data);
+        setError("Payment required to access this paper.");
       } else {
-        setError("An unexpected error occurred.");
+        console.error("Error fetching paper:", error);
+        if (axios.isAxiosError(error)) {
+          if (error.response?.data?.message?.includes('already attempted')) {
+            toast.info('You have already attempted this paper. Redirecting to your results...');
+            router.push('/student/papers/results');
+          } else {
+            setError(error.response?.data?.message || "Failed to load paper.");
+          }
+        } else {
+          setError("An unexpected error occurred.");
+        }
       }
     } finally {
       setLoading(false);

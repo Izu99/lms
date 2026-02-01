@@ -4,7 +4,7 @@ import rateLimit from 'express-rate-limit';
 // Rate limiting for authentication endpoints
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per windowMs
+  max: 20, // Increased from 5 to 20 for better UX
   message: 'Too many login attempts, please try again after 15 minutes',
   standardHeaders: true,
   legacyHeaders: false,
@@ -13,7 +13,7 @@ export const authLimiter = rateLimit({
 // Rate limiting for general API endpoints
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per windowMs
+  max: 500, // Increased from 100 to 500 for modern SPA dashboards
   message: 'Too many requests, please try again later',
   standardHeaders: true,
   legacyHeaders: false,
@@ -21,8 +21,8 @@ export const apiLimiter = rateLimit({
 
 // Input sanitization middleware
 export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
-  // Remove any potential MongoDB operators from request body
-  const sanitize = (obj: any): any => {
+  // Recursively remove any potential MongoDB operators (keys starting with $)
+  const sanitize = (obj: any): void => {
     if (obj && typeof obj === 'object') {
       Object.keys(obj).forEach(key => {
         if (key.startsWith('$')) {
@@ -32,18 +32,12 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
         }
       });
     }
-    return obj;
   };
 
-  if (req.body) {
-    req.body = sanitize(req.body);
-  }
-  if (req.query) {
-    req.query = sanitize(req.query);
-  }
-  if (req.params) {
-    req.params = sanitize(req.params);
-  }
+  // Mutate objects in place to avoid "getter only" errors in Express 5
+  if (req.body) sanitize(req.body);
+  if (req.query) sanitize(req.query);
+  if (req.params) sanitize(req.params);
 
   next();
 };

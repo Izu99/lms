@@ -205,6 +205,7 @@ export const deleteVideo = async (req: Request, res: Response) => {
 // Get single video
 // Get single video
 import { Payment } from '../models/Payment'; // Import Payment model
+import { CoursePackage } from '../models/CoursePackage'; // Import CoursePackage
 
 export const getVideoById = async (req: Request, res: Response) => {
   try {
@@ -241,7 +242,7 @@ export const getVideoById = async (req: Request, res: Response) => {
     }
 
     if (paymentRequired) {
-      // Check if user has already paid
+      // 1. Check if user has paid for the video directly
       const payment = await Payment.findOne({
         userId: requestingUser.id,
         itemId: video._id,
@@ -252,6 +253,27 @@ export const getVideoById = async (req: Request, res: Response) => {
         hasAccess = true;
         paymentRequired = false; // Override payment requirement since they paid
       } else {
+        // 2. Check if user has paid for a Course Package that includes this video
+        const packagesWithVideo = await CoursePackage.find({ videos: video._id }).select('_id');
+        
+        if (packagesWithVideo.length > 0) {
+            const packageIds = packagesWithVideo.map(p => p._id);
+            const packagePayment = await Payment.findOne({
+                userId: requestingUser.id,
+                status: 'PAID',
+                itemModel: 'CoursePackage',
+                itemId: { $in: packageIds }
+            });
+
+            if (packagePayment) {
+                hasAccess = true;
+                paymentRequired = false;
+            }
+        }
+      }
+      
+      // If still no access after both checks
+      if (paymentRequired) {
         return res.status(402).json({
           message: 'Payment required to access this video.',
           price: video.price,

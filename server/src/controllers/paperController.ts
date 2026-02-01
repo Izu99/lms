@@ -6,6 +6,9 @@ import path from 'path'; // Import path module
 import { IPaper, IQuestion } from '../models/Paper';
 import { deleteFile } from '../utils/fileUploadUtils'; // Import the deleteFile utility
 import { Payment } from '../models/Payment'; // Import Payment model
+import { CoursePackage } from '../models/CoursePackage'; // Import CoursePackage
+
+// ... (existing helper function code)
 
 const UPLOADS_DIR = path.join(__dirname, '../../uploads'); // Define uploads directory
 
@@ -259,7 +262,7 @@ export const getPaperById = async (req: Request, res: Response) => {
     }
 
     if (paymentRequired) {
-      // Check if user has already paid
+      // 1. Check if user has paid for the paper directly
       const payment = await Payment.findOne({
         userId: requestingUser.id,
         itemId: paper._id,
@@ -270,6 +273,26 @@ export const getPaperById = async (req: Request, res: Response) => {
         hasAccess = true;
         paymentRequired = false;
       } else {
+        // 2. Check if user has paid for a Course Package that includes this paper
+        const packagesWithPaper = await CoursePackage.find({ papers: paper._id }).select('_id');
+        
+        if (packagesWithPaper.length > 0) {
+            const packageIds = packagesWithPaper.map(p => p._id);
+            const packagePayment = await Payment.findOne({
+                userId: requestingUser.id,
+                status: 'PAID',
+                itemModel: 'CoursePackage',
+                itemId: { $in: packageIds }
+            });
+
+            if (packagePayment) {
+                hasAccess = true;
+                paymentRequired = false;
+            }
+        }
+      }
+
+      if (paymentRequired) {
         return res.status(402).json({
           message: 'Payment required to access this paper.',
           price: paper.price,

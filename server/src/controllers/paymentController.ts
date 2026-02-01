@@ -57,6 +57,17 @@ export const initiatePayment = async (req: Request, res: Response) => {
         // Override amount and title from DB to ensure accuracy
         amount = item.price;
         title = item.title;
+        
+        const metadata: any = {
+            itemTitle: title,
+            initiatedIp: req.ip,
+            userAgent: req.headers['user-agent']
+        };
+
+        // Add paperType for correct redirection
+        if (itemModel === 'Paper') {
+            metadata.paperType = item.paperType;
+        }
 
         const amountNum = Number(amount);
         if (isNaN(amountNum) || amountNum <= 0) {
@@ -87,11 +98,7 @@ export const initiatePayment = async (req: Request, res: Response) => {
             currency,
             orderId,
             status: 'PENDING',
-            metadata: {
-                itemTitle: title,
-                initiatedIp: req.ip,
-                userAgent: req.headers['user-agent']
-            }
+            metadata
         });
         
         console.log(`Payment record created: ${payment._id}, Amount: ${payment.amount}`);
@@ -275,7 +282,8 @@ export const getPaymentStatus = async (req: Request, res: Response) => {
             currency: payment.currency,
             itemModel: payment.itemModel,
             itemId: payment.itemId,
-            itemTitle: payment.metadata?.itemTitle
+            itemTitle: payment.metadata?.itemTitle,
+            paperType: payment.metadata?.paperType
         });
     } catch (error) {
         console.error('Get payment status error:', error);

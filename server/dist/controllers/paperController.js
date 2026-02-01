@@ -10,6 +10,8 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const path_1 = __importDefault(require("path")); // Import path module
 const fileUploadUtils_1 = require("../utils/fileUploadUtils"); // Import the deleteFile utility
 const Payment_1 = require("../models/Payment"); // Import Payment model
+const CoursePackage_1 = require("../models/CoursePackage"); // Import CoursePackage
+// ... (existing helper function code)
 const UPLOADS_DIR = path_1.default.join(__dirname, '../../uploads'); // Define uploads directory
 /**
  * Extracts all image URLs from a given paper object.
@@ -240,7 +242,7 @@ const getPaperById = async (req, res) => {
             hasAccess = true;
         }
         if (paymentRequired) {
-            // Check if user has already paid
+            // 1. Check if user has paid for the paper directly
             const payment = await Payment_1.Payment.findOne({
                 userId: requestingUser.id,
                 itemId: paper._id,
@@ -251,6 +253,23 @@ const getPaperById = async (req, res) => {
                 paymentRequired = false;
             }
             else {
+                // 2. Check if user has paid for a Course Package that includes this paper
+                const packagesWithPaper = await CoursePackage_1.CoursePackage.find({ papers: paper._id }).select('_id');
+                if (packagesWithPaper.length > 0) {
+                    const packageIds = packagesWithPaper.map(p => p._id);
+                    const packagePayment = await Payment_1.Payment.findOne({
+                        userId: requestingUser.id,
+                        status: 'PAID',
+                        itemModel: 'CoursePackage',
+                        itemId: { $in: packageIds }
+                    });
+                    if (packagePayment) {
+                        hasAccess = true;
+                        paymentRequired = false;
+                    }
+                }
+            }
+            if (paymentRequired) {
                 return res.status(402).json({
                     message: 'Payment required to access this paper.',
                     price: paper.price,
