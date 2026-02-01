@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { StudentLayout } from "@/components/student/StudentLayout";
 import Link from "next/link";
@@ -10,14 +10,17 @@ import {
   Send,
   AlertCircle,
   ArrowLeft,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { API_BASE_URL, API_URL } from "@/lib/constants";
 import { getFileUrl } from "@/lib/fileUtils";
 import { toast } from "sonner";
 import { FileUpload } from "@/components/ui/file-upload";
+import { PayHereButton } from "@/components/payment/PayHereButton";
+import { Lock } from "lucide-react";
 
 interface Paper {
   _id: string;
@@ -27,10 +30,21 @@ interface Paper {
   deadline: string;
 }
 
-export default function StructureEssayPaperPage() {
+function StructureEssayContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const pathname = usePathname();
   const paperId = pathname.split('/').pop();
+
+  useEffect(() => {
+    if (searchParams.get('payment_success') === 'true') {
+      toast.success("Payment Successful!", {
+        description: "You now have full access to this paper.",
+        duration: 5000,
+      });
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [searchParams]);
 
   const [paper, setPaper] = useState<Paper | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,6 +53,12 @@ export default function StructureEssayPaperPage() {
   const [answerFileUrl, setAnswerFileUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [hasPaperDownloaded, setHasPaperDownloaded] = useState(false);
+  const [paymentRequired, setPaymentRequired] = useState(false);
+  const [paymentDetails, setPaymentDetails] = useState<{
+    price: number;
+    paperTitle: string;
+    paperId: string;
+  } | null>(null);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -62,7 +82,12 @@ export default function StructureEssayPaperPage() {
         setHasPaperDownloaded(hasDownloaded);
       } catch (error) {
         console.error("Error fetching paper:", error);
-        setError("Failed to load paper");
+        if (axios.isAxiosError(error) && error.response?.status === 402) {
+          setPaymentRequired(true);
+          setPaymentDetails(error.response.data);
+        } else {
+          setError("Failed to load paper");
+        }
       } finally {
         setLoading(false);
       }
@@ -73,7 +98,47 @@ export default function StructureEssayPaperPage() {
     }
   }, [paperId]);
 
+  if (paymentRequired && paymentDetails) {
+    return (
+      <StudentLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl max-w-md w-full border theme-border">
+            <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock className="text-yellow-600 dark:text-yellow-400" size={32} />
+            </div>
+            <h2 className="text-2xl font-bold theme-text-primary mb-2">
+              Payment Required
+            </h2>
+            <p className="theme-text-secondary mb-6">
+              To access{" "}
+              <span className="font-semibold text-blue-600">
+                {paymentDetails.paperTitle}
+              </span>
+              , a payment of{" "}
+              <span className="font-bold">
+                LKR {paymentDetails.price?.toFixed(2)}
+              </span>{" "}
+              is required.
+            </p>
 
+            <PayHereButton
+              itemId={paymentDetails.paperId}
+              itemModel="Paper"
+              amount={paymentDetails.price}
+              title={paymentDetails.paperTitle}
+              className="w-full mb-4"
+            />
+
+            <Link href="/student/papers" className="block">
+              <Button variant="ghost" className="w-full">
+                Back to Papers
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </StudentLayout>
+    );
+  }
 
   const handleSubmit = async () => {
     if (!answerFile) {
@@ -252,5 +317,13 @@ export default function StructureEssayPaperPage() {
         </div>
       </motion.div>
     </StudentLayout>
+  );
+}
+
+export default function StructureEssayPaperPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center h-screen"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>}>
+      <StructureEssayContent />
+    </Suspense>
   );
 }

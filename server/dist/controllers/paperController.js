@@ -9,6 +9,7 @@ const StudentAttempt_1 = require("../models/StudentAttempt");
 const mongoose_1 = __importDefault(require("mongoose"));
 const path_1 = __importDefault(require("path")); // Import path module
 const fileUploadUtils_1 = require("../utils/fileUploadUtils"); // Import the deleteFile utility
+const Payment_1 = require("../models/Payment"); // Import Payment model
 const UPLOADS_DIR = path_1.default.join(__dirname, '../../uploads'); // Define uploads directory
 /**
  * Extracts all image URLs from a given paper object.
@@ -224,29 +225,41 @@ const getPaperById = async (req, res) => {
         // Access control logic for students
         const studentType = requestingUser.studentType;
         let hasAccess = false;
-        // let paymentRequired = false; // Commented out for bypass
+        let paymentRequired = false;
         if (paper.availability === 'all') {
             hasAccess = true;
         }
         else if (paper.availability === 'physical' && studentType === 'Physical') {
             hasAccess = true;
         }
-        else if (paper.availability === 'paid') {
-            // paymentRequired = true; // Uncomment when payment is implemented
-            hasAccess = false; // Deny access for now if paid only
+        else if (paper.availability === 'paid' || (paper.price && paper.price > 0)) {
+            paymentRequired = true;
         }
         else {
-            // Temporarily bypass payment requirement
+            // Default to free if price is 0 and no specific restriction
             hasAccess = true;
         }
-        // if (paymentRequired) { // Commented out for bypass
-        //   return res.status(402).json({
-        //     message: 'Payment required to access this paper.',
-        //     price: paper.price,
-        //     paperTitle: paper.title,
-        //     paperId: paper._id
-        //   });
-        // }
+        if (paymentRequired) {
+            // Check if user has already paid
+            const payment = await Payment_1.Payment.findOne({
+                userId: requestingUser.id,
+                itemId: paper._id,
+                status: 'PAID'
+            });
+            if (payment) {
+                hasAccess = true;
+                paymentRequired = false;
+            }
+            else {
+                return res.status(402).json({
+                    message: 'Payment required to access this paper.',
+                    price: paper.price,
+                    paperTitle: paper.title,
+                    paperId: paper._id,
+                    currency: 'LKR'
+                });
+            }
+        }
         if (!hasAccess) {
             // This case should ideally not be reached if logic is exhaustive, but as a fallback
             return res.status(403).json({ message: 'Access denied to this paper.' });
