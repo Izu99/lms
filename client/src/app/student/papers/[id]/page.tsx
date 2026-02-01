@@ -349,13 +349,26 @@ function PaperAttemptContent() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
         <div className="text-center max-w-md p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
-          <AlertTriangle className="text-yellow-500 w-16 h-16 mx-auto mb-4" />
+          <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="text-yellow-600 dark:text-yellow-400" size={32} />
+          </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Payment Required</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            To access "{paymentDetails.paperTitle}", a payment of LKR {paymentDetails.price?.toFixed(2)} is required.
+            To access <span className="font-semibold text-blue-600">"{paymentDetails.paperTitle}"</span>, a payment of <span className="font-bold">LKR {paymentDetails.price?.toFixed(2)}</span> is required.
           </p>
-          <Link href="/student/papers">
-            <Button>Back to Papers</Button>
+          
+          <PayHereButton
+            itemId={paymentDetails.paperId}
+            itemModel="Paper"
+            amount={paymentDetails.price}
+            title={paymentDetails.paperTitle}
+            className="w-full mb-4 h-12 text-lg"
+          />
+
+          <Link href="/student/papers" className="block">
+            <Button variant="ghost" className="w-full">
+              Back to Papers
+            </Button>
           </Link>
         </div>
       </div>
