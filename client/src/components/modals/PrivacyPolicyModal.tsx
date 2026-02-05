@@ -40,7 +40,7 @@ export function PrivacyPolicyModal({ open, onOpenChange }: PrivacyPolicyModalPro
                         Privacy Policy for ezyICT
                     </DialogTitle>
                     <DialogDescription className="text-slate-500 dark:text-slate-400 pr-8">
-                        We are committed to protecting your personal information and ensuring a secure learning environment.
+                        We are committed to protecting your privacy and handling your personal information responsibly.
                     </DialogDescription>
                     {/* Scroll indicator */}
                     <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">

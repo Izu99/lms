@@ -6,7 +6,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
     title: "Privacy Policy | ezyICT",
-    description: "Privacy Policy for ezyICT Learning Management System",
+    description: "Privacy Policy for ezyICT Learning Management System - PayHere Compliant",
 };
 
 export default function PrivacyPolicyPage() {
@@ -54,159 +54,102 @@ export default function PrivacyPolicyPage() {
                             <span>Your Privacy Matters</span>
                         </div>
                         <h1 className="text-4xl md:text-6xl font-black text-slate-900 mb-6 tracking-tight leading-tight">
-                            Privacy Policy for <span className="text-blue-600">ezyICT</span>
+                            Privacy Policy
                         </h1>
                         <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                            We are committed to protecting your personal information and ensuring a secure learning environment for all our students.
+                            At ezyICT, we are committed to protecting your privacy and handling your personal data responsibly.
                         </p>
                     </div>
                 </section>
 
                 {/* Content Section */}
                 <section className="py-16 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="prose prose-slate prose-lg max-w-none">
+                    <div className="space-y-8">
 
-                        {/* Introduction */}
-                        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 mb-12">
-                            <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-3">
-                                <FileText className="text-blue-600" />
-                                Introduction
+                        {/* Information We Collect */}
+                        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
+                            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                                <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100 text-blue-600 text-lg font-bold">1</span>
+                                Information We Collect
+                            </h2>
+                            <div className="space-y-4 text-slate-600">
+                                <p>When you visit our website, we may collect certain information about you, including:</p>
+                                <ul className="list-disc pl-6 space-y-2">
+                                    <li><strong>Personal identification information</strong> (such as your name, email address, and phone number) provided voluntarily by you during the registration or checkout process</li>
+                                    <li><strong>Payment and billing information</strong> necessary to process your orders, which are securely handled by trusted third-party payment processors</li>
+                                    <li><strong>Browsing information</strong>, such as your IP address, browser type, and device information, collected automatically using cookies and similar technologies</li>
+                                    <li><strong>Learning activity data</strong> including course access, progress, and submissions</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Use of Information */}
+                        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
+                            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                                <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100 text-blue-600 text-lg font-bold">2</span>
+                                Use of Information
+                            </h2>
+                            <div className="space-y-4 text-slate-600">
+                                <p>We may use the collected information for the following purposes:</p>
+                                <ul className="list-disc pl-6 space-y-2">
+                                    <li>Process enrollments and payments</li>
+                                    <li>Provide access to learning materials and services</li>
+                                    <li>Communicate important updates and support messages</li>
+                                    <li>Improve platform performance and user experience</li>
+                                    <li>Prevent fraud and unauthorized access</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Information Sharing */}
+                        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
+                            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                                <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100 text-blue-600 text-lg font-bold">3</span>
+                                Information Sharing
+                            </h2>
+                            <div className="space-y-4 text-slate-600">
+                                <p>We do <strong>not sell or trade</strong> your personal data.</p>
+                                <p>Information may be shared only with:</p>
+                                <ul className="list-disc pl-6 space-y-2">
+                                    <li>Trusted service providers (payment processors like PayHere)</li>
+                                    <li>Legal authorities if required by law</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Data Security */}
+                        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
+                            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                                <Lock className="text-blue-600" size={24} />
+                                Data Security
                             </h2>
                             <p className="text-slate-600 leading-relaxed">
-                                At ezyICT, your privacy is our priority. We are dedicated to protecting the personal and sensitive data of all users accessing our Learning Management System (LMS). This Privacy Policy explains how we collect, use, protect, and manage the data you provide to ensure a safe and effective learning experience.
+                                We use industry-standard security measures to protect your data. While we strive for maximum security, no online system is completely secure. We implement encryption, access controls, and regular security audits to safeguard your personal information.
                             </p>
                         </div>
 
-                        <div className="grid gap-12">
-
-                            {/* 1. Information We Collect */}
-                            <div className="group">
-                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3 group-hover:text-blue-600 transition-colors">
-                                    <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100 text-blue-600 text-lg font-bold">1</span>
-                                    Information We Collect
-                                </h3>
-                                <div className="pl-4 border-l-2 border-blue-100 space-y-6">
-                                    <div>
-                                        <h4 className="font-bold text-slate-800 mb-2">Personal Information</h4>
-                                        <ul className="list-disc pl-5 space-y-2 text-slate-600">
-                                            <li><strong>National Identity Number:</strong> Required for identity verification and security purposes.</li>
-                                            <li><strong>Address:</strong> Collected solely for delivering tutorial materials and official correspondence.</li>
-                                            <li><strong>Contact Details:</strong> Telephone numbers and email addresses used for communication, notifications, and support services.</li>
-                                        </ul>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-slate-800 mb-2">Academic and Platform Data</h4>
-                                        <ul className="list-disc pl-5 space-y-2 text-slate-600">
-                                            <li><strong>Video and Study Material Access:</strong> Strictly limited to registered users under applicable regulations.</li>
-                                            <li><strong>Platform Interaction:</strong> Data from quizzes, assignments, and AI-powered interactions is securely stored to enhance your academic progress.</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* 2. How We Protect Your Data */}
-                            <div className="group">
-                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3 group-hover:text-blue-600 transition-colors">
-                                    <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100 text-blue-600 text-lg font-bold">2</span>
-                                    How We Protect Your Data
-                                </h3>
-                                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 grid sm:grid-cols-2 gap-6">
-                                    <div className="flex gap-4">
-                                        <Lock className="text-blue-600 shrink-0" />
-                                        <div>
-                                            <h4 className="font-bold text-slate-900">Data Encryption</h4>
-                                            <p className="text-sm text-slate-600 mt-1">All sensitive information is encrypted during transmission and at rest.</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <Shield className="text-blue-600 shrink-0" />
-                                        <div>
-                                            <h4 className="font-bold text-slate-900">Access Control</h4>
-                                            <p className="text-sm text-slate-600 mt-1">Access to sensitive data is strictly limited to authorized personnel only.</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <Eye className="text-blue-600 shrink-0" />
-                                        <div>
-                                            <h4 className="font-bold text-slate-900">Regular Audits</h4>
-                                            <p className="text-sm text-slate-600 mt-1">Periodic security audits to identify and address potential vulnerabilities.</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <CreditCard className="text-blue-600 shrink-0" />
-                                        <div>
-                                            <h4 className="font-bold text-slate-900">Secure Payments</h4>
-                                            <p className="text-sm text-slate-600 mt-1">Partnering with trusted gateways ensures secure financial data processing.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* 3. Data Usage Policy */}
-                            <div className="group">
-                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3 group-hover:text-blue-600 transition-colors">
-                                    <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100 text-blue-600 text-lg font-bold">3</span>
-                                    Data Usage Policy
-                                </h3>
-                                <p className="text-slate-600 leading-relaxed pl-4 border-l-2 border-blue-100">
-                                    Personal information is used solely for academic and administrative purposes, such as tutorial delivery, student verification, and academic progress tracking. Data from platform interactions is used to enhance the quality of the learning experience and provide personalized support.
-                                </p>
-                            </div>
-
-                            {/* 4. Prohibited Actions */}
-                            <div className="group">
-                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3 group-hover:text-blue-600 transition-colors">
-                                    <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-red-100 text-red-600 text-lg font-bold">4</span>
-                                    Prohibited Actions
-                                </h3>
-                                <div className="bg-red-50 p-6 rounded-2xl border border-red-100">
-                                    <ul className="space-y-4">
-                                        <li className="flex gap-3 items-start">
-                                            <AlertTriangle className="text-red-500 shrink-0 mt-1" size={20} />
-                                            <span className="text-slate-700"><strong>Unauthorized Sharing:</strong> Distribution of LMS content without authorization is strictly forbidden.</span>
-                                        </li>
-                                        <li className="flex gap-3 items-start">
-                                            <AlertTriangle className="text-red-500 shrink-0 mt-1" size={20} />
-                                            <span className="text-slate-700"><strong>Misuse of Credentials:</strong> Sharing login credentials with others is prohibited and may result in account suspension.</span>
-                                        </li>
-                                        <li className="flex gap-3 items-start">
-                                            <AlertTriangle className="text-red-500 shrink-0 mt-1" size={20} />
-                                            <span className="text-slate-700"><strong>Copyright Violation:</strong> Infringement of intellectual property rights will lead to legal action.</span>
-                                        </li>
-                                        <li className="flex gap-3 items-start">
-                                            <AlertTriangle className="text-red-500 shrink-0 mt-1" size={20} />
-                                            <span className="text-slate-700"><strong>Tampering:</strong> Hacking or interfering with the LMS platform is prohibited.</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            {/* 5. Third-Party Payment Services */}
-                            <div className="group">
-                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3 group-hover:text-blue-600 transition-colors">
-                                    <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100 text-blue-600 text-lg font-bold">5</span>
-                                    Third-Party Payment Services
-                                </h3>
-                                <p className="text-slate-600 leading-relaxed pl-4 border-l-2 border-blue-100">
-                                    All payments are securely processed by our trusted payment partners. ezyICT does not store or process any payment-related information (such as credit card details) on its servers. Users are encouraged to review the terms and conditions of the payment provider during the transaction process.
-                                </p>
-                            </div>
-
-                            {/* 6. Legal Compliance */}
-                            <div className="group">
-                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3 group-hover:text-blue-600 transition-colors">
-                                    <span className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100 text-blue-600 text-lg font-bold">6</span>
-                                    Legal Compliance
-                                </h3>
-                                <div className="flex gap-4 pl-4 border-l-2 border-blue-100">
-                                    <Scale className="text-blue-600 shrink-0 mt-1" />
-                                    <p className="text-slate-600 leading-relaxed">
-                                        ezyICT complies with all relevant government regulations related to data protection, digital security, and intellectual property rights. Any violations may result in legal action to protect the integrity of our platform and the rights of our content creators.
-                                    </p>
-                                </div>
-                            </div>
-
+                        {/* Cookies */}
+                        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
+                            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                                <Eye className="text-blue-600" size={24} />
+                                Cookies
+                            </h2>
+                            <p className="text-slate-600 leading-relaxed">
+                                Cookies are used to improve functionality and user experience. You may disable cookies via your browser, though some features may not work properly.
+                            </p>
                         </div>
+
+                        {/* Policy Updates */}
+                        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
+                            <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                                <FileText className="text-blue-600" size={24} />
+                                Policy Updates
+                            </h2>
+                            <p className="text-slate-600 leading-relaxed">
+                                This Privacy Policy may be updated periodically. Any changes will be posted on this page. We encourage you to review this policy regularly to stay informed about how we protect your information.
+                            </p>
+                        </div>
+
                     </div>
                 </section>
 

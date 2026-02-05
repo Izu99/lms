@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { PayHereButton } from './PayHereButton';
+import { RefundPolicyModal } from "@/components/modals/RefundPolicyModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -87,11 +88,14 @@ const translations = {
 export function PaymentCheckout({ itemId, itemModel, amount, title, className }: PaymentCheckoutProps) {
     const [agreed, setAgree] = useState(false);
     const [lang, setLang] = useState<'si' | 'en' | 'ta'>('si');
+    const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
 
     const t = translations[lang];
 
     return (
-        <div className={`bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-2 border-blue-500/20 overflow-hidden ${className}`}>
+        <>
+            <RefundPolicyModal open={isRefundModalOpen} onOpenChange={setIsRefundModalOpen} />
+            <div className={`bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-2 border-blue-500/20 overflow-hidden ${className}`}>
             {/* Header / Language Switcher */}
             <div className="p-6 border-b theme-border bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -183,9 +187,22 @@ export function PaymentCheckout({ itemId, itemModel, amount, title, className }:
                             onCheckedChange={(checked) => setAgree(checked as boolean)}
                             className="mt-1 w-6 h-6 border-2 data-[state=checked]:bg-blue-600"
                         />
-                        <span className="text-base theme-text-primary leading-tight font-bold group-hover:text-blue-600 transition-colors">
-                            {t.agree}
-                        </span>
+                        <div className="flex-1">
+                            <span className="text-base theme-text-primary leading-tight font-bold group-hover:text-blue-600 transition-colors">
+                                {t.agree}
+                            </span>
+                            <p className="text-xs theme-text-tertiary mt-2">
+                                View the{" "}
+                                <button
+                                    type="button"
+                                    onClick={() => setIsRefundModalOpen(true)}
+                                    className="text-blue-600 hover:text-blue-700 underline font-semibold focus:outline-none"
+                                >
+                                    Refund Policy
+                                </button>
+                                {" "}before making your payment.
+                            </p>
+                        </div>
                     </label>
 
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-8 bg-white dark:bg-gray-950 p-6 rounded-2xl border theme-border shadow-inner">
@@ -217,5 +234,6 @@ export function PaymentCheckout({ itemId, itemModel, amount, title, className }:
                 </div>
             </div>
         </div>
+        </>
     );
 }

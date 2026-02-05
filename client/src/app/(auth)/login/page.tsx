@@ -11,13 +11,13 @@ import {
   BookOpen,
   Target,
 } from "lucide-react";
-import { PrivacyPolicyModal } from "@/components/modals/PrivacyPolicyModal";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { API_URL } from "@/lib/constants";
 import Cookies from 'js-cookie';
 import { useTheme } from 'next-themes';
+import { GlobalFooter } from "@/components/common/GlobalFooter";
 
 export default function LoginPage() {
   const { setTheme } = useTheme();
@@ -28,7 +28,6 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [currentQuote, setCurrentQuote] = useState(0);
   const [floatingElementStyles, setFloatingElementStyles] = useState<React.CSSProperties[]>([]);
-  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
 
   const motivationalQuotes = [
     {
@@ -127,8 +126,8 @@ export default function LoginPage() {
   const QuoteIcon = quote.icon;
 
   return (
+    <>
     <div className="min-h-screen flex">
-      <PrivacyPolicyModal open={isPrivacyModalOpen} onOpenChange={setIsPrivacyModalOpen} />
       {/* Left side - Enhanced Branding with Motivational Content */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
         {/* Animated Background Elements */}
@@ -241,7 +240,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right side - Login Form with Blue Theme */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white relative">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-white relative">
         {/* Subtle background pattern */}
         <div className="absolute inset-0 opacity-5">
           <div
@@ -421,21 +420,12 @@ export default function LoginPage() {
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-indigo-600 group-hover:w-full transition-all duration-300"></span>
                 </Link>
               </div>
-
-              <div className="text-center mt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsPrivacyModalOpen(true)}
-                  className="text-xs text-gray-500 hover:text-blue-600 hover:underline transition-colors"
-                >
-                  Privacy Policy
-                </button>
-              </div>
             </div>
           </div>
         </div>
       </div>
-
+      </div>
+      <GlobalFooter />
       <style jsx>{`
         @keyframes float {
           0%,
@@ -463,6 +453,6 @@ export default function LoginPage() {
           }
         }
       `}</style>
-    </div>
+    </>
   );
 }

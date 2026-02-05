@@ -1,4 +1,4 @@
-"use client"; 
+"use client";
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from 'next-themes';
 import { api } from "@/lib/api-client";
@@ -17,7 +17,6 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react";
-import { PrivacyPolicyModal } from "@/components/modals/PrivacyPolicyModal";
 
 // Custom hook for debouncing
 function useDebounce(value: string, delay: number) {
@@ -185,7 +184,8 @@ export default function RegisterPage() {
     },
   });
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(false);
-  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
+  const [isRefundAccepted, setIsRefundAccepted] = useState(false);
+  const [isTermsAccepted, setIsTermsAccepted] = useState(false);
 
   // Debounce the username input
   const debouncedUsername = useDebounce(data.username, 500);
@@ -438,7 +438,6 @@ export default function RegisterPage() {
 
   return (
     <>
-      <PrivacyPolicyModal open={isPrivacyModalOpen} onOpenChange={setIsPrivacyModalOpen} />
       <div className="min-h-screen flex">
         {/* Left side - Enhanced Branding with Motivational Content */}
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 via-teal-700 to-cyan-800 relative overflow-hidden">
@@ -1144,34 +1143,78 @@ export default function RegisterPage() {
                       </div>
                     </div>
 
-                    {/* Privacy Policy Checkbox */}
-                    <div className="flex items-start gap-3 mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                      <div className="flex items-center h-5">
-                        <input
-                          id="privacy-policy"
-                          name="privacy-policy"
-                          type="checkbox"
-                          checked={isPrivacyAccepted}
-                          onChange={(e) => setIsPrivacyAccepted(e.target.checked)}
-                          className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer"
-                        />
+                    {/* Policy Agreements */}
+                    <div className="space-y-3 mt-6">
+                      {/* Privacy Policy */}
+                      <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                        <div className="flex items-center h-5 mt-0.5">
+                          <input
+                            id="privacy-policy"
+                            name="privacy-policy"
+                            type="checkbox"
+                            checked={isPrivacyAccepted}
+                            onChange={(e) => setIsPrivacyAccepted(e.target.checked)}
+                            className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer"
+                          />
+                        </div>
+                        <div className="text-sm flex-1">
+                          <label htmlFor="privacy-policy" className="font-medium text-gray-700 cursor-pointer select-none">
+                            I agree to the{" "}
+                            <Link href="/privacy-policy" target="_blank" className="text-blue-600 hover:text-blue-700 underline font-semibold focus:outline-none">
+                              Privacy Policy
+                            </Link>
+                          </label>
+                        </div>
                       </div>
-                      <div className="text-sm">
-                        <label htmlFor="privacy-policy" className="font-medium text-gray-700 cursor-pointer select-none">
-                          I agree to the{" "}
-                          <button
-                            type="button"
-                            onClick={() => setIsPrivacyModalOpen(true)}
-                            className="text-emerald-600 hover:text-emerald-700 underline font-semibold focus:outline-none"
-                          >
-                            Privacy Policy
-                          </button>
-                          {" "}and Terms of Service
-                        </label>
-                        <p className="text-gray-500 mt-1 text-xs">
-                          By creating an account, you agree to our data collection and usage practices as described in the Privacy Policy.
-                        </p>
+
+                      {/* Refund Policy */}
+                      <div className="flex items-start gap-3 p-4 bg-orange-50 rounded-xl border border-orange-200">
+                        <div className="flex items-center h-5 mt-0.5">
+                          <input
+                            id="refund-policy"
+                            name="refund-policy"
+                            type="checkbox"
+                            checked={isRefundAccepted}
+                            onChange={(e) => setIsRefundAccepted(e.target.checked)}
+                            className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer"
+                          />
+                        </div>
+                        <div className="text-sm flex-1">
+                          <label htmlFor="refund-policy" className="font-medium text-gray-700 cursor-pointer select-none">
+                            I agree to the{" "}
+                            <Link href="/refund-policy" target="_blank" className="text-orange-600 hover:text-orange-700 underline font-semibold focus:outline-none">
+                              Refund Policy
+                            </Link>
+                          </label>
+                        </div>
                       </div>
+
+                      {/* Terms & Conditions */}
+                      <div className="flex items-start gap-3 p-4 bg-purple-50 rounded-xl border border-purple-200">
+                        <div className="flex items-center h-5 mt-0.5">
+                          <input
+                            id="terms-conditions"
+                            name="terms-conditions"
+                            type="checkbox"
+                            checked={isTermsAccepted}
+                            onChange={(e) => setIsTermsAccepted(e.target.checked)}
+                            className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer"
+                          />
+                        </div>
+                        <div className="text-sm flex-1">
+                          <label htmlFor="terms-conditions" className="font-medium text-gray-700 cursor-pointer select-none">
+                            I agree to the{" "}
+                            <Link href="/terms-conditions" target="_blank" className="text-purple-600 hover:text-purple-700 underline font-semibold focus:outline-none">
+                              Terms & Conditions
+                            </Link>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Summary text */}
+                      <p className="text-gray-500 text-xs px-4 py-2">
+                        By creating an account, you agree to our policies and terms of service.
+                      </p>
                     </div>
 
                     <div className="flex flex-col gap-3 sm:flex-row mt-6">
@@ -1185,8 +1228,9 @@ export default function RegisterPage() {
                       <button
                         type="button"
                         onClick={handleRegister}
-                        disabled={loading}
+                        disabled={loading || !isPrivacyAccepted || !isRefundAccepted || !isTermsAccepted}
                         className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={!isPrivacyAccepted || !isRefundAccepted || !isTermsAccepted ? "Please agree to all policies to continue" : ""}
                       >
                         {loading ? "Creating Account..." : "Create Account"}
                       </button>
