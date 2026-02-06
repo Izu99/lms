@@ -151,12 +151,12 @@ app.use('/api/', apiLimiter);
 
 // Use routes
 app.use('/api/auth', authRoutes);
-app.use('/api/institutes', protect, instituteRoutes);
+app.use('/api/institutes', instituteRoutes);
 app.use('/api/images', protect, imageUploadRoutes);
 app.use('/api/papers', protect, paperRoutes);
 app.use('/api/videos', protect, videoRoutes);
 app.use('/api/tutes', protect, tuteRoutes);
-app.use('/api/years', protect, yearRoutes);
+app.use('/api/years', yearRoutes);
 app.use('/api/youtube', protect, youtubeRoutes);
 app.use('/api/zoom', protect, zoomRoutes);
 

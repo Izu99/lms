@@ -186,6 +186,7 @@ export default function RegisterPage() {
   const [isPrivacyAccepted, setIsPrivacyAccepted] = useState(false);
   const [isRefundAccepted, setIsRefundAccepted] = useState(false);
   const [isTermsAccepted, setIsTermsAccepted] = useState(false);
+  const [lang, setLang] = useState<'si' | 'en' | 'ta'>('si');
 
   // Debounce the username input
   const debouncedUsername = useDebounce(data.username, 500);
@@ -1143,70 +1144,30 @@ export default function RegisterPage() {
                       </div>
                     </div>
 
-                    {/* Policy Agreements */}
+                    {/* Policy Agreements - Consolidated into one checkbox */}
                     <div className="space-y-3 mt-6">
-                      {/* Privacy Policy */}
-                      <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                        <div className="flex items-center h-5 mt-0.5">
+                      <div className="flex items-start gap-3 p-5 bg-white dark:bg-gray-900 rounded-2xl border-2 border-emerald-500/20 hover:border-emerald-500 transition-all cursor-pointer shadow-sm group">
+                        <div className="flex items-center h-5 mt-1">
                           <input
-                            id="privacy-policy"
-                            name="privacy-policy"
+                            id="all-policies"
+                            name="all-policies"
                             type="checkbox"
-                            checked={isPrivacyAccepted}
-                            onChange={(e) => setIsPrivacyAccepted(e.target.checked)}
-                            className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer"
+                            checked={isPrivacyAccepted && isRefundAccepted && isTermsAccepted}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setIsPrivacyAccepted(checked);
+                              setIsRefundAccepted(checked);
+                              setIsTermsAccepted(checked);
+                            }}
+                            className="w-6 h-6 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer"
                           />
                         </div>
-                        <div className="text-sm flex-1">
-                          <label htmlFor="privacy-policy" className="font-medium text-gray-700 cursor-pointer select-none">
-                            I agree to the{" "}
-                            <Link href="/privacy-policy" target="_blank" className="text-blue-600 hover:text-blue-700 underline font-semibold focus:outline-none">
-                              Privacy Policy
-                            </Link>
-                          </label>
-                        </div>
-                      </div>
-
-                      {/* Refund Policy */}
-                      <div className="flex items-start gap-3 p-4 bg-orange-50 rounded-xl border border-orange-200">
-                        <div className="flex items-center h-5 mt-0.5">
-                          <input
-                            id="refund-policy"
-                            name="refund-policy"
-                            type="checkbox"
-                            checked={isRefundAccepted}
-                            onChange={(e) => setIsRefundAccepted(e.target.checked)}
-                            className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer"
-                          />
-                        </div>
-                        <div className="text-sm flex-1">
-                          <label htmlFor="refund-policy" className="font-medium text-gray-700 cursor-pointer select-none">
-                            I agree to the{" "}
-                            <Link href="/refund-policy" target="_blank" className="text-orange-600 hover:text-orange-700 underline font-semibold focus:outline-none">
-                              Refund Policy
-                            </Link>
-                          </label>
-                        </div>
-                      </div>
-
-                      {/* Terms & Conditions */}
-                      <div className="flex items-start gap-3 p-4 bg-purple-50 rounded-xl border border-purple-200">
-                        <div className="flex items-center h-5 mt-0.5">
-                          <input
-                            id="terms-conditions"
-                            name="terms-conditions"
-                            type="checkbox"
-                            checked={isTermsAccepted}
-                            onChange={(e) => setIsTermsAccepted(e.target.checked)}
-                            className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer"
-                          />
-                        </div>
-                        <div className="text-sm flex-1">
-                          <label htmlFor="terms-conditions" className="font-medium text-gray-700 cursor-pointer select-none">
-                            I agree to the{" "}
-                            <Link href="/terms-conditions" target="_blank" className="text-purple-600 hover:text-purple-700 underline font-semibold focus:outline-none">
-                              Terms & Conditions
-                            </Link>
+                        <div className="text-sm flex-1 leading-relaxed">
+                          <label htmlFor="all-policies" className="font-medium text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                            I have read and agree to the{" "}
+                            <Link href="/privacy-policy" target="_blank" className="text-emerald-600 hover:text-emerald-700 underline font-bold">Privacy Policy</Link>,{" "}
+                            <Link href="/terms-conditions" target="_blank" className="text-emerald-600 hover:text-emerald-700 underline font-bold">Terms & Conditions</Link>, and{" "}
+                            <Link href="/refund-policy" target="_blank" className="text-emerald-600 hover:text-emerald-700 underline font-bold">Refund Policy</Link>.
                           </label>
                         </div>
                       </div>
