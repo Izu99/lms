@@ -124,12 +124,12 @@ app.use('/api/auth/register', security_1.authLimiter);
 app.use('/api/', security_1.apiLimiter);
 // Use routes
 app.use('/api/auth', authRoutes_1.default);
-app.use('/api/institutes', auth_1.protect, instituteRoutes_1.default);
+app.use('/api/institutes', instituteRoutes_1.default);
 app.use('/api/images', auth_1.protect, imageUploadRoutes_1.default);
 app.use('/api/papers', auth_1.protect, paperRoutes_1.default);
 app.use('/api/videos', auth_1.protect, videoRoutes_1.default);
 app.use('/api/tutes', auth_1.protect, tuteRoutes_1.default);
-app.use('/api/years', auth_1.protect, yearRoutes_1.default);
+app.use('/api/years', yearRoutes_1.default);
 app.use('/api/youtube', auth_1.protect, youtubeRoutes_1.default);
 app.use('/api/zoom', auth_1.protect, zoomRoutes_1.default);
 // Add new modular routes
