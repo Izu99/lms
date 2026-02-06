@@ -5,8 +5,13 @@ const Video_1 = require("../../../models/Video");
 const VideoWatch_1 = require("../../../models/VideoWatch");
 const getVideoStats = async (req, res) => {
     try {
-        const studentId = req.user.id;
-        const totalVideos = await Video_1.Video.countDocuments();
+        const user = req.user;
+        const studentId = user.id;
+        const videoFilter = {};
+        if (user.role === 'student' && user.academicLevel) {
+            videoFilter.academicLevel = user.academicLevel;
+        }
+        const totalVideos = await Video_1.Video.countDocuments(videoFilter);
         const watchedVideos = await VideoWatch_1.VideoWatch.find({ student: studentId });
         const totalWatchedCount = new Set(watchedVideos.map(w => w.video.toString())).size;
         const totalWatchTime = watchedVideos.reduce((acc, w) => acc + w.watchDuration, 0);

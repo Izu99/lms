@@ -68,6 +68,9 @@ const storage = multer.diskStorage({
       case 'id-card':
         subDir = 'id-cards';
         break;
+      case 'payment-slip':
+        subDir = 'slip';
+        break;
       default:
         // Fallback: check fieldname
         if (file.fieldname === 'thumbnail') {

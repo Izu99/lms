@@ -13,6 +13,7 @@ interface AuthenticatedRequest extends Request {
     studentType?: string;
     institute?: string; // Added for student
     year?: string;      // Added for student
+    academicLevel?: string; // Added for AL/OL filtering
   };
 }
 
@@ -63,6 +64,7 @@ export const protect = async (req: AuthenticatedRequest, res: Response, next: Ne
       studentType: user.studentType,
       institute: user.institute ? (user.institute as any)._id.toString() : undefined,
       year: user.year ? (user.year as any)._id.toString() : undefined,
+      academicLevel: user.academicLevel,
     };
 
     next();

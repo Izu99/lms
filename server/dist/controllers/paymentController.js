@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifySandboxPayment = exports.getPaymentStatus = exports.handleNotify = exports.initiatePayment = void 0;
+exports.submitManualPayment = exports.verifySandboxPayment = exports.getPaymentStatus = exports.handleNotify = exports.initiatePayment = void 0;
 const Payment_1 = require("../models/Payment");
 const User_1 = require("../models/User");
 const Video_1 = require("../models/Video");
@@ -291,3 +291,75 @@ const verifySandboxPayment = async (req, res) => {
     }
 };
 exports.verifySandboxPayment = verifySandboxPayment;
+const submitManualPayment = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { itemId, itemModel, username } = req.body;
+        if (!req.file) {
+            return res.status(400).json({ message: 'Payment slip image is required' });
+        }
+        if (!userId || !itemId || !itemModel || !username) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+        // 1. Validate Item and Price
+        let item = null;
+        switch (itemModel) {
+            case 'Video':
+                item = await Video_1.Video.findById(itemId);
+                break;
+            case 'Paper':
+                item = await Paper_1.Paper.findById(itemId);
+                break;
+            case 'Tute':
+                item = await Tute_1.Tute.findById(itemId);
+                break;
+            case 'CoursePackage':
+                item = await CoursePackage_1.CoursePackage.findById(itemId);
+                break;
+            default: return res.status(400).json({ message: 'Invalid item model' });
+        }
+        if (!item) {
+            return res.status(404).json({ message: 'Item not found' });
+        }
+        const amount = item.price;
+        const title = item.title;
+        // 2. Create Payment Record with PENDING status
+        const orderId = `SLIP-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+        // Construct path for the slip image
+        // Storing relative path from uploads root
+        const slipPath = `/uploads/slip/${req.file.filename}`;
+        const metadata = {
+            itemTitle: title,
+            manualPayment: {
+                username,
+                slipPath,
+                uploadedAt: new Date()
+            }
+        };
+        if (itemModel === 'Paper') {
+            metadata.paperType = item.paperType;
+        }
+        const payment = await Payment_1.Payment.create({
+            userId,
+            itemId,
+            itemModel,
+            amount,
+            currency: 'LKR',
+            orderId,
+            status: 'PENDING',
+            paymentMethod: 'MANUAL_SLIP',
+            metadata
+        });
+        return res.status(201).json({
+            success: true,
+            message: 'Manual payment submitted successfully',
+            orderId,
+            paymentId: payment._id
+        });
+    }
+    catch (error) {
+        console.error('Submit manual payment error:', error);
+        return res.status(500).json({ message: 'Server error processing manual payment' });
+    }
+};
+exports.submitManualPayment = submitManualPayment;

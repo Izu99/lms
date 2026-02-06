@@ -4,14 +4,22 @@ import { StudentAttempt } from '../../../models/StudentAttempt';
 import { StudentDashboardStats, StudentVideoSummary, StudentPaperSummary, StudentActivity } from '../types/studentDashboard.types';
 
 export class StudentDashboardService {
-  static async getDashboardStats(studentId: string): Promise<StudentDashboardStats> {
+  static async getDashboardStats(studentId: string, academicLevel?: string): Promise<StudentDashboardStats> {
+    const videoFilter: any = {};
+    const paperFilter: any = { deadline: { $gte: new Date() } };
+
+    if (academicLevel) {
+      videoFilter.academicLevel = academicLevel;
+      paperFilter.academicLevel = academicLevel;
+    }
+
     const [
       availableVideos,
       availablePapers,
       completedAttempts
     ] = await Promise.all([
-      Video.countDocuments(),
-      Paper.countDocuments({ deadline: { $gte: new Date() } }),
+      Video.countDocuments(videoFilter),
+      Paper.countDocuments(paperFilter),
       StudentAttempt.find({ studentId, status: 'submitted' })
     ]);
 
@@ -28,8 +36,13 @@ export class StudentDashboardService {
     };
   }
 
-  static async getRecentVideos(studentId: string, limit = 5): Promise<StudentVideoSummary[]> {
-    const videos = await Video.find()
+  static async getRecentVideos(studentId: string, academicLevel?: string, limit = 5): Promise<StudentVideoSummary[]> {
+    const filter: any = {};
+    if (academicLevel) {
+      filter.academicLevel = academicLevel;
+    }
+
+    const videos = await Video.find(filter)
       .populate('institute', 'name location')
       .populate('year', 'year name')
       .populate('uploadedBy', 'username firstName lastName')
@@ -55,8 +68,13 @@ export class StudentDashboardService {
     })) as StudentVideoSummary[];
   }
 
-  static async getAvailablePapers(studentId: string, limit = 5): Promise<StudentPaperSummary[]> {
-    const papers = await Paper.find({ deadline: { $gte: new Date() } })
+  static async getAvailablePapers(studentId: string, academicLevel?: string, limit = 5): Promise<StudentPaperSummary[]> {
+    const filter: any = { deadline: { $gte: new Date() } };
+    if (academicLevel) {
+      filter.academicLevel = academicLevel;
+    }
+
+    const papers = await Paper.find(filter)
       .sort({ deadline: 1 })
       .limit(limit)
       .lean();

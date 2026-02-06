@@ -5,6 +5,8 @@ import { Video } from '../models/Video';
 import { Paper } from '../models/Paper';
 import { Tute } from '../models/Tute';
 import { CoursePackage } from '../models/CoursePackage';
+import path from 'path';
+import fs from 'fs';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 
@@ -332,5 +334,80 @@ export const verifySandboxPayment = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Verify sandbox payment error:', error);
         return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+export const submitManualPayment = async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.id;
+        const { itemId, itemModel, username } = req.body;
+        
+        if (!req.file) {
+            return res.status(400).json({ message: 'Payment slip image is required' });
+        }
+
+        if (!userId || !itemId || !itemModel || !username) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        // 1. Validate Item and Price
+        let item: any = null;
+        switch (itemModel) {
+            case 'Video': item = await Video.findById(itemId); break;
+            case 'Paper': item = await Paper.findById(itemId); break;
+            case 'Tute': item = await Tute.findById(itemId); break;
+            case 'CoursePackage': item = await CoursePackage.findById(itemId); break;
+            default: return res.status(400).json({ message: 'Invalid item model' });
+        }
+
+        if (!item) {
+            return res.status(404).json({ message: 'Item not found' });
+        }
+
+        const amount = item.price;
+        const title = item.title;
+
+        // 2. Create Payment Record with PENDING status
+        const orderId = `SLIP-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+        
+        // Construct path for the slip image
+        // Storing relative path from uploads root
+        const slipPath = `/uploads/slip/${req.file.filename}`;
+
+        const metadata: any = {
+            itemTitle: title,
+            manualPayment: {
+                username,
+                slipPath,
+                uploadedAt: new Date()
+            }
+        };
+        
+        if (itemModel === 'Paper') {
+            metadata.paperType = item.paperType;
+        }
+
+        const payment = await Payment.create({
+            userId,
+            itemId,
+            itemModel,
+            amount,
+            currency: 'LKR',
+            orderId,
+            status: 'PENDING',
+            paymentMethod: 'MANUAL_SLIP', 
+            metadata
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: 'Manual payment submitted successfully',
+            orderId,
+            paymentId: payment._id
+        });
+
+    } catch (error) {
+        console.error('Submit manual payment error:', error);
+        return res.status(500).json({ message: 'Server error processing manual payment' });
     }
 };

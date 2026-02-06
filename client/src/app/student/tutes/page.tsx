@@ -173,6 +173,9 @@ function StudentTutesContent() {
                     src={getFileUrl(tute.thumbnailUrl, 'image')}
                     alt={tute.title}
                     className="w-full h-48 object-cover border-b theme-border"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80";
+                    }}
                   />
                 ) : tute.fileType === 'image' && tute.fileUrl ? (
                   <img
@@ -181,8 +184,15 @@ function StudentTutesContent() {
                     className="w-full h-48 object-cover border-b theme-border"
                   />
                 ) : (
-                  <div className="w-full h-48 bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900 dark:to-indigo-900 flex items-center justify-center border-b theme-border">
-                    {getFileIcon(tute.fileType)}
+                  <div className="w-full h-48 relative flex items-center justify-center border-b theme-border bg-gray-900">
+                    <img
+                      src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80"
+                      alt="Default Tute Thumbnail"
+                      className="absolute inset-0 w-full h-full object-cover opacity-30"
+                    />
+                    <div className="relative z-10 flex items-center justify-center">
+                      {getFileIcon(tute.fileType)}
+                    </div>
                   </div>
                 )}
 

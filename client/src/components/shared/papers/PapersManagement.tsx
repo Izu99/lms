@@ -86,9 +86,19 @@ const PaperCard = ({
                     src={getFileUrl(paper.thumbnailUrl, 'paper-thumbnail')}
                     alt={paper.title}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1586281380349-631531a744c2?w=800&q=80";
+                    }}
                 />
             ) : (
-                <FileText className="w-24 h-24 text-white/50 group-hover:scale-110 transition-transform" />
+                <div className="w-full h-full relative flex items-center justify-center">
+                    <img
+                        src="https://images.unsplash.com/photo-1586281380349-631531a744c2?w=800&q=80"
+                        alt="Default Paper Thumbnail"
+                        className="absolute inset-0 w-full h-full object-cover opacity-20"
+                    />
+                    <FileText className="w-24 h-24 text-white/50 group-hover:scale-110 transition-transform relative z-10" />
+                </div>
             )}
             <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg opacity-0 group-hover:opacity-100">

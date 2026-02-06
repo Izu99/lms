@@ -7,10 +7,11 @@ class StudentDashboardController {
     static async getDashboard(req, res) {
         try {
             const studentId = req.user.id;
+            const academicLevel = req.user.academicLevel;
             const [stats, recentVideos, availablePapers, recentActivity] = await Promise.all([
-                studentDashboardService_1.StudentDashboardService.getDashboardStats(studentId),
-                studentDashboardService_1.StudentDashboardService.getRecentVideos(studentId),
-                studentDashboardService_1.StudentDashboardService.getAvailablePapers(studentId),
+                studentDashboardService_1.StudentDashboardService.getDashboardStats(studentId, academicLevel),
+                studentDashboardService_1.StudentDashboardService.getRecentVideos(studentId, academicLevel),
+                studentDashboardService_1.StudentDashboardService.getAvailablePapers(studentId, academicLevel),
                 studentDashboardService_1.StudentDashboardService.getRecentActivity(studentId)
             ]);
             const dashboardData = {
@@ -29,7 +30,8 @@ class StudentDashboardController {
     static async getStats(req, res) {
         try {
             const studentId = req.user.id;
-            const stats = await studentDashboardService_1.StudentDashboardService.getDashboardStats(studentId);
+            const academicLevel = req.user.academicLevel;
+            const stats = await studentDashboardService_1.StudentDashboardService.getDashboardStats(studentId, academicLevel);
             return responseHelper_1.ResponseHelper.success(res, stats, 'Statistics retrieved successfully');
         }
         catch (error) {

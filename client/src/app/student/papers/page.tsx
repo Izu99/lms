@@ -409,10 +409,18 @@ export default function StudentPapersPage() {
                       src={getFileUrl(paper.thumbnailUrl, 'paper-thumbnail')}
                       alt={paper.title}
                       className="w-full h-48 object-cover border-b theme-border"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1586281380349-631531a744c2?w=800&q=80";
+                      }}
                     />
                   ) : (
-                    <div className={`w-full h-48 bg-gradient-to-br ${paper.paperType === 'Structure-Essay' ? 'from-purple-100 to-pink-100 dark:from-purple-900 dark:to-pink-900' : 'from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900'} flex items-center justify-center border-b theme-border`}>
-                      <FileText size={64} className="theme-text-tertiary" />
+                    <div className={`w-full h-48 relative flex items-center justify-center border-b theme-border ${paper.paperType === 'Structure-Essay' ? 'bg-purple-900' : 'bg-blue-900'}`}>
+                      <img
+                        src="https://images.unsplash.com/photo-1586281380349-631531a744c2?w=800&q=80"
+                        alt="Default Paper Thumbnail"
+                        className="absolute inset-0 w-full h-full object-cover opacity-20"
+                      />
+                      <FileText size={64} className="theme-text-tertiary relative z-10 opacity-50" />
                     </div>
                   )}
 

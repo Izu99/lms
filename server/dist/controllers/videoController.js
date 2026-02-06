@@ -12,15 +12,23 @@ const path_1 = __importDefault(require("path"));
 // Get all videos
 const getAllVideos = async (req, res) => {
     try {
-        const { institute, year, academicLevel } = req.query;
+        const { institute, year, academicLevel: queryLevel } = req.query;
+        const requestingUser = req.user;
         const filter = {};
         if (institute && institute !== 'all')
             filter.institute = institute;
         if (year && year !== 'all')
             filter.year = year;
-        // Note: Video model might not have academicLevel yet, but adding logic for consistency if it does or will
-        if (academicLevel && academicLevel !== 'all')
-            filter.academicLevel = academicLevel;
+        // Automatically filter by student's academicLevel if they are a student
+        if (requestingUser && requestingUser.role === 'student') {
+            if (requestingUser.academicLevel) {
+                filter.academicLevel = requestingUser.academicLevel;
+            }
+        }
+        else if (queryLevel && queryLevel !== 'all') {
+            // Teachers and admins can filter by query parameter
+            filter.academicLevel = queryLevel;
+        }
         const videos = await Video_1.Video.find(filter)
             .populate('uploadedBy', 'username role')
             .populate('institute', 'name location')
@@ -214,6 +222,10 @@ const getVideoById = async (req, res) => {
         // If user is not a student, or is a teacher/admin, grant full access
         if (!requestingUser || requestingUser.role !== 'student') {
             return res.json({ video });
+        }
+        // Check academic level match for students
+        if (requestingUser.academicLevel && video.academicLevel && requestingUser.academicLevel !== video.academicLevel) {
+            return res.status(403).json({ message: 'Access denied. This video does not match your academic level.' });
         }
         // Access control logic for students
         const studentType = requestingUser.studentType;

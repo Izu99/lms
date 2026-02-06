@@ -28,7 +28,16 @@ export const getCoursePackages = async (req: Request, res: Response) => {
 
     if (institute && institute !== 'all') query.institute = institute;
     if (year && year !== 'all') query.year = year;
-    if (academicLevel && academicLevel !== 'all') query.academicLevel = academicLevel;
+    
+    // Automatically filter by student's academicLevel if they are a student
+    if (user && user.role === 'student') {
+      if (user.academicLevel) {
+        query.academicLevel = user.academicLevel;
+      }
+    } else if (academicLevel && academicLevel !== 'all') {
+      // Teachers and admins can filter by query parameter
+      query.academicLevel = academicLevel;
+    }
 
     const coursePackages = await populateCoursePackage(CoursePackage.find(query)).sort({ createdAt: -1 });
     res.json({ coursePackages });
@@ -54,6 +63,11 @@ export const getCoursePackageById = async (req: Request, res: Response) => {
     // If user is not a student, or is a teacher/admin, grant full access
     if (!requestingUser || requestingUser.role !== 'student') {
       return res.json({ coursePackage });
+    }
+
+    // Check academic level match for students
+    if (requestingUser.academicLevel && coursePackage.academicLevel && requestingUser.academicLevel !== coursePackage.academicLevel) {
+      return res.status(403).json({ message: 'Access denied. This course package does not match your academic level.' });
     }
 
     // Access control logic for students
@@ -131,10 +145,24 @@ export const createCoursePackage = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Title, price, and availability are required' });
     }
 
-    // Ensure arrays are provided (can be empty)
-    const videosList = Array.isArray(videos) ? videos : [];
-    const papersList = Array.isArray(papers) ? papers : [];
-    const tutesList = Array.isArray(tutes) ? tutes : [];
+    // Function to normalize potentially stringified array or single string to array
+    const normalizeToArray = (input: any) => {
+      if (!input) return [];
+      if (Array.isArray(input)) return input;
+      if (typeof input === 'string') {
+        try {
+          const parsed = JSON.parse(input);
+          return Array.isArray(parsed) ? parsed : [input];
+        } catch (e) {
+          return [input];
+        }
+      }
+      return [];
+    };
+
+    const videosList = normalizeToArray(videos);
+    const papersList = normalizeToArray(papers);
+    const tutesList = normalizeToArray(tutes);
 
     // At least ONE of videos, papers, or tutes must be provided
     if (videosList.length === 0 && papersList.length === 0 && tutesList.length === 0) {
@@ -224,22 +252,41 @@ export const updateCoursePackage = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Not authorized to update this course package' });
     }
 
+    // Function to normalize potentially stringified array or single string to array
+    const normalizeToArray = (input: any) => {
+      if (!input) return [];
+      if (Array.isArray(input)) return input;
+      if (typeof input === 'string') {
+        try {
+          const parsed = JSON.parse(input);
+          return Array.isArray(parsed) ? parsed : [input];
+        } catch (e) {
+          return [input];
+        }
+      }
+      return [];
+    };
+
+    const videosList = videos ? normalizeToArray(videos) : coursePackage.videos;
+    const papersList = papers ? normalizeToArray(papers) : coursePackage.papers;
+    const tutesList = tutes ? normalizeToArray(tutes) : coursePackage.tutes;
+
     // Validate video, paper, and tute IDs if provided
     if (videos) {
-      const existingVideos = await Video.find({ _id: { $in: videos } });
-      if (existingVideos.length !== videos.length) {
+      const existingVideos = await Video.find({ _id: { $in: videosList } });
+      if (existingVideos.length !== videosList.length) {
         return res.status(400).json({ message: 'One or more video IDs are invalid' });
       }
     }
     if (papers) {
-      const existingPapers = await Paper.find({ _id: { $in: papers } });
-      if (existingPapers.length !== papers.length) {
+      const existingPapers = await Paper.find({ _id: { $in: papersList } });
+      if (existingPapers.length !== papersList.length) {
         return res.status(400).json({ message: 'One or more paper IDs are invalid' });
       }
     }
     if (tutes) { // Validate tute IDs if provided
-      const existingTutes = await Tute.find({ _id: { $in: tutes } });
-      if (existingTutes.length !== tutes.length) {
+      const existingTutes = await Tute.find({ _id: { $in: tutesList } });
+      if (existingTutes.length !== tutesList.length) {
         return res.status(400).json({ message: 'One or more tute IDs are invalid' });
       }
     }
@@ -250,9 +297,9 @@ export const updateCoursePackage = async (req: Request, res: Response) => {
     if (backgroundImage) {
       coursePackage.backgroundImage = backgroundImage;
     }
-    coursePackage.videos = videos || coursePackage.videos;
-    coursePackage.papers = papers || coursePackage.papers;
-    coursePackage.tutes = tutes || coursePackage.tutes; // Update tutes
+    coursePackage.videos = videosList;
+    coursePackage.papers = papersList;
+    coursePackage.tutes = tutesList; // Update tutes
     coursePackage.availability = availability || coursePackage.availability;
     coursePackage.institute = institute || undefined;
     coursePackage.year = year || undefined;

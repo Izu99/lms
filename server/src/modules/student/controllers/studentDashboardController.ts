@@ -14,11 +14,12 @@ export class StudentDashboardController {
   static async getDashboard(req: AuthenticatedRequest, res: Response) {
     try {
       const studentId = req.user!.id;
+      const academicLevel = (req.user as any).academicLevel;
 
       const [stats, recentVideos, availablePapers, recentActivity] = await Promise.all([
-        StudentDashboardService.getDashboardStats(studentId),
-        StudentDashboardService.getRecentVideos(studentId),
-        StudentDashboardService.getAvailablePapers(studentId),
+        StudentDashboardService.getDashboardStats(studentId, academicLevel),
+        StudentDashboardService.getRecentVideos(studentId, academicLevel),
+        StudentDashboardService.getAvailablePapers(studentId, academicLevel),
         StudentDashboardService.getRecentActivity(studentId)
       ]);
 
@@ -39,7 +40,8 @@ export class StudentDashboardController {
   static async getStats(req: AuthenticatedRequest, res: Response) {
     try {
       const studentId = req.user!.id;
-      const stats = await StudentDashboardService.getDashboardStats(studentId);
+      const academicLevel = (req.user as any).academicLevel;
+      const stats = await StudentDashboardService.getDashboardStats(studentId, academicLevel);
       
       return ResponseHelper.success(res, stats, 'Statistics retrieved successfully');
     } catch (error) {

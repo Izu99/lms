@@ -110,6 +110,12 @@ export const getTuteById = async (req: Request, res: Response) => {
 
     const requestingUser = (req as any).user;
     if (requestingUser && requestingUser.role === 'student') {
+      
+      // Check academic level match for students
+      if (requestingUser.academicLevel && tute.academicLevel && requestingUser.academicLevel !== tute.academicLevel) {
+        return res.status(403).json({ message: 'Access denied. This tute does not match your academic level.' });
+      }
+
       let hasAccess = false;
       if (tute.availability === 'all') {
         hasAccess = true;
@@ -299,9 +305,13 @@ export const getStudentTutes = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    // List all tutes (all, physical, and paid)
-    // We want the student to see everything available so they can choose to buy.
-    const tutes = await Tute.find({})
+    // List all tutes (all, physical, and paid) filtered by academicLevel
+    const filter: any = {};
+    if (student.academicLevel) {
+      filter.academicLevel = student.academicLevel;
+    }
+
+    const tutes = await Tute.find(filter)
       .populate('teacherId', 'firstName lastName')
       .sort({ createdAt: -1 });
 

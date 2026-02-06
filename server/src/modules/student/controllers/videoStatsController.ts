@@ -4,9 +4,15 @@ import { VideoWatch } from '../../../models/VideoWatch';
 
 export const getVideoStats = async (req: Request, res: Response) => {
   try {
-    const studentId = (req as any).user.id;
+    const user = (req as any).user;
+    const studentId = user.id;
 
-    const totalVideos = await Video.countDocuments();
+    const videoFilter: any = {};
+    if (user.role === 'student' && user.academicLevel) {
+      videoFilter.academicLevel = user.academicLevel;
+    }
+
+    const totalVideos = await Video.countDocuments(videoFilter);
     const watchedVideos = await VideoWatch.find({ student: studentId });
 
     const totalWatchedCount = new Set(watchedVideos.map(w => w.video.toString())).size;

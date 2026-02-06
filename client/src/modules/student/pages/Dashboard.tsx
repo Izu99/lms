@@ -287,7 +287,7 @@ export function StudentDashboard() {
               </button>
 
               <button
-                onClick={() => router.push('/student/zoom')}
+                onClick={() => router.push('/student/meeting')}
                 className="flex flex-col items-center gap-3 p-4 rounded-lg bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
               >
                 <div className="w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center">

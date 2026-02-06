@@ -116,6 +116,7 @@ app.use(helmet({
     },
   },
   crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 
 // ✅ Security: Custom security headers
@@ -139,8 +140,11 @@ if (NODE_ENV === 'development') {
 
 logger.info(`✅ Allowed origins: ${allowedOrigins.join(', ')}`);
 
-// Static files
-app.use('/api/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+// Static files with explicit Cross-Origin header for production
+app.use('/api/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(__dirname, '..', 'uploads')));
 
 // ✅ Rate limiting for auth routes
 app.use('/api/auth/login', authLimiter);

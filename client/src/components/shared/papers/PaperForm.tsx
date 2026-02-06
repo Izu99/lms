@@ -1266,6 +1266,44 @@ export function PaperForm({ mode, paperId, basePath }: PaperFormProps) {
                                                             )}
                                                         </div>
                                                     </div>
+
+                                                    <div className="pt-6 border-t border-border flex justify-center gap-4">
+                                                        <Button
+                                                            onClick={() => {
+                                                                const newQuestion: Question = {
+                                                                    questionText: "",
+                                                                    options: [
+                                                                        { optionText: "", isCorrect: true, imageUrl: "" },
+                                                                        { optionText: "", isCorrect: false, imageUrl: "" },
+                                                                        { optionText: "", isCorrect: false, imageUrl: "" },
+                                                                        { optionText: "", isCorrect: false, imageUrl: "" },
+                                                                        { optionText: "", isCorrect: false, imageUrl: "" },
+                                                                    ],
+                                                                    open: true,
+                                                                    imageUrl: "",
+                                                                    explanation: { text: "", imageUrl: "" },
+                                                                };
+                                                                const newQuestions = [...questions];
+                                                                newQuestions.splice(qIndex, 0, newQuestion);
+                                                                setQuestions(newQuestions);
+                                                            }}
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="bg-gray-50 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900/40"
+                                                        >
+                                                            <Plus size={16} className="mr-2" />
+                                                            Add Question Above
+                                                        </Button>
+                                                        <Button
+                                                            onClick={addQuestion}
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40"
+                                                        >
+                                                            <Plus size={16} className="mr-2" />
+                                                            Add Next Question
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             )}
                                         </motion.div>

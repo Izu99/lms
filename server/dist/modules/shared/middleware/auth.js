@@ -45,6 +45,7 @@ const protect = async (req, res, next) => {
             studentType: user.studentType,
             institute: user.institute ? user.institute._id.toString() : undefined,
             year: user.year ? user.year._id.toString() : undefined,
+            academicLevel: user.academicLevel,
         };
         next();
     }

@@ -229,13 +229,20 @@ export default function VideosPage() {
                           src={getFileUrl(video.thumbnailUrl, 'video-thumbnail')}
                           alt={video.title}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80";
+                          }}
                         />
                       ) : (
-                        <video
-                          src={getFileUrl(video.videoUrl, 'video')}
-                          className="w-full h-full object-cover"
-                          preload="metadata"
-                        />
+                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-700 bg-gray-800 relative">
+                          <img
+                            src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80"
+                            alt="Default Video Thumbnail"
+                            className="absolute inset-0 w-full h-full object-cover opacity-30"
+                          />
+                          <Video size={48} className="relative z-10 mb-2 opacity-50 text-white" />
+                          <span className="relative z-10 text-xs text-white">Video Lesson</span>
+                        </div>
                       )}
                       <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
                         <div className="w-16 h-16 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg opacity-0 group-hover:opacity-100">

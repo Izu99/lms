@@ -1,5 +1,3 @@
-import { API_URL } from "./constants";
-
 export type FileType = 'video' | 'paper' | 'image' | 'video-thumbnail' | 'paper-thumbnail';
 
 /**
@@ -10,54 +8,44 @@ export type FileType = 'video' | 'paper' | 'image' | 'video-thumbnail' | 'paper-
  * @param type The type of file to determine the base path
  * @returns The full absolute URL to the file
  */
-export const getFileUrl = (filename: string | undefined | null, type: FileType): string => {
-    if (!filename) return '';
+export const getFileUrl = (filename: any, type: FileType): string => {
+    if (!filename || typeof filename !== 'string') return '';
 
-    // If it's already a full URL (e.g. from external source or future cloud storage), return it
+    // If it's already a full URL, return it
     if (filename.startsWith('http://') || filename.startsWith('https://')) {
         return filename;
     }
 
-    // Remove leading slash if present to avoid double slashes
-    const cleanFilename = filename.startsWith('/') ? filename.slice(1) : filename;
+    // Use environment variable directly or fallback to localhost
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+    const baseUploadUrl = `${baseUrl}/api/uploads`;
 
-    // Use API_URL which already includes the /api prefix
-    const baseUploadUrl = `${API_URL}/uploads`;
+    // Remove leading slash if present
+    let cleanPath = filename.startsWith('/') ? filename.slice(1) : filename;
+    
+    // Remove redundant path segments if they exist in the filename string
+    // This handles cases where the DB might store "uploads/videos/..." or "api/uploads/..."
+    cleanPath = cleanPath.replace(/^api\/uploads\//, '').replace(/^uploads\//, '');
 
     switch (type) {
         case 'video':
-            if (cleanFilename.includes('videos/files/')) {
-                return `${baseUploadUrl}/${cleanFilename}`;
-            }
-            return `${baseUploadUrl}/videos/files/${cleanFilename}`;
+            if (cleanPath.startsWith('videos/files/')) return `${baseUploadUrl}/${cleanPath}`;
+            return `${baseUploadUrl}/videos/files/${cleanPath}`;
 
         case 'video-thumbnail':
-            if (cleanFilename.includes('videos/images/')) {
-                return `${baseUploadUrl}/${cleanFilename}`;
-            }
-            return `${baseUploadUrl}/videos/images/${cleanFilename}`;
+            if (cleanPath.startsWith('videos/images/')) return `${baseUploadUrl}/${cleanPath}`;
+            return `${baseUploadUrl}/videos/images/${cleanPath}`;
 
         case 'paper':
-            // Check if it already has the relative path (papers/mcq/... or papers/structure-essay/...)
-            if (cleanFilename.includes('papers/')) {
-                return `${baseUploadUrl}/${cleanFilename}`;
-            }
-            // Fallback for legacy or partial paths
-            return `${baseUploadUrl}/papers/pdf-papers/${cleanFilename}`;
+            if (cleanPath.startsWith('papers/')) return `${baseUploadUrl}/${cleanPath}`;
+            return `${baseUploadUrl}/papers/pdf-papers/${cleanPath}`;
 
         case 'paper-thumbnail':
-            if (cleanFilename.includes('papers/')) {
-                return `${baseUploadUrl}/${cleanFilename}`;
-            }
-            return `${baseUploadUrl}/papers/images/${cleanFilename}`;
+            if (cleanPath.startsWith('papers/')) return `${baseUploadUrl}/${cleanPath}`;
+            return `${baseUploadUrl}/papers/images/${cleanPath}`;
 
         case 'image':
         default:
-            // Check if it starts with uploads/ (common in some parts of the app)
-            if (cleanFilename.startsWith('uploads/')) {
-                const actualPath = cleanFilename.replace('uploads/', '');
-                return `${baseUploadUrl}/${actualPath}`;
-            }
-            return `${baseUploadUrl}/${cleanFilename}`;
+            return `${baseUploadUrl}/${cleanPath}`;
     }
 };

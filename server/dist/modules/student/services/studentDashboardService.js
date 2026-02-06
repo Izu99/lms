@@ -5,10 +5,16 @@ const Video_1 = require("../../../models/Video");
 const Paper_1 = require("../../../models/Paper");
 const StudentAttempt_1 = require("../../../models/StudentAttempt");
 class StudentDashboardService {
-    static async getDashboardStats(studentId) {
+    static async getDashboardStats(studentId, academicLevel) {
+        const videoFilter = {};
+        const paperFilter = { deadline: { $gte: new Date() } };
+        if (academicLevel) {
+            videoFilter.academicLevel = academicLevel;
+            paperFilter.academicLevel = academicLevel;
+        }
         const [availableVideos, availablePapers, completedAttempts] = await Promise.all([
-            Video_1.Video.countDocuments(),
-            Paper_1.Paper.countDocuments({ deadline: { $gte: new Date() } }),
+            Video_1.Video.countDocuments(videoFilter),
+            Paper_1.Paper.countDocuments(paperFilter),
             StudentAttempt_1.StudentAttempt.find({ studentId, status: 'submitted' })
         ]);
         const totalScore = completedAttempts.reduce((sum, attempt) => sum + attempt.score, 0);
@@ -22,8 +28,12 @@ class StudentDashboardService {
             progressPercentage: availablePapers > 0 ? (completedAttempts.length / availablePapers) * 100 : 0
         };
     }
-    static async getRecentVideos(studentId, limit = 5) {
-        const videos = await Video_1.Video.find()
+    static async getRecentVideos(studentId, academicLevel, limit = 5) {
+        const filter = {};
+        if (academicLevel) {
+            filter.academicLevel = academicLevel;
+        }
+        const videos = await Video_1.Video.find(filter)
             .populate('institute', 'name location')
             .populate('year', 'year name')
             .populate('uploadedBy', 'username firstName lastName')
@@ -47,8 +57,12 @@ class StudentDashboardService {
             year: video.year || null
         }));
     }
-    static async getAvailablePapers(studentId, limit = 5) {
-        const papers = await Paper_1.Paper.find({ deadline: { $gte: new Date() } })
+    static async getAvailablePapers(studentId, academicLevel, limit = 5) {
+        const filter = { deadline: { $gte: new Date() } };
+        if (academicLevel) {
+            filter.academicLevel = academicLevel;
+        }
+        const papers = await Paper_1.Paper.find(filter)
             .sort({ deadline: 1 })
             .limit(limit)
             .lean();

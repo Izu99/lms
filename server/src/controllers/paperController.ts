@@ -191,13 +191,16 @@ export const getAllPapers = async (req: Request, res: Response) => {
       papers = papersWithAttemptCount;
     } else {
       // Students see available papers (not expired and not attempted)
-      // Note: Students usually don't use these filters on the main list, but we can support them if needed.
-      // For now, keeping student logic as is regarding filters, or applying them if passed.
-
       const filter: any = {};
       if (institute && institute !== 'all') filter.institute = institute;
       if (year && year !== 'all') filter.year = year;
-      if (academicLevel && academicLevel !== 'all') filter.academicLevel = academicLevel;
+      
+      // Automatically filter by student's academicLevel if they are a student
+      if (requestingUser.academicLevel) {
+        filter.academicLevel = requestingUser.academicLevel;
+      } else if (academicLevel && academicLevel !== 'all') {
+        filter.academicLevel = academicLevel;
+      }
 
       const currentDate = new Date();
 
@@ -242,6 +245,11 @@ export const getPaperById = async (req: Request, res: Response) => {
     if (!requestingUser || requestingUser.role !== 'student') {
       // Teachers get full paper with correct answers
       return res.json({ paper });
+    }
+
+    // Check academic level match for students
+    if (requestingUser.academicLevel && paper.academicLevel && requestingUser.academicLevel !== paper.academicLevel) {
+      return res.status(403).json({ message: 'Access denied. This paper does not match your academic level.' });
     }
 
     // Access control logic for students
@@ -778,7 +786,13 @@ export const getAllPapersForStudent = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Access denied.' });
     }
 
-    const papers = await Paper.find()
+    const filter: any = {};
+    // Automatically filter by student's academicLevel
+    if (requestingUser.academicLevel) {
+      filter.academicLevel = requestingUser.academicLevel;
+    }
+
+    const papers = await Paper.find(filter)
       .select('-questions.options.isCorrect -teacherId')
       .sort({ createdAt: -1 });
 

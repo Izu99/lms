@@ -177,15 +177,18 @@ const getAllPapers = async (req, res) => {
         }
         else {
             // Students see available papers (not expired and not attempted)
-            // Note: Students usually don't use these filters on the main list, but we can support them if needed.
-            // For now, keeping student logic as is regarding filters, or applying them if passed.
             const filter = {};
             if (institute && institute !== 'all')
                 filter.institute = institute;
             if (year && year !== 'all')
                 filter.year = year;
-            if (academicLevel && academicLevel !== 'all')
+            // Automatically filter by student's academicLevel if they are a student
+            if (requestingUser.academicLevel) {
+                filter.academicLevel = requestingUser.academicLevel;
+            }
+            else if (academicLevel && academicLevel !== 'all') {
                 filter.academicLevel = academicLevel;
+            }
             const currentDate = new Date();
             // Get paper IDs that student has already attempted
             const attemptedPapers = await StudentAttempt_1.StudentAttempt.find({
@@ -223,6 +226,10 @@ const getPaperById = async (req, res) => {
         if (!requestingUser || requestingUser.role !== 'student') {
             // Teachers get full paper with correct answers
             return res.json({ paper });
+        }
+        // Check academic level match for students
+        if (requestingUser.academicLevel && paper.academicLevel && requestingUser.academicLevel !== paper.academicLevel) {
+            return res.status(403).json({ message: 'Access denied. This paper does not match your academic level.' });
         }
         // Access control logic for students
         const studentType = requestingUser.studentType;
@@ -688,7 +695,12 @@ const getAllPapersForStudent = async (req, res) => {
         if (requestingUser.role !== 'student') {
             return res.status(403).json({ message: 'Access denied.' });
         }
-        const papers = await Paper_1.Paper.find()
+        const filter = {};
+        // Automatically filter by student's academicLevel
+        if (requestingUser.academicLevel) {
+            filter.academicLevel = requestingUser.academicLevel;
+        }
+        const papers = await Paper_1.Paper.find(filter)
             .select('-questions.options.isCorrect -teacherId')
             .sort({ createdAt: -1 });
         const attemptedPapers = await StudentAttempt_1.StudentAttempt.find({

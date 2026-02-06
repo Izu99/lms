@@ -11,6 +11,7 @@ import CommonFilter from "@/components/common/CommonFilter";
 import { StudentGridSkeleton } from "@/components/student/skeletons/StudentGridSkeleton";
 import { useStudentFilters } from "@/modules/student/hooks/useStudentFilters";
 import { useState } from "react";
+import { getFileUrl } from "@/lib/fileUtils";
 
 export default function StudentCoursePackagesPage() {
   const { coursePackages, isLoading, error, refetch } = useStudentCoursePackages();
@@ -70,7 +71,7 @@ export default function StudentCoursePackagesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {coursePackages.map((pkg) => {
             const defaultBackground = "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=800&q=80";
-            const backgroundImage = pkg.backgroundImage ? `${API_BASE_URL}/${pkg.backgroundImage}` : defaultBackground;
+            const backgroundImage = pkg.backgroundImage ? getFileUrl(pkg.backgroundImage, 'image') : defaultBackground;
 
             return (
               <div key={pkg._id} className="theme-card flex flex-col justify-between overflow-hidden rounded-lg shadow-md">
@@ -81,6 +82,9 @@ export default function StudentCoursePackagesPage() {
                     alt={pkg.title}
                     className="w-full h-full object-cover object-top-left"
                     style={{ objectPosition: 'left top' }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = defaultBackground;
+                    }}
                   />
                   <div className="absolute inset-0 bg-black/30"></div> {/* Optional overlay */}
                 </div>

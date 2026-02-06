@@ -101,7 +101,7 @@ function StructureEssayContent() {
   if (paymentRequired && paymentDetails) {
     return (
       <StudentLayout>
-        <div className="flex flex-col items-center justify-center min-h-[80vh] p-4">
+        <div className="flex flex-col items-center justify-center min-h-[90vh] p-4">
           <div className="max-w-6xl w-full">
             <div className="text-center mb-10">
               <div className="w-20 h-20 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-yellow-500/10">
@@ -121,15 +121,7 @@ function StructureEssayContent() {
               amount={paymentDetails.price}
               title={paymentDetails.paperTitle}
               className="w-full"
-            />
-
-            <div className="mt-8 text-center">
-              <Link href="/student/papers">
-                <Button variant="ghost" className="text-muted-foreground hover:text-primary">
-                  <ArrowLeft className="mr-2 w-4 h-4" /> Return to Paper Gallery
-                </Button>
-              </Link>
-            </div>
+            />           
           </div>
         </div>
       </StudentLayout>

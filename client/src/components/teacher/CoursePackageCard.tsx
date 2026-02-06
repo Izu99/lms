@@ -26,6 +26,9 @@ export function CoursePackageCard({ pkg, onEdit, onDelete }: CoursePackageCardPr
           src={backgroundImage}
           alt={pkg.title}
           className="w-full h-full object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = defaultBackground;
+          }}
         />
         <div className="absolute inset-0 bg-black/80"></div>
       </div>
