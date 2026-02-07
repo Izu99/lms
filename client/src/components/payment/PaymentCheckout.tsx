@@ -34,10 +34,10 @@ const translations = {
         ],
         bankDetails: {
             header: "අපගේ බැංකු ගිණුම් විස්තර:",
-            bank: "බැංකුව: සම්පත් බැංකුව (Sampath Bank)",
-            name: "නම: ezyICT Learning (PVT) LTD",
-            account: "ගිණුම් අංකය: 1109 4532 9987",
-            branch: "ශාඛාව: ගම්පහ (Gampaha)",
+            bank: "බැංකුව: HNB (Hatton National Bank)",
+            name: "නම: Hansaka Prabath",
+            account: "ගිණුම් අංකය: 200020020341",
+            branch: "ශාඛාව: හක්මන (Hakmana)",
             usernameLabel: "ඔබගේ යූසර් නේම් එක (Username)",
             uploadLabel: "ගෙවීම් රිසිට්පත (Payment Slip)",
             uploadPlaceholder: "IMG_2024.jpg වැනි ගොනුවක් තෝරන්න",
@@ -63,10 +63,10 @@ const translations = {
         ],
         bankDetails: {
             header: "Our Bank Account Details:",
-            bank: "Bank: Sampath Bank",
-            name: "Name: ezyICT Learning (PVT) LTD",
-            account: "Account Number: 1109 4532 9987",
-            branch: "Branch: Gampaha",
+            bank: "Bank: HNB (Hatton National Bank)",
+            name: "Name: Hansaka Prabath",
+            account: "Account Number: 200020020341",
+            branch: "Branch: Hakmana",
             usernameLabel: "Your Site Username",
             uploadLabel: "Payment Slip Image",
             uploadPlaceholder: "Select or drag slip image",
@@ -92,10 +92,10 @@ const translations = {
         ],
         bankDetails: {
             header: "எங்கள் வங்கி கணக்கு விபரங்கள்:",
-            bank: "வங்கி: Sampath Bank",
-            name: "பெயர்: ezyICT Learning (PVT) LTD",
-            account: "கணக்கு எண்: 1109 4532 9987",
-            branch: "கிளை: Gampaha",
+            bank: "வங்கி: HNB (Hatton National Bank)",
+            name: "பெயர்: Hansaka Prabath",
+            account: "கணக்கு எண்: 200020020341",
+            branch: "கிளை: Hakmana",
             usernameLabel: "உங்கள் தள பயனர் பெயர் (Username)",
             uploadLabel: "கட்டண ரசீது (Payment Slip)",
             uploadPlaceholder: "ரசீது படத்தைத் தேர்ந்தெடுக்கவும்",
@@ -166,32 +166,31 @@ export function PaymentCheckout({ itemId, itemModel, amount, title, className }:
     };
 
     return (
-        <div className={`bg-white dark:bg-gray-900 rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-xl sm:shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden w-full max-w-5xl mx-auto ${className}`}>
+        <div className={`bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-xl sm:shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden w-full max-w-5xl mx-auto ${className}`}>
             {/* Top Bar: Icon & Language */}
-            <div className="p-3 sm:p-4 lg:p-6 bg-gradient-to-r from-blue-600 to-indigo-700 dark:from-blue-700 dark:to-indigo-800 border-b border-blue-500/20">
+            <div className="p-3 sm:p-4 lg:p-6 bg-slate-50 dark:bg-slate-800 border-b theme-border">
                 <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row items-center justify-between gap-3">
                     <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shrink-0">
-                            <ShieldCheck className="text-white w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600/10 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0">
+                            <ShieldCheck className="text-blue-600 w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h3 className="font-black text-base sm:text-lg lg:text-xl text-white tracking-tight truncate">
+                            <h3 className="font-bold text-base sm:text-lg lg:text-xl theme-text-primary tracking-tight truncate">
                                 {t.title}
                             </h3>
-                            <p className="text-[9px] sm:text-[10px] text-blue-100 font-bold uppercase tracking-wider">Secured by ezyICT</p>
+                            <p className="text-[9px] sm:text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider">Secured by ezyICT</p>
                         </div>
                     </div>
 
-                    <div className="flex bg-white/10 backdrop-blur-sm p-1 rounded-lg sm:rounded-xl border border-white/20 shadow-sm w-full sm:w-auto">
+                    <div className="flex bg-slate-200/50 dark:bg-slate-700/50 backdrop-blur-sm p-1 rounded-lg sm:rounded-xl border theme-border shadow-sm w-full sm:w-auto">
                         {(['en', 'si', 'ta'] as const).map((l) => (
                             <button
                                 key={l}
                                 onClick={() => setLang(l)}
-                                className={`flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-md sm:rounded-lg transition-all whitespace-nowrap ${
-                                    lang === l 
-                                        ? 'bg-white text-blue-600 shadow-md' 
-                                        : 'text-white/80 hover:bg-white/10'
-                                }`}
+                                className={`flex-1 sm:flex-none px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-md sm:rounded-lg transition-all whitespace-nowrap ${lang === l
+                                        ? 'bg-white dark:bg-slate-600 text-blue-600 dark:text-blue-300 shadow-md'
+                                        : 'theme-text-secondary hover:bg-white/10 dark:hover:bg-slate-600/50'
+                                    }`}
                             >
                                 {l === 'en' ? 'EN' : l === 'si' ? 'සිං' : 'த'}
                             </button>
@@ -219,7 +218,7 @@ export function PaymentCheckout({ itemId, itemModel, amount, title, className }:
                     <TabsContent value="online" className="space-y-4 sm:space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 items-start">
                             {/* Guidelines */}
-                            <div className="space-y-4 sm:space-y-5 lg:space-y-6 bg-slate-50 dark:bg-slate-900/30 p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-100 dark:border-slate-800 order-2 lg:order-1">
+                            <div className="space-y-4 sm:space-y-5 lg:space-y-6 bg-slate-50 dark:bg-slate-800/50 p-4 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl lg:rounded-3xl border theme-border order-2 lg:order-1">
                                 <div className="flex items-center gap-2 sm:gap-3">
                                     <AlertCircle className="text-blue-600 w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 shrink-0" />
                                     <h4 className="font-bold text-slate-900 dark:text-white uppercase tracking-tight text-xs sm:text-sm">
@@ -229,7 +228,7 @@ export function PaymentCheckout({ itemId, itemModel, amount, title, className }:
                                 <ul className="space-y-3 sm:space-y-4">
                                     {t.steps.map((step, idx) => (
                                         <li key={idx} className="flex gap-2 sm:gap-3 lg:gap-4 group">
-                                            <span className="flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-blue-600 flex items-center justify-center font-black text-xs sm:text-sm shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                            <span className="flex-shrink-0 w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 rounded-full bg-white dark:bg-slate-800 border theme-border text-blue-600 flex items-center justify-center font-black text-xs sm:text-sm shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all">
                                                 {idx + 1}
                                             </span>
                                             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium flex-1">
@@ -242,10 +241,10 @@ export function PaymentCheckout({ itemId, itemModel, amount, title, className }:
 
                             {/* Summary & Button */}
                             <div className="space-y-4 sm:space-y-5 lg:space-y-6 order-1 lg:order-2">
-                                <div className="p-5 sm:p-6 lg:p-8 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl sm:rounded-2xl lg:rounded-3xl text-white shadow-lg sm:shadow-xl">
-                                    <p className="text-[9px] sm:text-[10px] lg:text-xs font-bold uppercase tracking-widest opacity-90 mb-1 sm:mb-2">Total Amount</p>
-                                    <div className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tighter mb-1">LKR {amount.toFixed(2)}</div>
-                                    <p className="text-xs sm:text-sm opacity-90 font-medium line-clamp-2">{title}</p>
+                                <div className="p-5 sm:p-6 lg:p-8 bg-slate-100 dark:bg-slate-800 rounded-xl sm:rounded-2xl lg:rounded-3xl border theme-border shadow-sm">
+                                    <p className="text-[9px] sm:text-[10px] lg:text-xs font-bold uppercase tracking-widest theme-text-secondary mb-1 sm:mb-2">Total Amount</p>
+                                    <div className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tighter mb-1 theme-text-primary">LKR {amount.toFixed(2)}</div>
+                                    <p className="text-xs sm:text-sm theme-text-secondary font-medium line-clamp-2">{title}</p>
                                 </div>
 
                                 <div className="space-y-3 sm:space-y-4">
@@ -255,7 +254,7 @@ export function PaymentCheckout({ itemId, itemModel, amount, title, className }:
                                             itemModel={itemModel}
                                             amount={amount}
                                             title={title}
-                                            className="w-full h-12 sm:h-14 lg:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg lg:text-xl font-black shadow-lg hover:scale-[1.02] active:scale-95 transition-transform"
+                                            className="w-full h-12 sm:h-14 lg:h-16 rounded-xl sm:rounded-2xl text-base sm:text-lg lg:text-xl font-black shadow-lg bg-blue-600 hover:bg-blue-700 text-white transition-all active:scale-95"
                                         />
                                     </div>
                                     {!agreed && (
@@ -300,25 +299,25 @@ export function PaymentCheckout({ itemId, itemModel, amount, title, className }:
                             </div>
 
                             {/* Slip Upload Form */}
-                            <div className="space-y-3 sm:space-y-4 lg:space-y-5 p-4 sm:p-5 lg:p-6 bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                                <div className="space-y-1.5 sm:space-y-2">
-                                    <Label htmlFor="username" className="font-bold flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-                                        <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 shrink-0" />
-                                        <span className="truncate">{t.bankDetails.usernameLabel}</span>
+                            <div className="space-y-4 sm:space-y-5 lg:space-y-6 p-4 sm:p-5 lg:p-6 bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl lg:rounded-3xl border theme-border shadow-sm">
+                                <div className="space-y-2">
+                                    <Label htmlFor="username" className="font-bold flex items-center gap-2 text-xs sm:text-sm">
+                                        <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
+                                        {t.bankDetails.usernameLabel}
                                     </Label>
                                     <Input
                                         id="username"
                                         placeholder="e.g. kamal_perera"
                                         value={bankData.username}
                                         onChange={(e) => setBankData({ ...bankData, username: e.target.value })}
-                                        className="h-11 sm:h-11 lg:h-12 rounded-lg sm:rounded-xl focus:ring-blue-600 font-medium text-sm sm:text-base"
+                                        className="h-10 sm:h-11 lg:h-12 rounded-lg sm:rounded-xl focus:ring-blue-600 font-medium text-sm sm:text-base"
                                     />
                                 </div>
 
-                                <div className="space-y-1.5 sm:space-y-2">
-                                    <Label className="font-bold flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-                                        <UploadCloud className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 shrink-0" />
-                                        <span className="truncate">{t.bankDetails.uploadLabel}</span>
+                                <div className="space-y-2">
+                                    <Label className="font-bold flex items-center gap-2 text-xs sm:text-sm">
+                                        <UploadCloud className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
+                                        {t.bankDetails.uploadLabel}
                                     </Label>
                                     <div className="relative group cursor-pointer">
                                         <input
@@ -328,22 +327,21 @@ export function PaymentCheckout({ itemId, itemModel, amount, title, className }:
                                             accept="image/*"
                                             key={bankData.slip ? 'loaded' : 'empty'}
                                         />
-                                        <div className={`p-6 sm:p-7 lg:p-8 border-2 border-dashed rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-2 sm:gap-3 transition-colors min-h-[110px] sm:min-h-[130px] lg:min-h-[140px] ${
-                                            bankData.slip 
-                                                ? 'bg-blue-50 border-blue-400 group-hover:bg-blue-100 dark:bg-blue-900/20 dark:border-blue-500' 
+                                        <div className={`p-5 sm:p-6 lg:p-8 border-2 border-dashed rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-2 sm:gap-3 transition-colors min-h-[120px] sm:min-h-[140px] ${bankData.slip
+                                                ? 'bg-blue-50 border-blue-400 group-hover:bg-blue-100 dark:bg-blue-900/20 dark:border-blue-500'
                                                 : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 group-hover:border-blue-400 group-hover:bg-slate-100 dark:group-hover:bg-slate-800'
-                                        }`}>
+                                            }`}>
                                             {bankData.slip ? (
                                                 <>
-                                                    <CheckCircle className="text-green-500 w-7 h-7 sm:w-8 sm:h-8 lg:w-9 lg:h-9" />
-                                                    <p className="text-[11px] sm:text-xs lg:text-sm font-bold text-slate-900 dark:text-white truncate max-w-full px-2 text-center">
+                                                    <CheckCircle className="text-green-500 w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />
+                                                    <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-full px-2 text-center">
                                                         {bankData.slip.name}
                                                     </p>
                                                 </>
                                             ) : (
                                                 <>
-                                                    <UploadCloud className="text-slate-400 group-hover:text-blue-600 transition-colors w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10" />
-                                                    <p className="text-[11px] sm:text-xs lg:text-sm font-bold text-slate-500 dark:text-slate-400 text-center px-3 sm:px-4 leading-snug">
+                                                    <UploadCloud className="text-slate-400 group-hover:text-blue-600 transition-colors w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />
+                                                    <p className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 text-center px-2 sm:px-4">
                                                         {t.bankDetails.uploadPlaceholder}
                                                     </p>
                                                 </>
@@ -357,14 +355,14 @@ export function PaymentCheckout({ itemId, itemModel, amount, title, className }:
                                         <Button
                                             onClick={handleBankSubmit}
                                             disabled={isSubmitting || !bankData.username || !bankData.slip}
-                                            className="w-full h-12 sm:h-13 lg:h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm lg:text-base shadow-lg active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed px-4"
+                                            className="w-full h-11 sm:h-12 lg:h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-xl sm:rounded-2xl font-black text-sm sm:text-base lg:text-lg shadow-lg active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            <span className="truncate">{isSubmitting ? '⏳ යවමින්...' : t.bankDetails.submitBtn}</span>
+                                            {isSubmitting ? '⏳ යවමින්...' : t.bankDetails.submitBtn}
                                         </Button>
                                     </div>
-                                    <div className="flex items-start gap-2 sm:gap-2.5 p-3 sm:p-3.5 lg:p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/50 rounded-lg sm:rounded-xl lg:rounded-2xl">
-                                        <Clock className="text-amber-600 shrink-0 mt-0.5 w-4 h-4 sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
-                                        <p className="text-[9px] sm:text-[10px] lg:text-xs text-amber-700 dark:text-amber-400 font-bold leading-snug sm:leading-relaxed">
+                                    <div className="flex items-start gap-2 p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/50 rounded-xl sm:rounded-2xl">
+                                        <Clock className="text-amber-600 shrink-0 mt-0.5 w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                        <p className="text-[10px] sm:text-[11px] text-amber-700 dark:text-amber-400 font-bold leading-tight">
                                             {t.bankDetails.notice}
                                         </p>
                                     </div>
@@ -376,7 +374,7 @@ export function PaymentCheckout({ itemId, itemModel, amount, title, className }:
             </div>
 
             {/* Terms Agreement Toggle */}
-            <div className="p-3 sm:p-4 lg:p-8 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
+            <div className="p-3 sm:p-4 lg:p-8 bg-slate-50 dark:bg-slate-800/50 border-t theme-border">
                 <div className="max-w-3xl mx-auto">
                     <label className="flex items-start gap-2.5 sm:gap-3 lg:gap-4 p-3 sm:p-4 lg:p-5 bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl lg:rounded-3xl border border-slate-200 dark:border-slate-800 hover:border-blue-500 transition-all cursor-pointer shadow-sm group">
                         <Checkbox
